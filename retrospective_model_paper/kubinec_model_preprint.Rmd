@@ -23,7 +23,7 @@ output:
       - '--lua-filter=author-info-blocks.lua'
   #bookdown::word_document2
 bibliography: BibTexDatabase.bib
-abstract: "As the COVID-19 outbreak progresses, increasing numbers of researchers are examining how an array of factors either hurt or help the spread of the disease. Unfortunately, the majority of available data, primarily confirmed cases of COVID-19, are widely known to be biased indicators of the spread of the disease. In this paper we present a retrospective Bayesian model that is much simpler than epidemiological models of disease progression but is still able to identify the effect of covariates on the historical infection rate. The model is validated by comparing our estimation of the count of infected to projections from expert surveys and extant disease forecasts. To apply the model, we show that as of April 20th, there are approximately 3 million infected people in the United States, and these people are increasingly concentrated in states with more wealth, better air quality, fewer smokers, more residents under the age of 18, more public health funding and a history of more cardiovascular deaths. On the other hand, the timing of state declarations of emergency and the proportion of people who voted for President Trump in 2016 are not clear predictors of COVID-19 trends. In qddition, we find that the US states have increased testing at approximately the same level in line with infections, suggesting that testing has not yet increased significantly above infection trends.^[To reproduce the model and to access the underlying Stan code, please see our [Github page](https://github.com/saudiwin/corona_tscs). This paper is part of the [CoronaNet project](https://lumesserschmidt.github.io/CoronaNet/) collecting data on government responses to the COVID-19 pandemic. For helpful comments we thank Cindy Cheng and Joan Barcelo.]"
+abstract: "As the COVID-19 outbreak progresses, increasing numbers of researchers are examining how an array of factors either hurt or help the spread of the disease. Unfortunately, the majority of available data, primarily confirmed cases of COVID-19, are widely known to be biased indicators of the spread of the disease. In this paper we present a retrospective Bayesian model that is much simpler than epidemiological models of disease progression but is still able to identify the effect of covariates on the historical infection rate. The model is validated by comparing our estimation of the count of infected to projections from expert surveys and extant disease forecasts. To apply the model, we show that as of April 20th, there are approximately 3 million infected people in the United States, and these people are increasingly concentrated in states with more wealth, better air quality, fewer smokers, more residents under the age of 18, more public health funding and a history of more cardiovascular deaths. On the other hand, the timing of state declarations of emergency and the proportion of people who voted for President Trump in 2016 are not clear predictors of COVID-19 trends. In addition, we find that the US states have increased testing at approximately the same level in line with infections, suggesting that testing has not yet increased significantly above infection trends.^[To reproduce the model and to access the underlying Stan code, please see our [Github page](https://github.com/saudiwin/corona_tscs). This paper is part of the [CoronaNet project](https://lumesserschmidt.github.io/CoronaNet/) collecting data on government responses to the COVID-19 pandemic. For helpful comments we thank Cindy Cheng and Joan Barcelo.]"
 ---
 
 ```{r setup, include=FALSE}
@@ -63,9 +63,9 @@ pan_model <- stan_model("corona_tscs_betab.stan")
 
 \newpage
 
-# Introduction
 
-As more and more data has become available on observed case counts of the SARS-CoV2 coronavirus, there have been increasing attempts to infer how contextual factors like government policies, partisanship, and temperature affect the disease's spread [@carleton2020;@sajadi2020;@dudel2020;@tansim2020;@wright2020;@flaxman2020;@brze2020]. The temptation to make inferences from the observed data, however, can result in misleading conclusions. For example, some policy makers have publicly questioned whether the predictions of epidemiological models are far worse than the observed case count.^[See article available at https://www.realclearpolitics.com/video/2020/03/26/dr_birx_coronavirus_data_d] By contrast, in this paper we show that the unobserved infection rate is a confounding variable affecting any estimates of covariates on the observed counts of COVID-19 cases and tests. For this reason, in this paper we present a retrospective Bayesian model that can adjust for this bias by estimating the unseen infection rate up to an unidentified constant. Furthermore, by incorporating informative priors from the susceptible-infected-recovered (SIR)/susceptible-exposed-infected-recovered (SEIR) papers on SARS-CoV2  [@peak2020;@riou2020;@verity2020;@perkins2020;@lourenco2020;@li2020;@ferguson2020], it is possible to put an informative prior on the unobserved infection rate and estimate both recent disease trends and the effect of covariates on the historical spread of the disease.
+
+As more and more data has become available on observed case counts of the SARS-CoV2 coronavirus, there have been increasing attempts to infer how contextual factors like government policies, partisanship, and temperature affect the disease's spread [@carleton2020;@sajadi2020;@dudel2020;@tansim2020;@flaxman2020;@brze2020]. The temptation to make inferences from the observed data, however, can result in misleading conclusions. For example, some policy makers have publicly questioned whether the predictions of epidemiological models are far worse than the observed case count.^[See article available at https://www.realclearpolitics.com/video/2020/03/26/dr_birx_coronavirus_data_d] By contrast, in this paper we show that the unobserved infection rate is a confounding variable affecting any estimates of covariates on the observed counts of COVID-19 cases and tests. For this reason, in this paper we present a retrospective Bayesian model that can adjust for this bias by estimating the unseen infection rate up to an unidentified constant. Furthermore, by incorporating informative priors from the susceptible-infected-recovered (SIR)/susceptible-exposed-infected-recovered (SEIR) papers on SARS-CoV2  [@peak2020;@riou2020;@verity2020;@perkins2020;@lourenco2020;@li2020;@ferguson2020], it is possible to put an informative prior on the unobserved infection rate and estimate both recent disease trends and the effect of covariates on the historical spread of the disease.
 
 We also show how the model can be applied by measuring the association between U.S. state-level factors and the disease as of April 20th, 2020, including the timing of state of emergency declarations, vote share in the 2016 election for President Donald Trump, the percentage of foreign born and younger residents, gross domestic product (GDP) per capita, and health-related factors. The results show that as of April 20th, there are approximately 3 million infected people in the United States, and these people are increasingly concentrated in U.S. states with more wealth, better air quality, fewer smokers, more people under the age of 18, and a history of more cardiovascular deaths per capita. On the other hand, the proportion of people who voted for President Trump in 2016, the amount of public health funding in a state and the date that a state declared an emergency are not clear predictors of COVID-19 trends. 
 
@@ -660,7 +660,7 @@ calc_sum %>%
   scale_y_continuous(labels=scales::comma) +
   labs(caption="Blue 5% - 95% HPD intervals show estimated infected and the black line\nshows observed cases from the New York Times.\nThese estimates are based on the assumption that as few as 10% of cases\nmay be reported based on SIR/SEIR models.") +
   annotate("text",x=ymd(c("2020-04-17","2020-04-17")),
-           y=c(max_est+200000,max_obs+200000),
+           y=c(max_est-700000,max_obs+300000),
            hjust=1,
            vjust=0,
            fontface="bold",
@@ -731,7 +731,7 @@ calc_sum_state %>%
   ylab("Cumulative Count") +
   labs(caption="Some lines are labeled with uncertainty of estimates (5% - 95% Interval).\nThese estimates are based on the assumption that as few as\n10% of cases may be reported based on SIR/SEIR models. Does not exclude people\nwho may have recovered or died.") +
   geom_text_repel(data=top_5,aes(x=time_point,y=med_est,label=label),
-                  size=2,fontface="bold",segment.colour = NA) +
+                  size=3,fontface="bold",segment.colour = NA) +
   scale_y_continuous(labels=scales::comma) +
   xlab("Days Since Outbreak Start") + 
   guides(colour="none") +
@@ -770,7 +770,7 @@ ggsave("certain_state_rates.png")
 
 ```
 
-Figure \@ref(fig:compmarg) shows the marginal effect of covariates in the model on the latent infection rate, expressed as the marginal increase in proportions for a standard deviation increase in the covariate. Each covariate has two kinds of marginal effects: a cumulative effect in the top panel and a time-varying effect in the bottom panel, where time is coded as a linear counter since the start of the outbreak (at least one case recorded) in each state. As can be seen, the cumulative effects are generally less precise, but the over-time effects show clear trends. States with larger youth populations and more health care providers are seeing increasingly higher infection rates. By contrast, states that have a higher GDP per capita, more health care providers per capita, more young people, fewer smokers and better air quality are seeing increasingly fewer infections. These set of associations are not necessarily causal, as they are influenced by the spatial spread of the disease thus far, with outbreaks starting in wealthy coastal states and progressively moving inland.
+Figure \@ref(fig:compmarg) shows the marginal effect of covariates in the model on the latent infection rate, expressed as the marginal increase in proportions for a standard deviation increase in the covariate. Each covariate has two kinds of marginal effects: a cumulative effect in the top panel and a time-varying effect in the bottom panel, where time is coded as a linear counter since the start of the outbreak (at least one case recorded) in each state. As can be seen, the cumulative effects are generally less precise, but the over-time effects show clear trends. States with larger young and foreign-born populations, a higher GPD per capita and more health care providers are seeing increasingly higher infection rates. By contrast, states with more smokers and  better air quality are seeing increasingly fewer infections. These set of associations are not necessarily causal, as they are influenced by the spatial spread of the disease thus far, with outbreaks starting in wealthy coastal states and progressively moving inland. As the disease continues, we expect these associations to shift as we learn more about the effect of suppression policies targeting the disease.
 
 However, it is important to note that state-level Trump vote share is not associated with increasing COVID-19 infections, despite public opinion polling showing that Americans who are more conservative tend to discount the danger posed by the virus.^[See https://www.vox.com/2020/3/15/21180506/coronavirus-poll-democrats-republicans-trump.] In addition, those states that declared an earlier state of emergency have not yet witnessed a slowing infection rate. It is important to notice, however, that there is a roughly 14 day lag between action and effect. Anything states do, be it beneficial or detrimental, and however big is its effect, will take about a fortnight to manifest itself in the data. At present, however, there is no reason to believe that states that declared emergencies later or have more Trump voters are facing increasing disease trends. While we expect these trends to change over time, it is important to note what the empirical data support at present.
 
@@ -879,7 +879,8 @@ p3 <- over_all_sum2 %>%
   ggtitle("Cumulative Effect on\nProportion Infected") +
   theme(panel.grid=element_blank(),
         plot.title = element_text(size=10,hjust=0.5),
-        strip.text=element_text(face="bold")) +
+        strip.text=element_text(face="bold"),
+        axis.text.y=element_text(size=8)) +
   coord_flip()
 
 p4 <- over_all_time2 %>%
@@ -894,7 +895,8 @@ p4 <- over_all_time2 %>%
   geom_hline(yintercept=0,linetype=3) +
   theme(panel.grid=element_blank(),
         plot.title = element_text(size=10,hjust=0.5),
-        strip.text=element_text(face="bold",size=9)) +
+        strip.text=element_text(face="bold",size=9),
+        axis.text.y=element_text(size=8)) +
   facet_wrap(~label,scales="free_y")
 
 p3 + p4 +
@@ -906,27 +908,47 @@ ggsave("marginal_id.png")
 ```
 
 
-```{r compareids,fig.cap="Comparison Of Time-Varying Covariate Marginal Effects from Partially- and Fully-Identified Models"}
+```{r compareids,fig.cap="Comparison Of Time-Varying Covariate Marginal Effects from Partially- and Fully-Identified Models",fig.height=8,fig.width=4}
 
 combine_times <- bind_rows(over_all_time,over_all_time2)
 
-combine_times %>%
+fac1 <- combine_times %>%
+  filter(model=="Partially\nIdentified") %>% 
  ggplot(aes(y=med_est,x=time_scale_point)) +
-    xlab("Time Since Outbreak Began")  +
+    xlab("")  +
   ylab("Effect on Proportion Infected") +
-  labs("Intervals are 5% - 95% high posterior density (HPD) uncertainty intervals.") +
   geom_ribbon(aes(ymin=low_est,ymax=high_est),alpha=0.5,fill="red") +
   geom_line(linetype=2) +
-  ggtitle("Time-varying Effect on\nProportion Infected") +
+  ggtitle("Partially\nIdentified") +
   theme_minimal() +
   geom_hline(yintercept=0,linetype=3) +
   theme(panel.grid=element_blank(),
         plot.title = element_text(size=10,hjust=0.5),
-        strip.text=element_text(face="bold",size=9)) +
-  facet_grid(cols=vars(model),
-             rows=vars(label),scales="free_y")
+        strip.text=element_blank(),
+        axis.text.y=element_text(size=8)) +
+  facet_grid(vars(label),scales="free_y")
 
+fac2 <- combine_times %>%
+  filter(model=="Fully\nIdentified") %>% 
+ ggplot(aes(y=med_est,x=time_scale_point)) +
+    xlab("")  +
+  ylab("") +
+  labs("Intervals are 5% - 95% high posterior density (HPD) uncertainty intervals.") +
+  geom_ribbon(aes(ymin=low_est,ymax=high_est),alpha=0.5,fill="red") +
+  geom_line(linetype=2) +
+  ggtitle("Fully\nIdentified") +
+  theme_minimal() +
+  geom_hline(yintercept=0,linetype=3) +
+  theme(panel.grid=element_blank(),strip.text.y=element_text(face="bold",size=8,angle = 0),
+        plot.title = element_text(size=10,hjust=0.5),
+        axis.text.y=element_text(size=8)) +
+  facet_grid(vars(label),scales="free_y")
 
+fac1 + fac2 +
+  plot_annotation(caption="Time Since Outbreak Began",
+                  theme=theme(plot.caption=element_text(hjust=0.5)))
+
+#gridExtra::grid.arrange(fac1,fac2,ncol=2)
 ```
 
 
@@ -1071,7 +1093,7 @@ check_tests <- group_by(combined,state,gdp) %>% summarize(mean_tests=(mean(tests
 
 check_tests %>% 
   ggplot(aes(y=gdp,x=mean_tests)) +
-    stat_smooth(method="lm",alpha=0.1) +
+    stat_smooth(method="lm",alpha=0.2) +
   geom_text_repel(aes(label=state),alpha=0.8,segment.size=0) +
   theme_minimal() +
   labs("Plot shows some states like New York and Massachusetts have high average income and also\nvery high testing rates.") +
@@ -1084,10 +1106,10 @@ ggsave("gdp_tests.png")
 
 ```
 
-In addition to the estimation of covariates, the model provides further useful information by parameterizing the relationship between the unobserved infection rate and the number of tests conducted in a given state. These individual parameters are shown in Figure \@ref(fig:tpi). The scale of the y axis shows how much tests will increase for a unit increase of the infection rate on the logit scale. Given the multiplicative nature of the logit scale, the best way to understand the parameter is given a particular infection rate. For example, if we use a recent estimate of the US population at 330 million, and take the recent observed case count (700,000) as the quite conservative estimate of infected, then we have an infected rate of `r round(.7/330,3)`. If states successfully test at least twice this number, or `r 2*round(.7/330,3)`, then a unit increase in the infection rate from `r round(.7/330,3)` to `r plogis(qlogis(.7/330)+1)` would increase the testing rate from `r 2*round(.7/330,3)` to `r round(plogis(qlogis(2*(.7/330)) + qlogis(.7/330)+1),3)`. As such, the model provides a relatively nuanced relationship that can help provide insight into how much testing increases with infection rates.
+In addition to the estimation of covariates, the model provides further useful information by parameterizing the relationship between the unobserved infection rate and the number of tests conducted in a given state. These individual parameters are shown in Figure \@ref(fig:tpi). The scale of the y axis shows how much tests will increase for a unit increase of the infection rate on the logit scale. Given the multiplicative nature of the logit scale, the best way to understand the parameter is given a particular infection rate. For example, if we use a recent estimate of the US population at 330 million, and take the recent observed case count (700,000) as the quite conservative estimate of infected, then we have an infected rate of `r round(.7/330,3)` for the US population. Given a testing parameter of 1.03 and a baseline of equal testing/infection capacity, then a unit increase (logit scale) in the infection rate from `r round(.7/330,3)` to `r plogis(qlogis(.7/330)+1)` would increase the testing rate to `r round(plogis(0.98*(qlogis(.7/330)+1)),3)`. As such, the model provides a relatively nuanced relationship that can help provide insight into how much states are able to increase tests in proportion to infection rates.
 
 
-```{r tpi,fig.height=6,fig.cap="Parameter Measuring States' Testing Rates Relative to Infection Rates"}
+```{r tpi,fig.height=6,fig.cap="Measuring States' Testing Rates Relative to Infection Rates"}
 
 test_var <- as.data.frame(us_fit_scale,"country_test_raw") %>%
   mutate(iter=1:n()) %>%
@@ -1110,8 +1132,12 @@ test_var %>%
   theme(panel.grid = element_blank()) +
   coord_flip() +
   xlab("") +
-  labs(caption = "Scale of the estimates shows how increases in the infection rate increase\nthe number of tests in a given state. Higher numbers indicate more tests\nconducted for a unit increase in the infection rate (on the logit scale).") +
-  ylab("Proportion Tested Relative to Proportion Infected")
+  scale_y_continuous(breaks=c(.96,.98,1,1.02,1.04,1.06),
+                     labels = c("Ahead of\nCurve",".98","Keeping\nUp","1.02","1.04","Behind\nCurve")) +
+  annotate("text",y=c(.96,1.05),x=c("Georgia","North Dakota"),label=c("Testing More\nThan Infection Growth","Testing Less\nThan Infection Growth"),size=3) +
+  geom_hline(yintercept=1,linetype=2) +
+  labs(caption = "Scale of the estimates shows how increases in the infection rate increase\nthe number of tests in a given state. Higher numbers indicate fewer tests\nconducted for a unit increase in the infection rate (on the logit scale).") +
+  ylab("Proportion Tested Relative to Proportion Infected (Lower Numbers = Higher Testing Rate)")
 
 ggsave("testing.png",scale=1.1)
 

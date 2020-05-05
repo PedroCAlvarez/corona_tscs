@@ -327,7 +327,7 @@ plotBioGraph("Europe", "External Border Restrictions", "2020-03-15")
 
 
 
-# Government Policy Activity Index
+# Government Policy Activity Index {-}
 
 In this section, we briefly present our new index for tracking the relative government activity with regards to policies targeting COVID-19 across countries and over time. The model is a version of item-response theory known as ideal point modeling that incorporates over-time trends [@kubinec2019ideal;@jackman2004;@gelman2005;@quinn2002], permitting inference on how a latent construct, in this case total policy activity, responds to changes in the pandemic. To fit the model, the different policy types shown in Table \@ref(tab:desctab) were coded in terms of ordinal values, with lower values for sub-national targets of policies and higher values for policies applying to the entire country, or in the case of external border restrictions, to one or more external countries. For instance, internal country policies can take on three possible values: no policy, sub-national policy, or policy covering the whole country. Meanwhile external border restrictions can take on four possible values: no policy, policy targeting one other country, policy targeting multiple countries, and policy targeting all countries in the world (i.e., border closure).  
 
@@ -639,7 +639,7 @@ Each policy records at the minimum, the following monadic information: the polic
 
 A policy counts as a new entry and not an update if it deals with a change in any other dimension, e.g. policy type, targeted country.
 
-
+## Data Collection Methodology {-}
 As researchers learn more about the various health, economic, and social effects of the COVID-19 pandemic, it is crucial that they have access to data that is reliable, valid, and timely (to the greatest extent possible). We have adopted a data collection methodology that we believe optimizes over all three of these constraints.
 
 To collect the data, we recruited more than 220 research assistants (RAs) from colleges and universities around the world, representing 18 out of the 24 time zones.^[For more information on the individual RAs, please visit http://coronanet-project.org/]  Large social scientific datasets typically rely on experts, coders, or crowd-sourcing to input data. The literature has shown that common coding tasks can be completed via crowd-sourcing [@benoitetal2016; @sumneretal2019], but that there are also limitations to the wisdom of crowds when specific contextual or subject knowledge is required [@marquardtetal2017]. To address these trade offs, we decided to train current students to code our entries, leveraging the benefits of wide-spread recruitment and a diverse pool of country-specific knowledge from across the globe. Data collection started on March 28, 2020 and has proceeded rapidly, reaching `r length(unique(clean_data$record_id))` records as of the date of this article. Each RA is responsible for tracking government policy actions for at least one country. RAs were allocated depending on their background, language skills and expressed interest in certain countries [@Horn2019].^[Note depending on the level of policy coordination at the national level, certain countries were assigned multiple RAs, e.g. the United States, Germany, or France.]
@@ -649,7 +649,7 @@ We have also partnered with the machine learning company Jataware to automate th
 In what follows, we describe in greater detail how RAs document the policies that they identify using our data collection software instrument, and our post data-collection validation procedure. Please refer to the appendix for more information on our procedure for on-boarding and training RAs and our system for communicating with and organizing RAs.
 
 
-## Data Collection Software Instrument {-}
+### Data Collection Software Instrument {-}
 
 We designed a Qualtrics survey with survey questions about different aspects of a government policy action to streamline the CoronaNet data collection effort. With this tool, RAs can easily and efficiently document different policy actions by answering the relevant questions posed in the survey.^[See @buthe2020 for an example of a similar use of Qualtrics in collecting data.] For example, instead of entering the country that initiated a policy action into a spreadsheet, RAs answer the following question in the survey: "From what country does this policy originate from?" and choose from the available options given in the survey.
 
@@ -677,7 +677,7 @@ There are many additional benefits of using a survey instrument for data collect
 
 
 
-## Post-Data Collection Validation Checks {-}
+### Post-Data Collection Validation Checks {-}
 
 We further implement the following processes to validate the quality of the dataset:
 

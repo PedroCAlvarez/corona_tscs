@@ -311,19 +311,109 @@ if(nrow(missing)>0 && !(all(missing$country=="European Union"))) {
 
 # add in update information
 
-update_orig <- qualtRics::read_survey("data/CoronaNet/RA/")
+update_orig <- qualtRics::read_survey("data/CoronaNet/RA/ra_update_first.csv")
+update_current <- read_survey("data/CoronaNet/RA/ra_update.csv")
+
+# need to iterate over these and create new columns for update records
+
+split_orig <- str_split(update_orig$policy_update,",",simplify = T)
+
+all_orig_un <- unique(c(split_orig))
+all_orig_un <- all_orig_un[!is.na(all_orig_un) & all_orig_un!=""]
+all_orig_un <- data_frame(type=all_orig_un)
+
+split_data_orig <- apply(split_orig,1,function(c) {
+  left_join(all_orig_un,data_frame(type=c,present=1),by="type") %>% 
+    spread(key="type",value="present",fill=0)
+}) %>% bind_rows
+
+split_data_orig$country <- update_orig$assign_country
+split_data_orig$date_updated <- ymd("2020-04-10")
+
+split_curr <- str_split(update_current$country,",",simplify = T)
+
+all_curr_cu <- unique(c(split_curr))
+all_curr_cu <- all_curr_cu[!is.na(all_curr_cu) & all_curr_cu!=""]
+all_curr_cu <- data_frame(type=all_curr_cu)
+
+split_data_curr <- apply(split_curr,1,function(c) {
+  left_join(all_curr_cu,data_frame(type=c,present=1),by="type") %>% 
+    spread(key="type",value="present",fill=0)
+}) %>% bind_rows
+
+split_data_curr$country <- update_current$init_country
+split_data_curr$date_updated <- as_date(ymd_hms(update_current$EndDate))
+
+# separate rows
+
+split_data_orig <- separate_rows(split_data_orig,country,sep=",") %>% 
+  filter(!is.na(country))
+split_data_curr <- separate_rows(split_data_curr,country,sep=",") %>% 
+  filter(!is.na(country))
+
+combine_update <- bind_rows(list(orig_update=split_data_orig,
+                                 curr_update=split_data_curr),
+                            .id="update_type")
+
+# should be easy to collapse data now
+
+combine_update <- gather(combine_update,key="type",value="updated",-country,-date_updated) %>% 
+  group_by(type,country) %>% 
+  summarize(updated=any(updated==1,na.rm = T),
+            date_updated=max(date_updated,na.rm=T)) %>% 
+  mutate(date_updated=ifelse(updated,as.character(date_updated),NA_character_))
+
+# recode country
+
+combine_update$country <- recode(combine_update$country,Czechia="Czech Republic",
+                               `Hong Kong`="China",
+                               Macau="China",
+                               `United States`="United States of America",
+                               `Bahamas`="The Bahamas",
+                               `Tanzania`="United Republic of Tanzania",
+                               `North Macedonia`="Macedonia",
+                               `Micronesia`="Federated States of Micronesia",
+                               `Timor Leste`="East Timor",
+                               `Republic of the Congo`="Republic of Congo",
+                               `Cabo Verde`="Cape Verde",
+                               `Eswatini`="Swaziland",
+                               `Serbia`="Republic of Serbia",
+                               `Guinea-Bissau`="Guinea Bissau")
+
+# merge updated variable
+
+release_long <- left_join(release_long,distinct(select(combine_update,country,date_updated,
+                                                       type)),
+                          by=c("type","country"))
+
+# now we can fill in missing values, if they exist, with recorded dates
+
+release_long$date_updated <- ifelse(is.na(release_long$date_updated),as.character(as_date(release_long$recorded_date)),
+                                    release_long$date_updated)
+
+# we can also update if record is newer
+
+release_long$date_updated <- ifelse(ymd(release_long$date_updated)<release_long$recorded_date,
+                                    as.character(as_date(release_long$recorded_date)),
+                                   release_long$date_updated)
+
+release_long$date_updated <- ymd(release_long$date_updated)
+
+# need to collapse data due to possible duplicate records
+
 
 # Add in activity index
 
 release_long <- left_join(release_long,get_est_sum,by=c("country","date_start"))
 
-release_long <- select(release_long,record_id,policy_id,recorded_date,date_announced,date_start,date_end,
+release_long <- select(release_long,record_id,policy_id,recorded_date,date_updated,date_announced,date_start,date_end,
                   entry_type,event_description,domestic_policy,type,type_sub_cat,type_text,
                   index_high_est,
                   index_med_est,
                   index_low_est,
                   index_country_rank,
-                  everything())
+                  everything()) %>% 
+  select(-link_type)
 
 # now output raw data for sharing
 

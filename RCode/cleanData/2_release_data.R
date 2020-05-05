@@ -10,6 +10,7 @@ require(idealstan)
 require(lubridate)
 require(tidyr)
 require(missRanger)
+require(qualtRics)
 
 # update all githubs
 
@@ -307,6 +308,10 @@ if(nrow(missing)>0 && !(all(missing$country=="European Union"))) {
   warning("Country doesn't match ISO data.")
   
 }
+
+# add in update information
+
+update_orig <- qualtRics::read_survey("data/CoronaNet/RA/")
 
 # Add in activity index
 

@@ -12,6 +12,13 @@ require(tidyr)
 require(missRanger)
 require(qualtRics)
 
+mutate_cond <- function(.data, condition, ..., envir = parent.frame()) {
+  condition <- eval(substitute(condition), .data, envir)
+  .data[condition, ] <- .data[condition, ] %>% mutate(...)
+  .data
+}
+'%!in%' <- function(x,y)!('%in%'(x,y))
+
 # update all githubs
 
 system2("git",args=c("-C ~/covid-tracking-data","pull"))
@@ -137,7 +144,6 @@ get_est_sum <- get_est %>%
 
 # select only columns we need
 
-
 release <- filter(clean_data,!is.na(init_country),is.na(init_other),is.na(target_other) | target_other=="",
                   validation) %>% 
               select(record_id,policy_id,entry_type,event_description,country="init_country",
@@ -164,8 +170,19 @@ release <- filter(clean_data,!is.na(init_country),is.na(init_other),is.na(target
                      link="sources_matrix_1_2") %>% 
   select(-matches("TEXT"))
 
-# iterate and capture unique vars
+# move visa restrictions from travel_mechanism to type_ext_restrict 
+release$type_ext_restrict = ifelse(grepl("Visa restrictions", release$travel_mechanism), 
+                                   ifelse(is.na(release$type_ext_restrict),  'Visa restrictions (e.g. suspend issuance of visa)', paste(release$type_ext_restrict, 'Visa restrictions (e.g. suspend issuance of visa)', sep = ',')),release$type_ext_restrict )
+ 
+# make distinct 'other' category for each relevant broad policy type
+release$type_quarantine = gsub('Other', 'Other Quarantine', release$type_quarantine)
+release$type_ext_restrict = gsub('Other', 'Other External Border Restriction', release$type_ext_restrict)
+release$type_soc_distance = gsub('Other', 'Other Mask Wearing Policy', release$type_soc_distance)
 
+# make distinct 'unspecifed' category
+release$type_soc_distance = gsub('Unspecified', 'Unspecified Mask Wearing Policy', release$type_soc_distance)
+
+# iterate and capture unique vars
 type_vars <- names(release)[grepl(x=names(release),
                                   pattern="type\\_")]
 
@@ -176,12 +193,34 @@ unique_vars <- do.call(rbind, lapply(type_vars, function(c) {
  
 
 # separate out free text entry
-
 free_text <- filter(unique_vars,grepl(x=type_var,pattern="other|num"),!is.na(vals))
 cats <- filter(unique_vars,!grepl(x=type_var,pattern="other|num"),!is.na(vals)) %>% 
   mutate(vals=str_replace(vals,
                      "Personal Protective Equipment \\(e\\.g\\. gowns, goggles\\)",
-                     "Personal Protective Equipment"))
+                     "Personal Protective Equipment")) %>% 
+  mutate(vals=str_replace(vals,
+                          "Cancellation of an annually recurring event \\(e\\.g\\. election, national festival\\)",
+                          "Cancellation of an annually recurring event")) %>% 
+  mutate(vals=str_replace(vals,
+                          "Postponement of an annually recurring event \\(e\\.g\\. election, national festival\\)",
+                          "Postponement of an annually recurring event")) %>% 
+  mutate(vals=str_replace(vals,
+                          "Cancellation of a recreational or commercial event \\(e\\.g\\. sports game, music concert\\)",
+                          "Cancellation of a recreational or commercial event"))%>% 
+  mutate(vals=str_replace(vals,
+                          "Postponement of a recreational or commercial event \\(e\\.g\\. sports game, music concert\\)",
+                          "Postponement of a recreational or commercial event"))%>% 
+  mutate(vals=str_replace(vals,
+                          "Commercial areas \\(e\\.g\\. shopping malls,markets\\)",
+                          "Hygiene measures for commercial areas"))%>% 
+  mutate(vals=str_replace(vals,
+                          "Public areas \\(e\\.g\\. mosques, government buildings, schools\\)",
+                          "Hygiene measures for public areas"))%>% 
+  mutate(vals=str_replace(vals,
+                          "Public Transport \\(e\\.g\\. subways,trains\\)",
+                          "Hygiene measures for public transport"))
+
+
 
 cats <- lapply(1:nrow(cats), function(i) {
   this_data <- slice(cats,i)
@@ -189,6 +228,8 @@ cats <- lapply(1:nrow(cats), function(i) {
          type_var=this_data$type_var,
          vals=(str_split(this_data$vals,pattern=",")[[1]]))
 }) %>% bind_rows
+
+ 
 
 # assign unique IDs
 
@@ -206,7 +247,35 @@ cats <- left_join(cats,select(all_let,new_id,vals_id),
                   by="vals_id") %>% 
   distinct
 
+ 
+
+
 # now merge back in to regular data 
+release = release %>% 
+  mutate(type_health_resource=str_replace(type_health_resource,
+                          "Personal Protective Equipment \\(e\\.g\\. gowns, goggles\\)",
+                          "Personal Protective Equipment")) %>% 
+  mutate(type_mass_category=str_replace(type_mass_category,
+                          "Cancellation of an annually recurring event \\(e\\.g\\. election, national festival\\)",
+                          "Cancellation of an annually recurring event")) %>% 
+  mutate(type_mass_category=str_replace(type_mass_category,
+                          "Postponement of an annually recurring event \\(e\\.g\\. election, national festival\\)",
+                          "Postponement of an annually recurring event")) %>% 
+  mutate(type_mass_category=str_replace(type_mass_category,
+                          "Cancellation of a recreational or commercial event \\(e\\.g\\. sports game, music concert\\)",
+                          "Cancellation of a recreational or commercial event"))%>% 
+  mutate(type_mass_category=str_replace(type_mass_category,
+                          "Postponement of a recreational or commercial event \\(e\\.g\\. sports game, music concert\\)",
+                          "Postponement of a recreational or commercial event"))%>% 
+  mutate(type_hygiene=str_replace(type_hygiene,
+                          "Commercial areas \\(e\\.g\\. shopping malls,markets\\)",
+                          "Hygiene measures for commercial areas"))%>% 
+  mutate(type_hygiene=str_replace(type_hygiene,
+                          "Public areas \\(e\\.g\\. mosques, government buildings, schools\\)",
+                          "Hygiene measures for public areas"))%>% 
+  mutate(type_hygiene=str_replace(type_hygiene,
+                          "Public Transport \\(e\\.g\\. subways,trains\\)",
+                          "Hygiene measures for public transport"))
 
 release_long <- gather(release,key="discard",value="type_text",
                        unique(free_text$type_var)) %>% 
@@ -260,19 +329,19 @@ release_long = release_long %>%
 
 # recode records
 release_long$country <- recode(release_long$country,Czechia="Czech Republic",
-                           `Hong Kong`="China",
-                          Macau="China",
-                           `United States`="United States of America",
-                           `Bahamas`="The Bahamas",
-                           `Tanzania`="United Republic of Tanzania",
-                           `North Macedonia`="Macedonia",
-                           `Micronesia`="Federated States of Micronesia",
-                           `Timor Leste`="East Timor",
-                           `Republic of the Congo`="Republic of Congo",
-                           `Cabo Verde`="Cape Verde",
-                           `Eswatini`="Swaziland",
-                          `Serbia`="Republic of Serbia",
-                          `Guinea-Bissau`="Guinea Bissau")
+                            `Hong Kong`="China",
+                             Macau="China",
+                            `United States`="United States of America",
+                            `Bahamas`="The Bahamas",
+                            `Tanzania`="United Republic of Tanzania",
+                            `North Macedonia`="Macedonia",
+                            `Micronesia`="Federated States of Micronesia",
+                            `Timor Leste`="East Timor",
+                            `Republic of the Congo`="Republic of Congo",
+                            `Cabo Verde`="Cape Verde",
+                            `Eswatini`="Swaziland",
+                            `Serbia`="Republic of Serbia",
+                            `Guinea-Bissau`="Guinea Bissau")
 
 release_long$target_country <- recode(release_long$target_country,Czechia="Czech Republic",
                                   `Hong Kong`="China",
@@ -308,6 +377,120 @@ if(nrow(missing)>0 && !(all(missing$country=="European Union"))) {
   warning("Country doesn't match ISO data.")
   
 }
+
+
+# remove illogical type_sub_cat - type combinations
+# note these combinations are technically possible because RAs are given the 'backtrack' option in the Qualtrics survey
+
+release_long = release_long %>%
+mutate_cond( type %in% c('Declaration of Emergency',
+              'Internal Border Restrictions',
+              'Curfew',
+              'Health Testing',
+              'Health Monitoring',
+              'Other Policy Not Listed Above') & !is.na(type_sub_cat),
+              type_sub_cat = NA) %>%
+mutate_cond( type == "Quarantine/Lockdown" &
+              type_sub_cat %!in% c("Self-Quarantine (i.e. quarantine at home)",
+              "Government Quarantine (i.e. quarantine at a government hotel or facility)",
+              "Quarantine outside the home or government facility (i.e. quarantine in a hotel)",
+              "Quarantine only applies to people of certain ages. Please note the age restrictions in the text box.",
+              "Other Quarantine"),
+              type_sub_cat = NA) %>%
+mutate_cond( type == "External Border Restrictions" &
+            type_sub_cat %!in% c("Health Screenings (e.g. temperature checks)" ,
+            "Health Certificates",
+            "Travel History Form (e.g. documents where traveler has recently been)",
+            "Visa restrictions (e.g. suspend issuance of visa)",
+            "Visa extensions (e.g. visa validity extended)",
+            "Other External Border Restriction"  ),
+type_sub_cat = NA) %>%
+mutate_cond( type == "Restrictions of Mass Gatherings"  &
+            type_sub_cat %!in% c("Cancellation of an annually recurring event" ,
+            "Postponement of an annually recurring event",
+            "Cancellation of a recreational or commercial event",
+            "Postponement of a recreational or commercial event",
+            "Attendance at religious services prohibited (e.g. mosque/church closings)",
+            "Prison population reduced (e.g. early release of prisoners)"),
+            type_sub_cat = NA) %>%
+mutate_cond( type == "Social Distancing" & 
+             type_sub_cat %!in% c("All public spaces / everywhere",
+             "Inside public or commercial building (e.g. supermarkets)",
+              "Unspecified Mask Wearing Policy",
+              "Other Mask Wearing Policy",
+              "Wearing masks"),
+              type_sub_cat = NA) %>%
+mutate_cond(type =="Closure of Schools"  &
+            type_sub_cat %!in% c("Preschool or childcare facilities (generally for children ages 5 and below)" ,
+            "Primary Schools (generally for children ages 10 and below)"  ,
+            "Secondary Schools (generally for children ages 10 to 18)"  ,
+            "Higher education (i.e. degree granting institutions)" ),
+            type_sub_cat = NA)  %>%  
+mutate_cond(type == "Restriction of Non-Essential Government Services"  &
+            type_sub_cat %!in% c("Restricted issuing of permits/certificates and/or processing of government documents"  ,
+            "Beaches"  ,
+            "Campsites",
+            "Parks",
+            "Tourist Sites",
+            "Unspecified outdoor spaces",
+            "Other public outdoor spaces",
+            'Public libraries',
+            'Public museums/galleries',
+            'Unspecified public facilities',
+            'Other public facilities',
+            'Restricted government working hours (e.g. work from home policies for government workers)',
+            'All non-essential government services restricted'),
+            type_sub_cat = NA) %>%
+mutate_cond(type =="Restriction of Non-Essential Businesses" &
+            type_sub_cat %!in% c("Retail Businesses",
+            "Restaurants/Bars" ,
+            "Shopping Centers" ,
+            "Non-Essential Commercial Businesses" ,
+            "Personal Grooming Businesses (e.g. hair salons)",
+            "Other Businesses",
+            "All or unspecified non-essential businesses"),
+            type_sub_cat = NA)  %>%  
+mutate_cond(type =="Health Resources" &
+            type_sub_cat %!in% c("Masks",
+            "Ventilators",
+            "Personal Protective Equipment",
+            "Hand Sanitizer" ,
+            "Test Kits" ,
+            "Vaccines",
+            "Unspecified Health Materials",
+            "Other Health Materials",
+            "Hospitals",
+            "Temporary Quarantine Centers",
+            "Temporary Medical Centers",
+            "Public Testing Facilities (e.g. drive-in testing for COVID-19)" ,
+            "Health Research Facilities",
+            "Unspecified Health Infrastructure",
+            "Other Health Infrastructure",
+            "Doctors" ,
+            "Nurses" ,
+            "Health Volunteers" ,
+            "Unspecified Health Staff" ,
+            "Other Heath Staff",
+            "Health Insurance"),
+            type_sub_cat = NA) %>%  
+mutate_cond( type =="Hygiene" &
+             type_sub_cat %!in% c("Hygiene measures for commercial areas"  ,
+             "Hygiene measures for public areas"   ,
+             "Hygiene measures for public transport"  ,
+             "Burial procedures",
+             "Other Areas Hygiene Measures Applied" ),
+             type_sub_cat = NA)  %>%
+mutate_cond( type == "Public Awareness Measures"  &
+            type_sub_cat %!in% c("Disseminating information related to COVID-19 to the public that is reliable and factually accurate"  ,
+            "Gathering information related to COVID-19 from the public"  ,
+            "Both Disseminating and Gathering information related to COVID-19"),
+            type_sub_cat = NA) %>%
+mutate_cond(type == "New Task Force, Bureau or Administrative Configuration"  &
+            type_sub_cat %!in% c("New Task Force or Bureau (i.e. establishment of a temporary body)"  ,
+            "Existing government entity given new powers"  ,
+            "Cooperation among different jurisdictional entities (e.g. treaties or agreements among countries or provinces)",
+            "Other Administrative Configurations"),
+            type_sub_cat = NA)
 
 # add in update information
 

@@ -81,7 +81,7 @@ capwords <- function(s, strict = FALSE) {
 
 country_regions = read_csv(file = 'data/regions/country_region_clean.csv')
 regions_df = read_csv(file = 'data/regions/country_regional_groups_concordance.csv')
-qualtrics = read_survey('data/CoronaNet/coronanet_raw_latest.csv') %>% 
+qualtrics = read_survey('data/CoronaNet/RA/ra_data_pull.csv') %>% 
   mutate(entry_type=recode(entry_type,
                            `1`="new_entry",
                            `New Entry`="new_entry",
@@ -266,15 +266,6 @@ qualtrics <- left_join(qualtrics,country_regions_long,by="index_prov")
 qualtrics <- distinct(qualtrics)
 
 ## records that have a province match are still 'duplicated'
-# e.g. if a policy comes out of Alaska it currently has
-# two index_provs: 'United States3' and 'United StatesNA'
-# remove the second one ('United StatesNA')
-# qualtrics = qualtrics %>% 
-#   group_by(record_id) %>%
-#     filter(if (any(!is.na(init_prov)))
-#       !is.na(init_prov)
-#   else is.na(init_prov)) %>%
-#   ungroup()
 
 # more fixing provinces
 

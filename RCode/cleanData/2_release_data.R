@@ -338,50 +338,50 @@ write_csv(release_long_combined,"data/CoronaNet/coronanet_release_allvars.csv")
 
 # let's impute the buggers
 
-release_long_combined <- group_by(release_long_combined,country) %>% 
-  mutate(miss_test=all(is.na(tests_raw)))
-
-imputed_release_long <- lapply(c(7583,
-                            1999332,
-                            747352,
-                            99226,
-                            1884630,
-                            19945817,
-                            856397,
-                            885773,
-                            1994005,
-                            8847736),function(i) {
-  missRanger(ungroup(release_long_combined),formula= FarRight_IO + 
-               ExternalLaborOpenness_IO + eco_glob_KOF + 
-               soc_glob_KOF + 
-               cult_prox_KOF +
-               poli_glob_KOF +
-               overallGlob_index_KOF +
-               news_WB +
-               disap_FA +
-               polpris_FA +
-               latentmean_FA +
-               transparencyindex_HR +
-               state_IDC +
-               muni_IDC +
-               dispersive_IDC +
-               constraining_IDC +
-               inclusive_IDC +
-               Rank_FP +
-               Score_FP +
-               sfi_SFI +
-               ti_cpi_TI +
-               v2x_polyarchy_VDEM +
-               EmigrantStock_EMS ~.-c(record_id,policy_id,miss_test),
-             pmm.k=10,
-             seed=i) %>% 
-    mutate(imputation_seed=i)
-})
-
-imputed_release_long <- lapply(imputed_release_long, mutate,tests_daily_or_total=ifelse(miss_test,NA,
-                                                                              tests_daily_or_total),
-                          tests_raw=ifelse(miss_test,NA,
-                                           tests_raw))
+# release_long_combined <- group_by(release_long_combined,country) %>% 
+#   mutate(miss_test=all(is.na(tests_raw)))
+# 
+# imputed_release_long <- lapply(c(7583,
+#                             1999332,
+#                             747352,
+#                             99226,
+#                             1884630,
+#                             19945817,
+#                             856397,
+#                             885773,
+#                             1994005,
+#                             8847736),function(i) {
+#   missRanger(ungroup(release_long_combined),formula= FarRight_IO + 
+#                ExternalLaborOpenness_IO + eco_glob_KOF + 
+#                soc_glob_KOF + 
+#                cult_prox_KOF +
+#                poli_glob_KOF +
+#                overallGlob_index_KOF +
+#                news_WB +
+#                disap_FA +
+#                polpris_FA +
+#                latentmean_FA +
+#                transparencyindex_HR +
+#                state_IDC +
+#                muni_IDC +
+#                dispersive_IDC +
+#                constraining_IDC +
+#                inclusive_IDC +
+#                Rank_FP +
+#                Score_FP +
+#                sfi_SFI +
+#                ti_cpi_TI +
+#                v2x_polyarchy_VDEM +
+#                EmigrantStock_EMS ~.-c(record_id,policy_id,miss_test),
+#              pmm.k=10,
+#              seed=i) %>% 
+#     mutate(imputation_seed=i)
+# })
+# 
+# imputed_release_long <- lapply(imputed_release_long, mutate,tests_daily_or_total=ifelse(miss_test,NA,
+#                                                                               tests_daily_or_total),
+#                           tests_raw=ifelse(miss_test,NA,
+#                                            tests_raw))
 
 
 #write_csv(release_combined,"../CoronaNet/data/coronanet_release_allvars.csv")

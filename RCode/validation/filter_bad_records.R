@@ -47,10 +47,13 @@ q$sources_matrix_1_1<-mdy(q$sources_matrix_1_1)
 
 q<-q[which(q$date_announced >q$sources_matrix_1_1),]
 q<-q$record_id 
-q
+
 qualtrics<- qualtrics[!qualtrics$record_id%in% q,]
 
+# this is an example of an instance where a policy is enforced, but not of the policy itself
 
+qualtrics = qualtrics[-which(qualtrics$record_id %in% c(3139281,
+                                           7910501)),]
 
 # Log of what has been solved
 

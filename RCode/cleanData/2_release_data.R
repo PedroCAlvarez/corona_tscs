@@ -173,7 +173,9 @@ release <- filter(clean_data,!is.na(init_country),is.na(init_other),is.na(target
 # move visa restrictions from travel_mechanism to type_ext_restrict 
 release$type_ext_restrict = ifelse(grepl("Visa restrictions", release$travel_mechanism), 
                                    ifelse(is.na(release$type_ext_restrict),  'Visa restrictions (e.g. suspend issuance of visa)', paste(release$type_ext_restrict, 'Visa restrictions (e.g. suspend issuance of visa)', sep = ',')),release$type_ext_restrict )
- 
+
+release$travel_mechanism = gsub('Visa restrictions|Visa restrictions,|,Visa restrictions', '', release$travel_mechanism)
+
 # make distinct 'other' category for each relevant broad policy type
 release$type_quarantine = gsub('Other', 'Other Quarantine', release$type_quarantine)
 release$type_ext_restrict = gsub('Other', 'Other External Border Restriction', release$type_ext_restrict)

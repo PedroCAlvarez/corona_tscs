@@ -140,7 +140,9 @@ get_est_sum <- get_est %>%
 
 release <- filter(clean_data,!is.na(init_country),is.na(init_other),is.na(target_other) | target_other=="",
                   validation) %>% 
-              select(record_id,policy_id,entry_type,event_description,country="init_country",
+              select(record_id,policy_id,entry_type,
+                     update_type=update_end_dum,
+                     event_description,country="init_country",
                      date_announced,
                      date_start,
                      date_end,
@@ -407,7 +409,8 @@ release_long$date_updated <- ymd(release_long$date_updated)
 release_long <- left_join(release_long,get_est_sum,by=c("country","date_start"))
 
 release_long <- select(release_long,record_id,policy_id,recorded_date,date_updated,date_announced,date_start,date_end,
-                  entry_type,event_description,domestic_policy,type,type_sub_cat,type_text,
+                  entry_type,update_type,
+                  event_description,domestic_policy,type,type_sub_cat,type_text,
                   index_high_est,
                   index_med_est,
                   index_low_est,

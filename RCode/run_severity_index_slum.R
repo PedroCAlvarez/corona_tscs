@@ -219,7 +219,8 @@ clean_comp <- clean %>% complete(country,combine_type,date_start) %>% group_by(c
                              target_geog_level,
                              compliance)) %>% 
   group_by(country) %>% 
-  filter(date_start<today(),!all(compliance==0)) %>% 
+  filter(date_start<today(),!all(compliance==0),
+         date_start>ymd("2020-02-15")) %>% 
   ungroup %>% 
   mutate(country=factor(country),
          country=relevel(country,"United States of America")) %>% 

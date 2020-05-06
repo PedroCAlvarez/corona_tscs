@@ -10,6 +10,7 @@ require(dplyr)
 require(lubridate)
 require(readr)
 require(stringr)
+require(parallel)
 
 # load cleaned file
 
@@ -251,7 +252,7 @@ countries <- c("United States of America","Germany","Brazil","Switzerland","Isra
 # need to cycle over each time point
 # oh hurray
 
-over_time_pts <- lapply(unique(clean_comp$date_start), function(d) {
+over_time_pts <- mclapply(unique(clean_comp$date_start), function(d) {
   
   to_make <- ungroup(clean_comp) %>% 
     distinct %>% 
@@ -264,6 +265,7 @@ over_time_pts <- lapply(unique(clean_comp$date_start), function(d) {
   # note no missing data :)
   
   activity_fit <- id_estimate(to_make,vary_ideal_pts="none",ncores=1,nchains=1,niters=500,
+                              within_chain="threads",
                               warmup=300,
                               fixtype="prefix",
                               restrict_ind_high="Quarantine/Lockdown_type_self_quarantine",
@@ -271,89 +273,7 @@ over_time_pts <- lapply(unique(clean_comp$date_start), function(d) {
                               id_refresh = 10,
                               const_type="items")
   
-  all_lev <- as.character(unique(clean_data$init_country))
-
-  get_est <- as.data.frame(severity_fit@stan_samples,"L_full") %>%
-    mutate(iter=1:n()) %>%
-    gather(key="parameter",value="estimate",-iter) %>%
-    mutate(date_announced=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?[0-9]?0?")),
-           country=as.numeric(str_extract(parameter,"[1-9][0-9]?[0-9]?0?(?=\\])")),
-           country=factor(country,labels=levels(severity_fit@score_data@score_matrix$person_id)),
-           date_announced=factor(date_announced,labels=as.character(sort(unique(severity_fit@score_data@score_matrix$time_id)))))
-
+  saveRDS(activity_fit,paste0("/scratch/rmk7/sev_fit_",d,".rds"))
   
 })
 
-to_make <- ungroup(distinct(clean_comp)) %>% 
-  group_by(country,combine_type) %>% 
-  arrange(country,combine_type,date_start) %>% 
-  mutate(num_pol_diff=combine_disc- dplyr::lag(combine_disc)) %>% 
-  group_by(country,date_start) %>% 
-  mutate(sum_diff=sum(num_pol_diff,na.rm=T)) %>% 
-  filter(!(sum_diff==0 & !is.na(num_pol_diff))) %>% 
-  # filter(country %in% countries) %>% 
-  # filter(date_start<ymd("2020-04-10"),
-  #        date_start>ymd("2020-02-15")) %>% 
-         #!(date_start %in% comp_days$date_start[comp_days$diff==0])) %>% 
-           id_make(outcome_disc="combine_disc",
-                   person_id="country",
-                   ordered_id="ordered_id",
-                   item_id="combine_type",time_id="date_start")
-
-# note no missing data :)
-
-activity_fit <- id_estimate(to_make,vary_ideal_pts="random_walk",ncores=2,nchains=2,niters=500,
-                            warmup=300,
-            fixtype="prefix",
-            restrict_ind_high="Quarantine/Lockdown_type_self_quarantine",
-            restrict_ind_low="Restriction of Non-Essential Businesses_type_bars",
-            id_refresh = 10,
-            const_type="items")
-
-# activity_fit <- parallel::mclapply(1:4, function(i) {
-#   id_estimate(to_make,vary_ideal_pts="random_walk",ncores=1,nchains=1,niters=500,warmup=300,
-#                             fixtype="prefix",
-#                             restrict_ind_high="Quarantine/Lockdown_type_self_quarantine",
-#                             restrict_ind_low="Restriction of Non-Essential Businesses_type_bars",
-#                             id_refresh = 10,
-#                             const_type="items")
-#   },mc.cores=4)
-
-saveRDS(activity_fit,"data/activity_fit.rds")
-
-
-all_lev <- as.character(unique(clean_data$init_country))
-
-all_lev <- all_lev[all_lev!="Chad"]
-
-get_est <- as.data.frame(activity_fit@stan_samples,"L_tp1") %>%
-  mutate(iter=1:n()) %>%
-  gather(key="parameter",value="estimate",-iter) %>%
-  mutate(date_announced=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?[0-9]?0?")),
-         country=as.numeric(str_extract(parameter,"[1-9][0-9]?[0-9]?0?(?=\\])")),
-         country=factor(country,labels=levels(severity_fit@score_data@score_matrix$person_id)),
-         date_announced=factor(date_announced,labels=as.character(sort(unique(severity_fit@score_data@score_matrix$time_id)))))
-
-saveRDS(get_est,"data/get_est.rds")
-
-system("cp data/get_est.rds ~/CoronaNet/data")
-
-# get_stan_mods <- lapply(activity_fit,function(s) s@stan_samples)
-# 
-# combine_stan_mods <- rstan::sflist2stanfit(get_stan_mods)
-# 
-# activity_fit[[1]]@stan_samples <- combine_stan_mods 
-# 
-# saveRDS(activity_fit2,"data/activity_fit_collapse.rds")
-
-
-
-# all_lev <- as.character(unique(clean_comp$country))
-# 
-# all_lev <- all_lev[all_lev!="Chad"]
-# 
-id_plot_legis_dyn(activity_fit[[1]],include=all_lev) + ylab("activity Index") + guides(color="none") +
-  ggtitle("CoronaNet Index of activity of Measures\nOpposing COVID-19 Pandemic",
-          subtitle="Posterior Median Estimates with 5% - 95% Intervals")
-
-#ggsave("index.png")

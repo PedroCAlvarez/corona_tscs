@@ -83,8 +83,139 @@ qualtrics <- filter(qualtrics, !(record_id %in% c(1703790,
 
 
 
-# External Border Restrictions -- visa extensions
+
+other = qualtrics %>% filter(type == 'Other Policy Not Listed Above')
+ 
+
+
+mask = other %>% 
+  filter(grepl('wear', event_description)) %>%
+   #filter(grepl('mask|Mask|face|Face', type_15_TEXT)) %>%
+  select(record_id, init_country, event_description) %>% data.frame()
+
+ 
+# social distancing - masks 
 qualtrics = qualtrics %>% 
+  mutate_cond(record_id %in% c(1900964,
+                               7070777,
+                               9110335,
+                               1057745,
+                               5290219,
+                               908362,
+                               5607578,
+                               2822947,
+                               2538425,
+                               8042890,
+                               8993169,
+                               1546416,
+                               434213,
+                               4031696,
+                               8530156,
+                               4342131,
+                               9854171),
+              type = 'Social Distancing',
+              type_15_TEXT = NA,
+              type_other = NA,
+              type_soc_distance = "Masks",
+              type_soc_distance = 'All public spaces / everywhere')
+
+# social distancing - unspecified
+qualtrics = qualtrics %>% 
+  mutate_cond(record_id %in% c(3420717,
+                               4990764,
+                               9162039,
+                               3860156),
+              type = 'Social Distancing',
+              type_15_TEXT = NA,
+              type_other = NA,
+              type_soc_distance = "Masks",
+              type_soc_distance = 'All public spaces / everywhere')
+
+
+
+# social distancing - masks  - markets
+qualtrics = qualtrics %>% 
+  mutate_cond(record_id %in% c(9669797),
+              type = 'Social Distancing',
+              type_15_TEXT = NA,
+              type_other = NA,
+              type_soc_distance = "Masks,Other",
+              type_soc_distance_7_TEXT = 'markets')
+
+
+# social distancing - masks
+qualtrics = qualtrics %>%
+  mutate_cond( record_id %in% c(6725232), 
+               type = 'Social Distancing',
+               type_15_TEXT = NA,
+               type_other = NA,
+               type_soc_distance = "Inside public or commercial building (e.g. supermarkets)")
+
+# social distancing - masks  - public transport
+qualtrics = qualtrics %>% 
+  mutate_cond(record_id %in% c(4257872,
+                               3477445,
+                               9861723),
+              type = 'Social Distancing',
+              type_15_TEXT = NA,
+              type_other = NA,
+              type_soc_distance = "Masks,Other",
+              type_soc_distance_7_TEXT = 'public transport')
+
+# social distancing - masks  - buses
+qualtrics = qualtrics %>% 
+  mutate_cond(record_id %in% c(1978580),
+              type = 'Social Distancing',
+              type_15_TEXT = NA,
+              type_other = NA,
+              type_soc_distance = "Masks,Other",
+              type_soc_distance_7_TEXT = 'buses')
+
+
+# health resources - masks
+qualtrics = qualtrics %>% 
+  mutate_cond(record_id %in% c(9052375,
+                               6121319,
+                               571522,
+                               8150021),
+              type = 'Health Resources',
+              type_15_TEXT = NA,
+              type_other = NA,
+              type_health_resource = "Masks")
+
+# health resources - masks - 6 million, maximum 3 per person
+qualtrics = qualtrics %>% 
+        mutate_cond(record_id %in% c(313900),
+                    type = 'Health Resources',
+                    type_15_TEXT = NA,
+                    type_other = NA,
+                    type_health_resource = "Masks",
+                    type_health_resource_1_TEXT = '6 million, maximum 3 per person')
+
+
+# health resources - masks, bans exports
+qualtrics = qualtrics %>% 
+  mutate_cond(record_id %in% c(5193638),
+              type = 'Health Resources',
+              type_15_TEXT = NA,
+              type_other = NA,
+              type_health_resource = "Masks,Personal Protective Equipment (e.g. gowns, goggles)",
+              type_health_resource_1_TEXT = 'bans exports of masks',
+              type_health_resource_3_TEXTT = 'bans exports of ppe')
+
+
+# health resources - masks,soap
+qualtrics = qualtrics %>% 
+  mutate_cond(record_id %in% c(2010153),
+              type = 'Health Resources',
+              type_15_TEXT = NA,
+              type_other = NA,
+              type_health_resource = "Masks,Other Health Materials",
+              type_health_resource_13_TEXT = 'soap')
+
+ 
+# External Border Restrictions -- visa extensions
+qualtrics = qualtrics %>%
   mutate_cond( record_id %in% c(3335261,
                                 3270767,
                                 2796253,
@@ -97,39 +228,40 @@ qualtrics = qualtrics %>%
                                 8580682,
                                 4555476,
                                 2525153,
-                                7101715), 
+                                7101715),
                type = 'External Border Restrictions',
-               type_15_TEXT = "",
+               type_15_TEXT = NA,
+               type_other = NA,
                type_ext_restrict= "Visa extensions (e.g. visa validity extended)")
 
 # External Border Restrictions -- visa restrictions
-qualtrics = qualtrics %>% 
+qualtrics = qualtrics %>%
   mutate_cond( record_id %in% c(2716396,
                                 3561265,
                                 401337,
-                                25240), 
+                                25240),
                type = 'External Border Restrictions',
-               type_15_TEXT = "",
+               type_15_TEXT = NA,
+               type_other = NA,
                type_ext_restrict= "Visa restrictions (e.g. suspend issuance of visa)")
 
 
-
-# social distancing - masks
+# restriction of mass gatherings --- prisons
 qualtrics = qualtrics %>%
-  mutate_cond( record_id %in% c(6725232), 
-               type = 'Social Distancing',
-               type_15_TEXT = "",
-               type_soc_distance = "Inside public or commercial building (e.g. supermarkets)")
+  mutate_cond(record_id %in% c(8097861),
+              type = 'Restrictions of Mass Gatherings',
+              type_15_TEXT = NA,
+              type_other = NA,
+              type_mass_category = "Prison population reduced (e.g. early release of prisoners)")
 
-
- 
 # hygiene, commercial areas, public areas, public transport, 
 qualtrics = qualtrics %>%
             mutate_cond(record_id %in% c(3776542,
                                          8852960,
                                          1119313),
                         type = 'Hygiene',
-                        type_15_TEXT = "",
+                        type_15_TEXT = NA,
+                        type_other = NA,
                         type_hygiene ="Commercial areas (e.g. shopping malls,markets),Public areas (e.g. mosques, government buildings, schools),Public Transport (e.g. subways,trains)")
 
 
@@ -137,7 +269,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(6655920),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Commercial areas (e.g. shopping malls,markets),Public areas (e.g. mosques, government buildings, schools),Public Transport (e.g. subways,trains)",
               type_hygiene_11_TEXT = 'markets',
               type_hygiene_12_TEXT =  'sports facilities;cultural and entertainment facilities;commercial areas')
@@ -147,14 +280,16 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(3210689),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Commercial areas (e.g. shopping malls,markets),Public areas (e.g. mosques, government buildings, schools)")
 
 # hygiene, public transport, commercial areas -- supermarkets; open markets
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(7821010),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Commercial areas (e.g. shopping malls,markets),Public areas (e.g. mosques, government buildings, schools)",
               type_hygiene_11_TEXT = "supermarkets;markets")
 
@@ -162,7 +297,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(9255723),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Commercial areas (e.g. shopping malls,markets)")
 
 
@@ -170,7 +306,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(7500562),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Commercial areas (e.g. shopping malls,markets)",
               type_hygiene_11_TEXT = "malls;business centers;supermarkets;entertainment places")
 
@@ -181,7 +318,8 @@ qualtrics = qualtrics %>%
                                3846909,
                                9859255),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Commercial areas (e.g. shopping malls,markets)",
               type_hygiene_11_TEXT = "markets")
 
@@ -190,7 +328,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(3470223),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Commercial areas (e.g. shopping malls,markets)",
               type_hygiene_11_TEXT = "bakeries")
 
@@ -200,7 +339,8 @@ qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(5639822,
                                1269772),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Public areas (e.g. mosques, government buildings, schools)")
 
 
@@ -208,7 +348,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(8159173),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Public areas (e.g. mosques, government buildings, schools)",
               type_hygiene_12_TEXT = "mosques")
 
@@ -217,7 +358,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(3136002),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Public areas (e.g. mosques, government buildings, schools)",
               type_hygiene_12_TEXT = "government buildings")
 
@@ -225,7 +367,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(2180252),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Public areas (e.g. mosques, government buildings, schools)",
               type_hygiene_12_TEXT = "schools")
 
@@ -235,7 +378,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(1560318),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Public areas (e.g. mosques, government buildings, schools),Public Transport (e.g. subways,trains),Other Areas Hygiene Measures Applied",
               type_hygiene_12_TEXT = "parks",
               type_hygiene_13_TEXT  = 'streets',
@@ -249,9 +393,11 @@ qualtrics = qualtrics %>%
                                6454317,
                                9581346,
                                6483009,
-                               1931576),
+                               1931576,
+                               476932),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Public Transport (e.g. subways,trains)")
 
 
@@ -260,7 +406,8 @@ qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(2953224,
                                9310476),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Public Transport (e.g. subways,trains)",
               type_hygiene_13_TEXT = 'buses')
 
@@ -268,7 +415,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(5181702),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Public Transport (e.g. subways,trains)",
               type_hygiene_13_TEXT = 'streets')
 
@@ -277,7 +425,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(3557333),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Public Transport (e.g. subways,trains)",
               type_hygiene_13_TEXT = 'airports')
 
@@ -285,7 +434,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(5180729),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Public Transport (e.g. subways,trains)",
               type_hygiene_13_TEXT = 'airplanes')
 
@@ -293,7 +443,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(2062179),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Public Transport (e.g. subways,trains)",
               type_hygiene_13_TEXT = "public transport terminals;railway depots")
 
@@ -307,7 +458,8 @@ qualtrics = qualtrics %>%
                                9084944,
                                9640371),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Burial procedures")
 
 
@@ -315,7 +467,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(3960526),
                                type = 'Hygiene',
-                               type_15_TEXT = "",
+                               type_15_TEXT = NA,
+                               type_other = NA,
                                type_hygiene ="Other Areas Hygiene Measures Applied",
                                type_hygiene_15_TEXT = "cities;villages")
               
@@ -324,7 +477,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(3726422),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Other Areas Hygiene Measures Applied",
               type_hygiene_15_TEXT = "food service")
 
@@ -332,7 +486,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(4432599),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Other Areas Hygiene Measures Applied",
               type_hygiene_15_TEXT = "food service;retail")
 
@@ -343,7 +498,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(4608191),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Other Areas Hygiene Measures Applied",
               type_hygiene_15_TEXT = "taxis")
 
@@ -351,7 +507,8 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(4767605),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Other Areas Hygiene Measures Applied",
               type_hygiene_15_TEXT = "hotels")
 
@@ -360,16 +517,19 @@ qualtrics = qualtrics %>%
 qualtrics = qualtrics %>%
   mutate_cond(record_id %in% c(1318798),
               type = 'Hygiene',
-              type_15_TEXT = "",
+              type_15_TEXT = NA,
+              type_other = NA,
               type_hygiene ="Other Areas Hygiene Measures Applied",
               type_hygiene_15_TEXT = "petrol stations")
 
  
 # public awareness measure - gathering
 qualtrics = qualtrics %>%
-  mutate_cond( record_id %in% c(3483365), 
+  mutate_cond( record_id %in% c(3483365,
+                                8061245), 
                type = 'Public Awareness Measures',
-               type_15_TEXT = "",
+               type_15_TEXT = NA,
+               type_other = NA,
                type_pub_awareness = "Gathering information related to COVID-19 from the public")
 
 # public awareness measure - disseminating
@@ -377,7 +537,8 @@ qualtrics = qualtrics %>%
   mutate_cond( record_id %in% c(4487498,
                                 9623754), 
                type = 'Public Awareness Measures',
-               type_15_TEXT = "",
+               type_15_TEXT = NA,
+               type_other = NA,
                type_pub_awareness = "Disseminating information related to COVID-19 to the public that is reliable and factually accurate")
 
 
@@ -392,9 +553,16 @@ qualtrics = qualtrics %>%
                                 3323150,
                                 8859598), 
                type = 'Anti-Disinformation Measures',
-               type_15_TEXT = "")
+               type_15_TEXT = NA,
+               type_other = NA)
 
- 
+
+
+### HAVEN"T DONE YET
+# 6712766 -- recode, multiple policies here
+# 3857966 -- recode, multiple policies here
+# 5740309 -- recode, multiple policies here
+# 1546416; check to see if this whould be actually split into 2 policies
 # 2544387 ; check to see if quarantine measure also coded ehre
 # 5180729 might want to think about allowing hygiene to have a target: Russia introduces new procedures for disinfecting airplanes coming from China on February 6.\n
 

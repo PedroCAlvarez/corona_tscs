@@ -10,6 +10,14 @@ require(dplyr)
 require(lubridate)
 require(readr)
 require(stringr)
+require(readxl)
+
+
+ecdc <- read_xlsx("data/COVID-19-geographic-disbtribution-worldwide-2020-05-06.xlsx")
+
+# what kind of model to run
+
+model_type <- "RW"
 
 # load cleaned file
 
@@ -244,18 +252,22 @@ comp_days <- distinct(clean_comp,date_start,total_day) %>%
   arrange(date_start) %>% 
   mutate(diff = total_day - dplyr::lag(total_day)) 
 
-# do preliminary analysis
-
-countries <- c("United States of America","Germany","Brazil","Switzerland","Israel")
-
-# need to cycle over each time point
-# oh hurray
-
-over_time_pts <- lapply(unique(clean_comp$date_start), function(d) {
+if(model_type=="RW") {
+  # do preliminary analysis
   
-  to_make <- ungroup(clean_comp) %>% 
-    distinct %>% 
-    filter(date_start==d) %>% 
+  countries <- c("United States of America","Germany","Brazil","Switzerland","Israel")
+  
+  to_make <- ungroup(distinct(clean_comp)) %>% 
+    group_by(country,combine_type) %>% 
+    arrange(country,combine_type,date_start) %>% 
+    mutate(num_pol_diff=combine_disc- dplyr::lag(combine_disc)) %>% 
+    group_by(country,date_start) %>% 
+    mutate(sum_diff=sum(num_pol_diff,na.rm=T)) %>% 
+    filter(!(sum_diff==0 & !is.na(num_pol_diff))) %>% 
+    #filter(country %in% countries) %>% 
+    # filter(date_start<ymd("2020-04-10"),
+    #        date_start>ymd("2020-02-15")) %>% 
+    #!(date_start %in% comp_days$date_start[comp_days$diff==0])) %>% 
     id_make(outcome_disc="combine_disc",
             person_id="country",
             ordered_id="ordered_id",
@@ -263,63 +275,90 @@ over_time_pts <- lapply(unique(clean_comp$date_start), function(d) {
   
   # note no missing data :)
   
-  activity_fit <- id_estimate(to_make,vary_ideal_pts="none",ncores=1,nchains=1,niters=500,
+  activity_fit <- id_estimate(to_make,vary_ideal_pts="random_walk",ncores=4,nchains=4,niters=600,
                               warmup=300,
+                              within_chain="none",
                               fixtype="prefix",
                               restrict_ind_high="Quarantine/Lockdown_type_self_quarantine",
                               restrict_ind_low="Restriction of Non-Essential Businesses_type_bars",
                               id_refresh = 10,
-                              const_type="items")
+                              const_type="items") 
   
-  all_lev <- as.character(unique(clean_data$init_country))
-
-  get_est <- as.data.frame(severity_fit@stan_samples,"L_full") %>%
-    mutate(iter=1:n()) %>%
-    gather(key="parameter",value="estimate",-iter) %>%
-    mutate(date_announced=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?[0-9]?0?")),
-           country=as.numeric(str_extract(parameter,"[1-9][0-9]?[0-9]?0?(?=\\])")),
-           country=factor(country,labels=levels(severity_fit@score_data@score_matrix$person_id)),
-           date_announced=factor(date_announced,labels=as.character(sort(unique(severity_fit@score_data@score_matrix$time_id)))))
-
+  saveRDS(activity_fit,"data/activity_fit_rw.rds")
+} else {
+  # merge in ECDC data
   
-})
+  country_names <- read_xlsx("data/ISO WORLD COUNTRIES.xlsx",sheet = "ISO-names")
+  
+  clean_comp <- mutate(clean_comp,
+                       country=recode(country,Czechia="Czech Republic",
+                                      `Hong Kong`="China",
+                                      Macau="China",
+                                      `United States`="United States of America",
+                                      `Bahamas`="The Bahamas",
+                                      `Tanzania`="United Republic of Tanzania",
+                                      `North Macedonia`="Macedonia",
+                                      `Micronesia`="Federated States of Micronesia",
+                                      `Timor Leste`="East Timor",
+                                      `Republic of the Congo`="Republic of Congo",
+                                      `Cabo Verde`="Cape Verde",
+                                      `Eswatini`="Swaziland",
+                                      `Serbia`="Republic of Serbia",
+                                      `Guinea-Bissau`="Guinea Bissau"))
+  
+  # merge in ISOs
+  
+  clean_comp <- left_join(clean_comp, country_names,by=c(country="ADMIN"))
+  
+  # filter out the EU
+  
+  clean_comp <- filter(clean_comp, !is.na(ISO_A3))
+  
+  # merge deaths/cases
+  ecdc$dateRep <- as_date(ecdc$dateRep)
+  clean_comp <- left_join(clean_comp,ecdc,by=c("ISO_A3"="countryterritoryCode","date_start"="dateRep"))
+  
+  # filter out some tiny islands
+  clean_comp <- group_by(clean_comp) %>% 
+    filter(!all(is.na(cases)))
+  # assume no reported cases = 0
+  
+  clean_comp <- mutate(clean_comp,cases=coalesce(cases,0),
+                       deaths=coalesce(cases,0),
+                       cases=cases - mean(cases),
+                       deaths=deaths- mean(deaths))
+  
+  to_make <- ungroup(distinct(clean_comp)) %>% 
+    group_by(country,combine_type) %>% 
+    arrange(country,combine_type,date_start) %>% 
+    mutate(num_pol_diff=combine_disc- dplyr::lag(combine_disc)) %>% 
+    group_by(country,date_start) %>% 
+    mutate(sum_diff=sum(num_pol_diff,na.rm=T)) %>% 
+    filter(!(sum_diff==0 & !is.na(num_pol_diff))) %>% 
+    #filter(country %in% countries) %>% 
+    # filter(date_start<ymd("2020-04-10"),
+    #        date_start>ymd("2020-02-15")) %>% 
+    #!(date_start %in% comp_days$date_start[comp_days$diff==0])) %>% 
+    id_make(outcome_disc="combine_disc",
+            person_id="country",
+            ordered_id="ordered_id",
+            item_id="combine_type",time_id="date_start",
+            person_cov=~cases + deaths)
+  
+  activity_fit <- id_estimate(to_make,vary_ideal_pts="AR1",ncores=1,nchains=1,niters=500,
+                              warmup=300,
+                              within_chain="mpi",
+                              fixtype="prefix",
+                              restrict_ind_high="Quarantine/Lockdown_type_self_quarantine",
+                              restrict_ind_low="Restriction of Non-Essential Businesses_type_bars",
+                              id_refresh = 10,
+                              const_type="items") 
+  
+}
 
-to_make <- ungroup(distinct(clean_comp)) %>% 
-  group_by(country,combine_type) %>% 
-  arrange(country,combine_type,date_start) %>% 
-  mutate(num_pol_diff=combine_disc- dplyr::lag(combine_disc)) %>% 
-  group_by(country,date_start) %>% 
-  mutate(sum_diff=sum(num_pol_diff,na.rm=T)) %>% 
-  filter(!(sum_diff==0 & !is.na(num_pol_diff))) %>% 
-  # filter(country %in% countries) %>% 
-  # filter(date_start<ymd("2020-04-10"),
-  #        date_start>ymd("2020-02-15")) %>% 
-         #!(date_start %in% comp_days$date_start[comp_days$diff==0])) %>% 
-           id_make(outcome_disc="combine_disc",
-                   person_id="country",
-                   ordered_id="ordered_id",
-                   item_id="combine_type",time_id="date_start")
 
-# note no missing data :)
 
-activity_fit <- id_estimate(to_make,vary_ideal_pts="random_walk",ncores=2,nchains=2,niters=500,
-                            warmup=300,
-            fixtype="prefix",
-            restrict_ind_high="Quarantine/Lockdown_type_self_quarantine",
-            restrict_ind_low="Restriction of Non-Essential Businesses_type_bars",
-            id_refresh = 10,
-            const_type="items")
 
-# activity_fit <- parallel::mclapply(1:4, function(i) {
-#   id_estimate(to_make,vary_ideal_pts="random_walk",ncores=1,nchains=1,niters=500,warmup=300,
-#                             fixtype="prefix",
-#                             restrict_ind_high="Quarantine/Lockdown_type_self_quarantine",
-#                             restrict_ind_low="Restriction of Non-Essential Businesses_type_bars",
-#                             id_refresh = 10,
-#                             const_type="items")
-#   },mc.cores=4)
-
-saveRDS(activity_fit,"data/activity_fit.rds")
 
 
 all_lev <- as.character(unique(clean_data$init_country))

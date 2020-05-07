@@ -3,6 +3,7 @@ title: "CoronaNet: A Dyadic Dataset of Government Responses to the COVID-19 Pand
 header-includes:
    - \usepackage{lineno}
    - \linenumbers
+csl: nature.csl
 author: 
   - Cindy Cheng: 
       email: cindy.cheng@hfp.tum.de

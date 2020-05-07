@@ -28,7 +28,7 @@ output:
   #bookdown::word_document2
   bookdown::pdf_document2:
     keep_tex: true
-    latex_engine: xelatex
+    #latex_engine: xelatex
     includes:
       in_header:
           preamble.tex
@@ -62,6 +62,7 @@ library(readr)
 library(knitr)
 library(readxl)
 require(gghighlight)
+require(patchwork)
 
 
 library(devtools)
@@ -347,11 +348,9 @@ Of course, a caveat with the index is that we may be missing some possible polic
 
 ```{r plotindex,fig.cap="CoronaNet Time-Varying Index of National Policy Activity of Measures Opposing COVID-19 Pandemic"}
 
-# severity_fit <- readRDS("../data/activity_fit_collapse.rds")
+# severity_fit <- readRDS("../data/activity_fit_rw.rds")
 # 
 # all_lev <- as.character(unique(clean_data$init_country))
-# 
-# all_lev <- all_lev[all_lev!="Chad"]
 # 
 # get_est <- as.data.frame(severity_fit@stan_samples,"L_tp1") %>%
 #   mutate(iter=1:n()) %>%
@@ -369,7 +368,7 @@ get_est <- readRDS("../data/get_est.rds")
 get_est_sum <- get_est %>%
             ungroup %>%
   filter(country!="Chad") %>%
-            mutate(estimate=(estimate-min(estimate))/(max(estimate)-min(estimate))*100,
+            mutate(estimate=plogis(estimate)*100,
                    date_announced=ymd(as.character(date_announced))) %>%
   group_by(country,date_announced) %>%
   summarize(med_est=median(estimate),
@@ -398,24 +397,69 @@ list_countries <- c("United States of America",
 random_country <- group_by(get_est_sum,country) %>% 
   sample_n(1)
 
+# need a way to facet this
 
-get_est_sum %>%
+# facets <- lapply(c("Jan","Feb","Mar","Apr"), function(m) {
+#   mutate(get_est_sum,month_facet=m)
+# }) %>% bind_rows
+
+to_plot <- get_est_sum %>%
   ungroup %>%
+  mutate(month_var=month(date_announced,label=T)) %>% 
+  group_by(month_var,country) %>% 
+  mutate(country_spread=unique(med_est[date_announced==max(date_announced)]) - unique(med_est[date_announced==min(date_announced)])) %>% 
+  ungroup
+
+calc_ranks <- select(to_plot,country_spread,country,month_var) %>% distinct %>% 
+  arrange(month_var,desc(country_spread)) %>% 
+  group_by(month_var) %>% mutate(count_rank=rev(rank(country_spread)))
+    
+  
+  
+  breakout <- to_plot  %>%
+    left_join(calc_ranks,by=c("country","country_spread","month_var")) %>% 
+  filter(month_var!="Dec") %>% 
+  ungroup %>% 
   ggplot(aes(y=med_est,x=date_announced)) +
   #geom_ribbon(aes(ymin=low_est,ymax=high_est,group=country),alpha=0.2) +
-  geom_line(aes(group=country, colour = country),alpha=0.7, size = 1) +
-  #scale_color_distiller(palette="Reds",direction=1) +
-  gghighlight(country %in% list_countries,
-              label_params=list(size=3),
-              aes(colour = country),
+  geom_line(aes(group=country,colour=med_est),alpha=0.7, size = 1) +
+  scale_color_distiller(palette="Reds",direction=1) +
+  gghighlight(count_rank<5,
+              calculate_per_facet = T,
+              label_params=list(size=2.5,colour="black"),
               unhighlighted_params = list(size = .5, colour = alpha("grey", 0.3))) +
-  scale_color_manual(name="Country",values=c('#00CC33','#E69F00','#CC0000',"#FF99FF","#99CCFF","#006699","#990099","orangered1","#9933FF","yellow3", "blue1" ))+
+  # scale_color_manual(name="Country",values=c('#00CC33','#E69F00','#CC0000',"#FF99FF","#99CCFF","#006699","#990099","orangered1","#9933FF","yellow3", "blue1" ))+
+  theme_minimal() +
+  theme(panel.grid = element_blank(),
+        axis.text.x=element_text(angle=45)) +
+  xlab("") +
+  ylab("") +
+  facet_wrap(~month_var,scales = "free_x")
+  
+overall <- to_plot  %>%
+  group_by(date_announced) %>% 
+  mutate(all_rank=rev(rank(med_est))) %>% 
+  ungroup %>% 
+    mutate(last_rank = ifelse(date_announced==max(date_announced),`Country Rank`,NA),
+         lab_country = ifelse(last_rank %in% c(1,10,20,30,50,100,190),as.character(country),
+                              NA)) %>% 
+  ungroup %>% 
+  ggplot(aes(y=med_est,x=date_announced)) +
+  #geom_ribbon(aes(ymin=low_est,ymax=high_est,group=country),alpha=0.2) +
+  geom_line(aes(group=country,colour=med_est),alpha=0.7, size = 1) +
+  scale_color_distiller(palette="Reds",direction=1) +
+  geom_label_repel(aes(label=lab_country),size=3) +
+  # scale_color_manual(name="Country",values=c('#00CC33','#E69F00','#CC0000',"#FF99FF","#99CCFF","#006699","#990099","orangered1","#9933FF","yellow3", "blue1" ))+
   theme_minimal() +
   theme(panel.grid = element_blank()) +
-  labs(caption="Estimates are derived from Stan, a Markov Chain Monte Carlo sampler.\nThe intervals represent the median and 5% - 95% posterior density region.\nPlot shows one estimate per country per day.") +
+  # labs(caption="Estimates are derived from Stan, a Markov Chain Monte Carlo sampler.\nThe intervals represent the median and 5% - 95% posterior density region.\nPlot shows one estimate per country per day.") +
   xlab("") +
-  ylab("Policy Activity Index Scale (0 to 100)")
+  ylab("Policy Activity Index Scale (0 to 100)") +
+  guides(color="none")
 
+overall + breakout +
+  plot_annotation(tag_levels="A",
+                  caption=str_wrap("Estimates are derived from Stan, a Markov Chain Monte Carlo sampler. Uncertainty intervals are not shown. Plot A shows the full distribution of countries, while plot B shows each month separately with the top 4 countries for that month in terms of increases in activity scores from start of the month to the end of the month.",width=120))
 
 ggsave("index.png")
 

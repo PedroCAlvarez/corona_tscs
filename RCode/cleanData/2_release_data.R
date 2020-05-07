@@ -251,8 +251,6 @@ cats <- left_join(cats,select(all_let,new_id,vals_id),
                   by="vals_id") %>% 
   distinct
 
- 
-
 
 # now merge back in to regular data 
 release = release %>% 
@@ -292,7 +290,6 @@ release_long <- left_join(release_long,select(cats,-vals_id),by=c(extra="type_va
 
 
 # merge back down
-
 release_long <- distinct(release_long,record_id,policy_id,new_id,.keep_all = T) %>% 
   ungroup %>% 
   mutate(record_id=paste0(record_id,new_id)) %>% 
@@ -314,6 +311,8 @@ release_long <- release_long %>%
                            `Update on Existing Entry (type in Record ID in text box)`="update",
                            `Update on Existing Entry for record ID ${e://Field/record_id} (<- if no record ID listed, type in Record ID in text box)`="update",
                            `New Entry`="new_entry")) %>% 
+  mutate_cond(is.na(date_start),
+                date_start = date_announced) %>% 
   filter(!is.na(date_start),
          recorded_date<(today()-days(5))) %>% 
   mutate(type_sub_cat=ifelse(type_sub_cat=="None of the above",NA,type_sub_cat))

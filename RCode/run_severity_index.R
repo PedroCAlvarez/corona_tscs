@@ -251,39 +251,6 @@ countries <- c("United States of America","Germany","Brazil","Switzerland","Isra
 # need to cycle over each time point
 # oh hurray
 
-over_time_pts <- lapply(unique(clean_comp$date_start), function(d) {
-  
-  to_make <- ungroup(clean_comp) %>% 
-    distinct %>% 
-    filter(date_start==d) %>% 
-    id_make(outcome_disc="combine_disc",
-            person_id="country",
-            ordered_id="ordered_id",
-            item_id="combine_type",time_id="date_start")
-  
-  # note no missing data :)
-  
-  activity_fit <- id_estimate(to_make,vary_ideal_pts="none",ncores=1,nchains=1,niters=500,
-                              warmup=300,
-                              fixtype="prefix",
-                              restrict_ind_high="Quarantine/Lockdown_type_self_quarantine",
-                              restrict_ind_low="Restriction of Non-Essential Businesses_type_bars",
-                              id_refresh = 10,
-                              const_type="items")
-  
-  all_lev <- as.character(unique(clean_data$init_country))
-
-  get_est <- as.data.frame(severity_fit@stan_samples,"L_full") %>%
-    mutate(iter=1:n()) %>%
-    gather(key="parameter",value="estimate",-iter) %>%
-    mutate(date_announced=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?[0-9]?0?")),
-           country=as.numeric(str_extract(parameter,"[1-9][0-9]?[0-9]?0?(?=\\])")),
-           country=factor(country,labels=levels(severity_fit@score_data@score_matrix$person_id)),
-           date_announced=factor(date_announced,labels=as.character(sort(unique(severity_fit@score_data@score_matrix$time_id)))))
-
-  
-})
-
 to_make <- ungroup(distinct(clean_comp)) %>% 
   group_by(country,combine_type) %>% 
   arrange(country,combine_type,date_start) %>% 
@@ -302,7 +269,7 @@ to_make <- ungroup(distinct(clean_comp)) %>%
 
 # note no missing data :)
 
-activity_fit <- id_estimate(to_make,vary_ideal_pts="random_walk",ncores=2,nchains=2,niters=500,
+activity_fit <- id_estimate(to_make,vary_ideal_pts="random_walk",ncores=3,nchains=3,niters=600,
                             warmup=300,
             fixtype="prefix",
             restrict_ind_high="Quarantine/Lockdown_type_self_quarantine",

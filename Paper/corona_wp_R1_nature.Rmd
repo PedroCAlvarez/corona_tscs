@@ -483,10 +483,10 @@ Given this distribution of discrimination parameters, we believe the index is a 
 
 ```{r rankcount}
 
-# out_items <- summary(severity_fit,pars="items") %>%
-#   filter(`Item Type`=="Non-Inflated Discrimination")
-# 
-# saveRDS(out_items,'../data/out_items.rds')
+out_items <- summary(severity_fit,pars="items") %>%
+  filter(`Item Type`=="Non-Inflated Discrimination")
+
+saveRDS(out_items,'../data/out_items.rds')
 
 out_items <- readRDS("../data/out_items.rds")
 
@@ -541,7 +541,7 @@ out_items %>%
 
 In this section, we first describe the variables that our dataset is able to provide as well as how they are organized. We then provide detail on the methodology we employed to collect the data. 
 
-## Time-Varying Item Response Model
+## Time-Varying Item Response Model {-}
 
 Our time-varying item response model follows the specification in @kubinec2019. We review that notation here to show how it relates to classical item-response theory as well as the ideal point modeling literature. 
 

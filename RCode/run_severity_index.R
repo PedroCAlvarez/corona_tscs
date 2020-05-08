@@ -275,8 +275,8 @@ if(model_type=="RW") {
   
   # note no missing data :)
   
-  activity_fit <- id_estimate(to_make,vary_ideal_pts="random_walk",ncores=4,nchains=4,niters=600,
-                              warmup=300,
+  activity_fit <- id_estimate(to_make,vary_ideal_pts="random_walk",ncores=4,nchains=4,niters=800,
+                              warmup=400,
                               within_chain="none",
                               fixtype="prefix",
                               restrict_ind_high="Quarantine/Lockdown_type_self_quarantine",
@@ -345,8 +345,8 @@ if(model_type=="RW") {
             item_id="combine_type",time_id="date_start",
             person_cov=~cases + deaths)
   
-  activity_fit <- id_estimate(to_make,vary_ideal_pts="AR1",ncores=1,nchains=1,niters=500,
-                              warmup=300,
+  activity_fit <- id_estimate(to_make,vary_ideal_pts="AR1",ncores=1,nchains=1,niters=800,
+                              warmup=400,
                               within_chain="mpi",
                               fixtype="prefix",
                               restrict_ind_high="Quarantine/Lockdown_type_self_quarantine",

@@ -8,8 +8,8 @@ require(googlesheets4)
 require(lubridate)
 require(stringr)
 
-start_week <- ymd("2020-04-26")
-end_week <- ymd("2020-05-03")
+start_week <- ymd("2020-05-03")
+end_week <- ymd("2020-05-10")
 
 #sheets_auth()
 

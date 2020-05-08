@@ -324,7 +324,7 @@ if(model_type=="RW") {
   # assume no reported cases = 0
   
   clean_comp <- mutate(clean_comp,cases=coalesce(cases,0),
-                       deaths=coalesce(cases,0),
+                       deaths=coalesce(deaths,0),
                        cases=cases - mean(cases),
                        deaths=deaths- mean(deaths))
   

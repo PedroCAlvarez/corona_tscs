@@ -833,6 +833,28 @@ We further implement the following processes to validate the quality of the data
 
 If the majority achieves consensus, then we consider the entry valid. If a discrepancy exists, a fourth RA or PI evaluates between the three entries to determine whether one, some, a combination of all three is most accurate. Reconciled policies are then entered into the dataset as a correction for full transparency. If an RA was found to have made a coding mistake, then we sample six of their previous entries: 3 entries which correspond to the type of mistake made^[e.g. if the RA incorrectly codes an 'External Border Restriction' as a 'Quarantine', we sample 3 entries where the RA has coded a policy as being about a 'Quarantine.'] and randomly sample 3 more entries to ascertain whether the mistake was systematic or not. If systematic errors are found, entries coded by that individual will be entirely recoded by a new RA.
 
+We are in the process of completing our second coding of the validation sample. Thus far, 192 entries have been double coded out of the original 480 randomly-selected policies included in our validaiton set. To evaluate the inter-coder reliability at this early stage of validation, we provide several measures in Table \ref{tab:validation}. These statistics indicate moderate levels of agreement between coders, and much of the disagreement arises between policy types that are analytically similiar, such as quarantine and lockdown or different health measures such as health testing, health monitoring, and health resources. When these categories are collapsed in to quarantine lockdown and health, respectively, the validation set's Cohen's Kappa increases from 0.577 to 0.667. This ambiguities provide further evidence for the utility of our planned ``majority voting'' validation strategy.
+%Add information about the validation sample - until what date is it current?
+%Bob's table could be helpful to point to in an appendix to back up that last assertion.
+
+
+\begin{table}[!h]
+\centering
+\caption{Inter-Coder Reliability Measures for On-Going Validation}
+\label{tab:validation}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{|c|l|c|c|c|c|}
+\hline
+                      & \textbf{Scott's Pi} & \textbf{Krippendorf's Alpha} & \textbf{Fleiss' Kappa} & \textbf{Cohen's Kappa} & \textbf{Percentage Agreement} \\ \hline
+\textbf{Estimate}     & 0.513               & 0.514                        & 0.513                  & 0.577                  & 0.610                         \\ \hline
+\textbf{Std. Error}   & 0.040               &                              &                        &                        &                               \\ \hline
+\textbf{Coders}       & 2                   & 2                            & 2                      & 2                      & 2                             \\ \hline
+\textbf{Observations} & 192                 & 192                          & 192                    & 192                    & 192                           \\ \hline
+\end{tabular}%
+}
+\end{table}
+
+
 # Conclusion {-}
 
 As policymakers, researchers and the broader public debate and compare how to succeed against the novel threats posed by COVID-19, they need real-time, traceable data on government policies in order to understand which of these policies are effective, and under what conditions.  This requires specific knowledge of the variation in such policies and the extent of their implementation across countries and time. The goal of the dataset and policy action index presented here is to provide this information. 

@@ -483,10 +483,10 @@ Given this distribution of discrimination parameters, we believe the index is a 
 
 ```{r rankcount}
 
-out_items <- summary(severity_fit,pars="items") %>%
-  filter(`Item Type`=="Non-Inflated Discrimination")
-
-saveRDS(out_items,'../data/out_items.rds')
+# out_items <- summary(severity_fit,pars="items") %>%
+#   filter(`Item Type`=="Non-Inflated Discrimination")
+# 
+# saveRDS(out_items,'../data/out_items.rds')
 
 out_items <- readRDS("../data/out_items.rds")
 
@@ -589,8 +589,53 @@ The over-time dimension induces a new source of identifiability issues, which we
 
 For estimation, we sample from four Markov Chain Monte Carlo (MCMC) chains with over-dispersed starting values using Stan, a Hamiltonian Markov Chain Monte Carlo (HMC) sampler [@carpenter2017]. We run the sampler for 600 iterations, 300 of which are discarded as warmup. While this number of iterations is far less than other MCMC samplers, HMC is a far more efficient at exploring the posterior density and we are able to achieve convergence using this number of iterations. 
 
-We assess convergence using split-Rhat as we fit independent chains. All Rhat values were [FILL IN]. We also assess convergence using trace plots, one of which is shown below for the time-varying country policy activity scores for the United States. Strong mixing between chains can be observed in the plot. Finally, we report no divergent transitions or iterations where the sampler reached its maximum tree depth, which are both signs of poor mixing in the chains. For these reasons, we are confident than the sampler reached a stationary distribution and was able to adequately explore the high-density regions of the joint posterior.
+We assess convergence using split-$\hat{R}$ as we fit independent chains with over-dispersed starting values. $\hat{R}$ values for all parameters (which totaled more than 40,000) were 1.01 or less (see panel A in Figure \@ref(fig:modelconv)). Panel B in Figure \@ref(fig:modelconv) shows the distribution of effective number of samples for the parameters, which is a way of comparing the auto-correlation in MCMC draws to independent draws without auto-correlation, as we might obtain from a Monte Carlo simulation. Again, the number of effective samples is quite high, often exceeding the total number of empirical draws.^[Hamiltonian Monte Carlo can produce more informative samples than even a Monte Carlo simulation because it can generate negatively correlated draws that explore the posterior space much more quickly.]  We also assess convergence using trace plots, one of which is shown below for the time-varying country policy activity scores for the United States. Strong mixing between chains can be observed in the plot. Finally, we report no divergent transitions or iterations where the sampler reached its maximum tree depth, which are both signs of poor mixing in the chains. For these reasons, we are confident than the sampler reached a stationary distribution and was able to adequately explore the high-density regions of the joint posterior.
 
+```{r modelconv,fig.cap="Rhat Values of Parameters for Random-Walk MCMC Fit"}
+# rhat <- id_plot_rhats(severity_fit) +
+#   xlab(expression("split-"~hat(R)))
+# 
+# # let's get ESS
+# 
+# ess_sum <- summary(severity_fit@stan_samples)[[1]]
+# 
+# # filter out absence parameters (not used)
+# 
+# ess_sum <- ess_sum[!grepl("abs|A\\_int",row.names(ess_sum)),]
+# 
+# # plot as histogram 
+# 
+# ess_plot <- as_tibble(ess_sum) %>% 
+#   gather(key="variable",value="value") %>% 
+#   filter(variable=="n_eff") %>% 
+#   ggplot(aes(x=value)) +
+#   geom_histogram() +
+#   theme(panel.grid = element_blank(),
+#         panel.background = element_blank()) +
+#   ylab("") +
+#   xlab("Number of Effective\nSamples")
+# 
+# trace1 <-  stan_trace(severity_fit@stan_samples,"L_full[1]") + 
+#   ylab("U.S. Intercept") +
+#   xlab("Posterior Iteration") +
+#   guides(color="none") +
+#   theme(axis.text.y=element_text(size=8),
+#         axis.title = element_text(size=8))
+# trace2 <- stan_trace(severity_fit@stan_samples,"L_tp1_var[1,30]") +
+#   ylab("U.S. Jan. 30th") +
+#     xlab("Posterior Iteration") +
+#   theme(legend.position = "bottom",
+#         axis.text.y=element_text(size=8),
+#         axis.title = element_text(size=8))
+# rhat + ess_plot / (trace1 + trace2) +
+#   plot_annotation(tag_levels="A",
+#                   caption=str_wrap("Plot A shows the distribution of split-Rhat values for all 40,000 parameters in the model, revealing most parameters are close to 1, which indicates strong convergence. The effective number of samples for parameters in plot B is also very high, often exceeding the total number of posterior draws. Plots C and D show strong mixing across chains for the intercept and over-time parameter for the United States for January 30th.",width=115))
+# 
+# ggsave("mcmc_evaluate.png")
+
+knitr::include_graphics("mcmc_evaluate.png")
+
+```
 
 
 

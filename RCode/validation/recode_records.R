@@ -8,6 +8,31 @@ condition <- eval(substitute(condition), .data, envir)
 .data
 }
 
+# some ppl made updates to their entries using the correction link
+# STILL NEED TO DO THIS: fix these entries
+# for now, ignore
+qualtrics = qualtrics[-which(qualtrics$link_type == 'C' &qualtrics$entry_type == 'update'),]
+ 
+# NOTE STILL need to fix:
+# remove 2 entries where coders made a new entry using the update link; fix later
+qualtrics = qualtrics[-which(qualtrics$link_type == 'U' & qualtrics$entry_type == 'new_entry'),] 
+
+
+# NOTE STILL need to fix:
+# remove 18 entries where coders made a new entry using the correction link; fix later
+qualtrics = qualtrics[-which(qualtrics$link_type == 'C' & qualtrics$entry_type == 'new_entry'),]  
+
+# NOTE still need to fix
+# remove 12 entries where coder made an update using the 'correction' link, fix later
+qualtrics = qualtrics[-which(qualtrics$link_type == 'U' & qualtrics$entry_type == 'correction'),] 
+
+
+# some ppl were able to enter corrections without specifying a corresponding
+# record id before it was a forced response, 
+  # STILL NEED TO DO THIS contact these people, remove these entries for now
+  # fix <- filter(qualtrics, is.na(correct_record_match))
+# remove these entries for now
+qualtrics <- filter(qualtrics, !is.na(correct_record_match))
 
 
 # note RA Adrianna Poppe did not enter in the record id for her correction to 9008490; doing it for her here

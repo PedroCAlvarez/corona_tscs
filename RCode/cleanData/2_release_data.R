@@ -146,7 +146,8 @@ get_est_sum <- get_est %>%
 
 release <- filter(clean_data,!is.na(init_country),is.na(init_other),is.na(target_other) | target_other=="",
                   validation) %>% 
-              select(record_id,policy_id,entry_type,
+              select(record_id,policy_id,entry_type, 
+                      correct_type = "correct_dum",
                      update_type=update_end_dum,
                      event_description,country="init_country",
                      date_announced,
@@ -316,19 +317,7 @@ release_long <- release_long %>%
   filter(!is.na(date_start),
          recorded_date<(today()-days(5))) %>% 
   mutate(type_sub_cat=ifelse(type_sub_cat=="None of the above",NA,type_sub_cat))
-
-
-## records that have a type_sub_cat are still 'duplicated'
-# e.g. if a policy sub type is 'Health screenings (e.g. temperature checks)" it has
-# two record_id: '[record_id]Ag' and '[record_id]NA'
-# remove the second one ('[record_id]NA')
-release_long = release_long %>% 
-  group_by(policy_id) %>%
-  filter(if (any(!is.na(type_sub_cat)))
-    !is.na(type_sub_cat)
-    else is.na(type_sub_cat)) %>%
-  ungroup()
-
+ 
 
 # recode records
 release_long$country <- recode(release_long$country,Czechia="Czech Republic",
@@ -363,6 +352,7 @@ release_long$target_country <- recode(release_long$target_country,Czechia="Czech
 release_long <- mutate(release_long,init_country_level=ifelse(province %in% c("Hong Kong","Macau"),"No, it is at the national level",
                                                     init_country_level))
 
+ 
 # country names
 
 country_names <- read_xlsx("data/ISO WORLD COUNTRIES.xlsx",sheet = "ISO-names")
@@ -495,6 +485,19 @@ mutate_cond(type == "New Task Force, Bureau or Administrative Configuration"  &
             "Other Administrative Configurations"),
             type_sub_cat = NA)
 
+## records that have a type_sub_cat are still 'duplicated'
+# e.g. if a policy sub type is 'Health screenings (e.g. temperature checks)" it has
+# two record_id: '[record_id]Ag' and '[record_id]NA'
+# remove the second one ('[record_id]NA')
+release_long = release_long %>% 
+  group_by(policy_id) %>%
+  filter(if (any(!is.na(type_sub_cat)))
+    !is.na(type_sub_cat)
+    else is.na(type_sub_cat) %>% row_number() == 1) %>%
+  ungroup()
+
+
+ 
 # add in update information
 
 update_orig <- qualtRics::read_survey("data/CoronaNet/RA/ra_update_first.csv")

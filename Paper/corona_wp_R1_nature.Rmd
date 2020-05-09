@@ -603,11 +603,11 @@ We assess convergence using split-$\hat{R}$ as we fit independent chains with ov
 # 
 # ess_sum <- ess_sum[!grepl("abs|A\\_int",row.names(ess_sum)),]
 # 
-# # plot as histogram 
+# # plot as histogram
 # 
-# ess_plot <- as_tibble(ess_sum) %>% 
-#   gather(key="variable",value="value") %>% 
-#   filter(variable=="n_eff") %>% 
+# ess_plot <- as_tibble(ess_sum) %>%
+#   gather(key="variable",value="value") %>%
+#   filter(variable=="n_eff") %>%
 #   ggplot(aes(x=value)) +
 #   geom_histogram() +
 #   theme(panel.grid = element_blank(),
@@ -615,23 +615,24 @@ We assess convergence using split-$\hat{R}$ as we fit independent chains with ov
 #   ylab("") +
 #   xlab("Number of Effective\nSamples")
 # 
-# trace1 <-  stan_trace(severity_fit@stan_samples,"L_full[1]") + 
+# trace1 <-  stan_trace(severity_fit@stan_samples,"L_full[1]") +
 #   ylab("U.S. Intercept") +
 #   xlab("Posterior Iteration") +
-#   guides(color="none") +
-#   theme(axis.text.y=element_text(size=8),
-#         axis.title = element_text(size=8))
+#   theme(axis.text=element_text(size=8),
+#         axis.title = element_text(size=8)) +
+#   guides(color=guide_legend(title="Chain",title.position="top")) +
+#   theme(legend.title = element_text(size=8))
 # trace2 <- stan_trace(severity_fit@stan_samples,"L_tp1_var[1,30]") +
 #   ylab("U.S. Jan. 30th") +
 #     xlab("Posterior Iteration") +
-#   theme(legend.position = "bottom",
-#         axis.text.y=element_text(size=8),
-#         axis.title = element_text(size=8))
-# rhat + ess_plot / (trace1 + trace2) +
+#   theme(axis.text=element_text(size=8),
+#         axis.title = element_text(size=8)) +
+#   guides(color='none')
+# rhat + ess_plot / (trace1 + trace2 +   plot_layout(guides="collect") & theme(legend.position = "top")) +
 #   plot_annotation(tag_levels="A",
-#                   caption=str_wrap("Plot A shows the distribution of split-Rhat values for all 40,000 parameters in the model, revealing most parameters are close to 1, which indicates strong convergence. The effective number of samples for parameters in plot B is also very high, often exceeding the total number of posterior draws. Plots C and D show strong mixing across chains for the intercept and over-time parameter for the United States for January 30th.",width=115))
+#                   caption=str_wrap("Plot A shows the distribution of split-Rhat values for all 40,000 parameters in the model, revealing most parameters are close to 1, which indicates strong convergence. The effective number of samples for parameters in plot B is also very high, often exceeding the total number of posterior draws. Plots C and D show strong mixing across chains for the intercept and over-time parameter for the United States for January 30th.",width=115)) 
 # 
-# ggsave("mcmc_evaluate.png")
+# ggsave("mcmc_evaluate.png",width=6.5,height=4.5)
 
 knitr::include_graphics("mcmc_evaluate.png")
 

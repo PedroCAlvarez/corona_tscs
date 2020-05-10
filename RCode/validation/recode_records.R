@@ -8,31 +8,109 @@ condition <- eval(substitute(condition), .data, envir)
 .data
 }
 
-# some ppl made updates to their entries using the correction link
-# STILL NEED TO DO THIS: fix these entries
-# for now, ignore
+
+# issue where coders used correction link to enter update
+  # note that this issue is partially resolved as of May 10
+    # waiting on the following to finish corrections: 
+          # Alexander Pachanov, Elfriede Derrer-Merk, Imogen Merket, Jane Murtu, Barbara Bromova, Nikolina Klatt, Mustafa Nasery, Konstanze Schonfeld
+          # Konstanze Schonfeld, Maisa Naisirova, Malte Speil, Richmond Silva
+
+    # contact following RAs who said they did the corrections but can't find evidence for it
+        # Arianna Shoulten
+        # Julia Darge
+
+  # even when the issue is fully resolved, still need to remove these items
 qualtrics = qualtrics[-which(qualtrics$link_type == 'C' &qualtrics$entry_type == 'update'),]
- 
-# NOTE STILL need to fix:
-# remove 2 entries where coders made a new entry using the update link; fix later
-qualtrics = qualtrics[-which(qualtrics$link_type == 'U' & qualtrics$entry_type == 'new_entry'),] 
 
-
-# NOTE STILL need to fix:
-# remove 18 entries where coders made a new entry using the correction link; fix later
-qualtrics = qualtrics[-which(qualtrics$link_type == 'C' & qualtrics$entry_type == 'new_entry'),]  
-
-# NOTE still need to fix
-# remove 12 entries where coder made an update using the 'correction' link, fix later
+# note there are 12 entries where coder made an update using the 'correction' link
+# in principal you should be able to fix this in the code, for now remove
 qualtrics = qualtrics[-which(qualtrics$link_type == 'U' & qualtrics$entry_type == 'correction'),] 
 
 
-# some ppl were able to enter corrections without specifying a corresponding
-# record id before it was a forced response, 
-  # STILL NEED TO DO THIS contact these people, remove these entries for now
-  # fix <- filter(qualtrics, is.na(correct_record_match))
-# remove these entries for now
-qualtrics <- filter(qualtrics, !is.na(correct_record_match))
+# remove 2 entries where coders made a new entry using the update link; contact these coders
+qualtrics = qualtrics[-which(qualtrics$link_type == 'U' & qualtrics$entry_type == 'new_entry'),] 
+ 
+# remove 18 entries where coders made a new entry using the correction link; contact these coders
+qualtrics = qualtrics[-which(qualtrics$link_type == 'C' & qualtrics$entry_type == 'new_entry'),]  
+
+# RA Arianna Schouten asked to change the policy_id for the following 2 records
+qualtrics = qualtrics %>% 
+    mutate(entry_type_3_TEXT = ifelse(record_id == 8674156, 3827793, entry_type_3_TEXT),
+          entry_type_3_TEXT = ifelse(record_id == 6964745, 2738947, entry_type_3_TEXT))
+
+# NOTE: I can't find a trace of this record from RA Arianna Schouten
+    # Number 3757671 should be an update of reference number 2777808 (instead of number 7672988)
+    # FOLLOW UP LATER
+# qualtrics %>% mutate(entry_type_3_TEXT = ifelse(record_id == 3757671, 2777808, entry_type_3_TEXT)) %>% select(record_id, entry_type_3_TEXT)
+
+# RA Katharina Klaunig
+# I accidentally selected the wrong initiating country for the below records. I have both Uzbekistan and Kazakhstan. The descriptions are correct in stating Kazakhstan but the initiating country I chose was Uzbekistan. Sorry about that! I'm unable to do this in the corrections survey.
+qualtrics = qualtrics %>% mutate(init_country = ifelse(record_id %in% c(5551542, 1335740, 1225028, 5320600), 'Kazakhstan', init_country))
+
+
+# fixing Cheng-Hao Shen's Palau thing
+qualtrics = qualtrics %>% 
+    mutate(entry_type_3_TEXT = ifelse(record_id == 8917154, 6006156, entry_type_3_TEXT) )
+
+
+# issues identified from paper bio-fabric plot
+
+  # this is not a travel ban for people entering Italy, but for leaving Italy
+  qualtrics = qualtrics %>% mutate(target_direction = ifelse(record_id == 3071523, "Outbound", target_direction))
+
+
+  # this is an 'restriction of non-essential business' measure rather than a travel ban
+  qualtrics = qualtrics %>% mutate(type = ifelse(record_id %in% c(8819062), 'Restriction of Non-Essential Businesses', type),
+                      target_geog_level = ifelse(record_id %in% c(8819062), 'One or more countries, but not all countries', target_geog_level),
+                      target_who_what = ifelse(record_id %in% c(8819062), NA, target_who_what),
+                      target_direction = ifelse(record_id %in% c(8819062), NA, target_direction),
+                      travel_mechanism = ifelse(record_id %in% c(8819062), NA, travel_mechanism))
+
+
+  # Micronesia, not a ban on all countries, but unsepcificed countries that have coronacases
+  qualtrics = qualtrics %>% mutate(target_geog_level = ifelse(record_id %in%c(3625348, 4465391 ), 'One or more countries, but not all countries', target_geog_level) )
+
+
+  # Colombia: this is quarantine upon arrival, not external border restriction
+  qualtrics = qualtrics %>% mutate(type = ifelse(record_id %in%c(1293754 ), 'Quarantine', type),
+                                    type_quarantine =ifelse(record_id %in%c(1293754), "Self-Quarantine (i.e. quarantine at home)", type_quarantine  ))
+
+
+   # Bahrain: these are recommendations, not mandatory bans, targets are citizen residents, target direction is outbound
+  qualtrics = qualtrics %>% mutate(target_who_what = ifelse(record_id %in% c(5709516, 9327917 ), 'Citizen Residents', target_who_what),
+                                    target_direction =ifelse(record_id %in% c(5709516, 9327917), "Outbound", target_direction),
+                                    compliance =  ifelse(record_id %in% c(5709516, 9327917), "Voluntary/Recommended but No Penalties", compliance ))
+
+                                
+  # Initiating country is Slovenia, not Iran 
+   qualtrics = qualtrics %>% mutate(init_country = ifelse(record_id %in%c(3031369), 'Slovenia', init_country ))
+
+  
+   # Germany: target country is not Germany but 'All countries', directio is outbound
+  qualtrics = qualtrics %>% mutate(target_country = ifelse(record_id %in%c(1592443), 'All countries', target_country ),
+                                   target_direction= ifelse(record_id %in%c(1592443), 'Outbound', target_direction))
+
+
+   # Germany: target country is not Germany but 'All countries', compliance is voluntary
+  qualtrics = qualtrics %>% mutate(target_country = ifelse(record_id %in%c(3788036, 5258786 ), 'All countries', target_country ),
+                                   compliance= ifelse(record_id %in%c(3788036, 5258786 ), "Voluntary/Recommended but No Penalties", compliance))
+
+
+   #Azerbaijan target who what should be 'other' for bsuiness trips/public employees
+   qualtrics = qualtrics %>% mutate(target_who_what = ifelse(record_id %in%c(2632978), 'Other', target_who_what ),
+                                   target_who_what_10_TEXT = ifelse(record_id %in%c(2632978), "Public/private employees on business trips", target_who_what_10_TEXT ),
+                                      target_direction = ifelse(record_id %in%c(2632978), "Outbound", target_direction))
+ 
+  #Tunisia target who what should be 'other' for students
+   qualtrics = qualtrics %>% mutate(target_who_what = ifelse(record_id %in%c(7066331), 'Other', target_who_what ),
+                                   target_who_what_10_TEXT = ifelse(record_id %in%c(7066331), "Students/school trips", target_who_what_10_TEXT ),
+                                   target_direction = ifelse(record_id %in%c(7066331), "Outbound", target_direction))
+
+
+
+# some ppl made updates to their entries using the correction link
+
+
 
 
 # note RA Adrianna Poppe did not enter in the record id for her correction to 9008490; doing it for her here

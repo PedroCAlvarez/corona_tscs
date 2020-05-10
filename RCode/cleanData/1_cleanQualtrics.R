@@ -89,8 +89,10 @@ findAllLinkedRecords = function(correct_id, data = qualtrics){
     return(correct_id_new) %>% sort()
    }
 }
+ 
 
-# the linkCorrectedEntries() function addresses the issue where some records are linked to the same original id in a daisy chain, but 
+ 
+ # the linkCorrectedEntries() function addresses the issue where some records are linked to the same original id in a daisy chain, but 
     # they currently do not have the same correct_record_match by:
   # i) linking all the records in this chain to have the same correct_record_match
   # ii) linking all the records in this chain to have the same entry type
@@ -113,7 +115,12 @@ linkCorrectedEntries = function(correct_id, data = qualtrics){
      if( which(corr_slice$record_id %in% x['correct_record_match'] & corr_slice$entry_type !='correction')%>% length() >0  ) {  
 
   # (3) if so, then change the correct_record_match in (1) to be the correct_record_match of policy_id (Y) in (2)
-      x['entry_type'] = corr_slice$entry_type[which(corr_slice$record_id %in% x['correct_record_match'] & corr_slice$entry_type !='correction')] %>% unique()
+
+      replaceSlice = corr_slice[which(corr_slice$record_id %in% x['correct_record_match'] & corr_slice$entry_type !='correction'),]
+      
+   
+      x['entry_type'] = ifelse(length(unique(replaceSlice$entry_type))==1, unique(replaceSlice$entry_type), unique(replaceSlice$entry_type[-which(replaceSlice$link_type == 'U')]))
+
       x['correct_record_match'] = corr_slice$correct_record_match[which(corr_slice$record_id %in% x['correct_record_match'] & corr_slice$entry_type !='correction')] %>% unique()
     } }
   return(x)
@@ -124,12 +131,12 @@ linkCorrectedEntries = function(correct_id, data = qualtrics){
                                         policy_id= str_trim(policy_id),
                                         correct_record_match = str_trim(correct_record_match))
 
-  # call this function recursively until you link all the corrections to the 'original' entries
+  #call this function recursively until you link all the corrections to the 'original' entries
   if(any(clean_slice$entry_type == 'correction')){
     linkCorrectedEntries(clean_slice$correct_record_match, data = clean_slice)
   }else{
-     return(clean_slice )
-   }
+      return(clean_slice )
+    }
 
  
 }
@@ -323,6 +330,7 @@ varsToMatch = c('record_id',
              'correct_dum',
              'entry_type')
 
+ 
 
 qualtrics = data.frame(qualtrics)
 qualtrics[match(cleanAllLinkedRecords$new_id, qualtrics$new_id),varsToMatch]  = cleanAllLinkedRecords[varsToMatch]

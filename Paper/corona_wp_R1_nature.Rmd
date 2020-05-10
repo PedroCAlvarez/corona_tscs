@@ -331,9 +331,11 @@ plotBioGraph("Europe", "External Border Restrictions", "2020-03-15")
 
 # Government Policy Activity Index {-}
 
-In this section, we briefly present our new index for tracking the relative government activity with regards to policies targeting COVID-19 across countries and over time. The model is a version of item-response theory known as ideal point modeling that incorporates over-time trends [@kubinec2019ideal;@jackman2004;@gelman2005;@quinn2002], permitting inference on how a latent construct, in this case total policy activity, responds to changes in the pandemic. To fit the model, the different policy types shown in Table \@ref(tab:desctab) were coded in terms of ordinal values, with lower values for sub-national targets of policies and higher values for policies applying to the entire country, or in the case of external border restrictions, to one or more external countries. For instance, internal country policies can take on three possible values: no policy, sub-national policy, or policy covering the whole country. Meanwhile external border restrictions can take on four possible values: no policy, policy targeting one other country, policy targeting multiple countries, and policy targeting all countries in the world (i.e., border closure).  
+In this section, we briefly present our new index for tracking the relative government activity with regards to policies targeting COVID-19 across countries and over time. The model is a version of item-response theory known as ideal point modeling that incorporates over-time trends [@kubinec2019ideal;@jackman2004;@gelman2005;@quinn2002;@barbera2015;@bonica2014], permitting inference on how a latent construct, in this case total policy activity, responds to changes in the pandemic. To fit the model, the different policy types shown in Table \@ref(tab:desctab) were coded in terms of ordinal values, with lower values for sub-national targets of policies and higher values for policies applying to the entire country, or in the case of external border restrictions, to one or more external countries. For instance, internal country policies can take on three possible values: no policy, sub-national policy, or policy covering the whole country. Meanwhile external border restrictions can take on four possible values: no policy, policy targeting one other country, policy targeting multiple countries, and policy targeting all countries in the world (i.e., border closure).  
 
-We employed ideal point modeling because it can be given a latent utility interpretation [@jackman2004]. The model assumes that countries are located in a latent space in which the distance between countries and policies represents the relative cost of imposing different policies. As countries become more willing to pay these costs, i.e. their ideal points/policy activity score rises, they then subsequently implement more policies. This interpretation is similar to the traditional item-response theory approach for analyzing test questions in which students who answer more questions on a test are considered to have higher "ability" [@takane1986; @reckase2009]. Following this logic, we are able to estimate latent country scores that represent the readiness of a country to impose a set number of policies. The cost of policies is estimated via discrimination parameters, which indicate how strongly policies discriminate between countries (in other words, are an indication of relative cost).
+We employed ideal point modeling because it can be given a latent utility interpretation [@jackman2004]. We assume that each country has an unobserved "ideal point" on a unidimensional space representing its willingness to impose policies, while each policy likewise has a position on the same space. The relative cost of different policies can be thought of as the distance between a country's ideal point and the ideal point of the policy relative to other policies. While the meaning of this implied cost will vary from country to country, it is likely a combination of the social, political and economic costs of implementing the policy at a given time point.
+
+As countries become more willing to pay the implied cost (i.e. the latent distance between ideal point and policy), the country's ideal points/policy activity score will rise and they will implement more policies. This interpretation is similar to the traditional item-response theory approach for analyzing test questions in which students who answer more questions on a test are considered to have higher "ability" [@takane1986; @reckase2009]. Following this logic, we are able to estimate latent country scores that represent the readiness of a country to impose a set number of policies. The implied cost of policies is estimated via discrimination parameters, which indicate how strongly policies discriminate between countries. 
 
 The country-level policy activity score is further allowed to vary over time in a random-walk process with a country-specific variance parameter to incorporate heteroskedasticity [@quinn2002]. Incorporating over-time trends explicitly is very important for capturing the nuances of policy implementation over time. For example, countries that impose more restrictive policies at an earlier date will be rewarded with higher policy activity scores compared to those who impose such policies at a later date. Imposing a given policy when most countries have already imposed them will result in little if any change in the policy activity score. 
 
@@ -341,7 +343,7 @@ The advantage of employing a statistical model, rather than simply summing acros
 
 Furthermore, because the model is stochastic, it is robust to some of the coding errors of the kind that often occur in these types of datasets. As we discuss in our validation section, while we are continuing to validate the data on a daily basis, the massive speed and scope of data collection means that we cannot identify all issues with the data in real time. However, the measurement model employed only requires us to assume that on average the policy codings are correct, not that they are correct for each instance. Coding error, such as incorrectly selecting a policy type, will propagate through the model as higher uncertainty intervals, but will not affect average posterior estimates. As our data quality improves, and we are able to collect more data over time, the model will produce more variegated estimates with smaller uncertainty intervals.
 
-Figure \@ref(fig:plotindex) shows the estimated index scores for the `r length(unique(clean_data$country))` countries in our dataset at present, and suggests strong evidence of policy diffusion effects. While information about COVID-19 existed at least as early as January, we do not see large-scale changes occurring in activity scores until March. Furthermore, the trajectories are highly non-linear, with a large number of countries quickly transitioning from relatively low to relatively high scores. This tandem movement is a strong indication of policy diffusion as countries adopted similar policies across time and space as opposed to a more linear learning process.
+Figure \@ref(fig:plotindex) shows the estimated index scores for the `r length(unique(clean_data$country))` countries in our dataset at present, and suggests strong evidence of policy diffusion effects. While information about COVID-19 existed at least as early as January, we do not see large-scale changes occurring in activity scores until March. Furthermore, the trajectories are highly non-linear, with a large number of countries quickly transitioning from relatively low to relatively high scores. This non-linear movement could be due to a variety of factors, including the rapid spread of the virus and policy learning as states observe other states' policy actions. We note that the country that appeared to take the quickest action in the shortest amount of time is New Zealand, as can be seen in Figure \@ref(fig:plotvar) where we show over-time variance parameters for each country.
 
 Of course, a caveat with the index is that we may be missing some possible policy measures that have occurred due to the difficulty in finding them in published sources. However, there is still clear differentiation within the index in terms of when policies were imposed, with some countries starting to impose policies much earlier than others. Furthermore, there is a clear break about March 1st when countries began to impose more stringent policies across the world.
 
@@ -425,9 +427,12 @@ calc_ranks <- select(to_plot,country_spread,country,month_var) %>% distinct %>%
   #geom_ribbon(aes(ymin=low_est,ymax=high_est,group=country),alpha=0.2) +
   geom_line(aes(group=country,colour=med_est),alpha=0.7, size = 1) +
   scale_color_distiller(palette="Reds",direction=1) +
-  gghighlight(count_rank<5,
+  gghighlight(count_rank<4,
               calculate_per_facet = T,
-              label_params=list(size=2.5,colour="black"),
+              label_params=list(size=2.5,colour="black",direction="both",
+                                force=1.7,
+                                label.padding=0.1,
+                                segment.curvature=-.5),
               unhighlighted_params = list(size = .5, colour = alpha("grey", 0.3))) +
   # scale_color_manual(name="Country",values=c('#00CC33','#E69F00','#CC0000',"#FF99FF","#99CCFF","#006699","#990099","orangered1","#9933FF","yellow3", "blue1" ))+
   theme_minimal() +
@@ -460,7 +465,7 @@ overall <- to_plot  %>%
 
 overall + breakout +
   plot_annotation(tag_levels="A",
-                  caption=str_wrap("Estimates are derived from Stan, a Markov Chain Monte Carlo sampler. Median posterior estimates are shown. Plot A shows the full distribution of countries, while plot B shows each month separately with the top 4 countries for that month in terms of increases in activity scores from start of the month to the end of the month.",width=115))
+                  caption=str_wrap("Estimates are derived from Stan, a Markov Chain Monte Carlo sampler. Median posterior estimates are shown. Plot A shows the full distribution of countries, while plot B shows each month separately with the top 3 countries for that month in terms of increases in activity scores from start of the month to the end of the month.",width=110))
 
 ggsave("index.png")
 
@@ -589,9 +594,9 @@ The likelihood function for the model is as follows for a set of countries $i \i
 (\#eq:basic)
 \end{align}
 
-In this equation, the time-varying country parameters $\alpha_{it}$, also called person abilities or ideal points, are our estimate of policy activity scores. They are estimated jointly with the item (polity type) discrimination parameters $\gamma_j$ and item difficulty (intercept) parameters $\beta_j$. To address the ordinal nature of the outcome $Y_{ijtk}$, ordinal cutpoints $c_{k}$ are used to model the varying levels of enforcement and geographical targets in the data. The logit function, represented by $\zeta(\cdot)$, maps the latent scale to probability that a given ordinal outcome is chosen. Because we have two separate type of ordered measures (domestic versus international policies) with either four or five ordered categories, we estimate the model jointly as two ordered logit specifications. 
+In this equation, the time-varying country parameters $\alpha_{it}$, also called person abilities or ideal points, are our estimate of policy activity scores. They are estimated jointly with the item (policy type) discrimination parameters $\gamma_j$ and item difficulty (intercept) parameters $\beta_j$. To address the ordinal nature of the outcome $Y_{ijtk}$, ordinal cutpoints $c_{k}$ are used to model the varying levels of enforcement and geographical targets in the data. The logit function, represented by $\zeta(\cdot)$, maps the latent scale to probability that a given ordinal outcome is chosen. Because we have two separate type of ordered measures (domestic versus international policies) with either three or four ordered categories, we estimate the model jointly as two ordered logit specifications. 
 
-The likelihood in \@ref(eq:basic) is not fully identified due to possibly scaling issues with the latent variable $\alpha_{it}$ (i.e., it has no natural units) and due to potential sign reflection (also called multi-modality) where $L(Y_{ijtk})$ could be unchanged even if $\alpha_{it}$ is multiplied by -1. These identification issues are well-known in the literature [@gelman2005], and we resolve them with standard practices. First, we assign a reasonably informative prior distribution on the $t=1$ ideal points:
+The likelihood in \@ref(eq:basic) is not fully identified due to possible scaling issues with the latent variable $\alpha_{it}$ (i.e., it has no natural units) and due to potential sign reflection (also called multi-modality) where $L(Y_{ijtk})$ could be unchanged even if $\alpha_{it}$ is multiplied by -1. These identification issues are well-known in the literature [@gelman2005], and we resolve them with standard practices. First, we assign a reasonably informative prior distribution on the $t=1$ ideal points:
 
 \begin{equation}
 \alpha_{it=1} \sim N(0,1)
@@ -619,9 +624,9 @@ The over-time dimension induces a new source of identifiability issues, which we
 
 ## Model Convergence {-}
 
-For estimation, we sample from four Markov Chain Monte Carlo (MCMC) chains with over-dispersed starting values using Stan, a Hamiltonian Markov Chain Monte Carlo (HMC) sampler [@carpenter2017]. We run the sampler for 600 iterations, 300 of which are discarded as warmup. While this number of iterations is far less than other MCMC samplers, HMC is a far more efficient at exploring the posterior density and we are able to achieve convergence using this number of iterations. 
+For estimation, we sample from four Markov Chain Monte Carlo (MCMC) chains with over-dispersed starting values using Stan, a Hamiltonian Markov Chain Monte Carlo (HMC) sampler [@carpenter2017]. We run the sampler for 800 iterations, 400 of which are discarded as warmup. While this number of iterations is far less than other MCMC samplers, HMC is a far more efficient at exploring the posterior density and we are able to achieve convergence using this number of iterations. 
 
-We assess convergence using split-$\hat{R}$ as we fit independent chains with over-dispersed starting values. $\hat{R}$ values for all parameters (which totaled more than 40,000) were 1.01 or less (see panel A in Figure \@ref(fig:modelconv)). Panel B in Figure \@ref(fig:modelconv) shows the distribution of effective number of samples for the parameters, which is a way of comparing the auto-correlation in MCMC draws to independent draws without auto-correlation, as we might obtain from a Monte Carlo simulation. Again, the number of effective samples is quite high, often exceeding the total number of empirical draws.^[Hamiltonian Monte Carlo can produce more informative samples than even a Monte Carlo simulation because it can generate negatively correlated draws that explore the posterior space much more quickly.]  We also assess convergence using trace plots, one of which is shown below for the time-varying country policy activity scores for the United States. Strong mixing between chains can be observed in the plot. Finally, we report no divergent transitions or iterations where the sampler reached its maximum tree depth, which are both signs of poor mixing in the chains. For these reasons, we are confident than the sampler reached a stationary distribution and was able to adequately explore the high-density regions of the joint posterior.
+We assess convergence using split-$\hat{R}$ by fitting four independent chains with over-dispersed starting values. $\hat{R}$ values for all parameters (which totaled more than 40,000) were 1.01 or less (see plot A in Figure \@ref(fig:modelconv)). Plot B in Figure \@ref(fig:modelconv) shows the distribution of effective number of samples for the parameters, which is a way of comparing the auto-correlation in MCMC draws to independent draws without auto-correlation, such as we might obtain from a Monte Carlo simulation. Again, the number of effective samples is quite high, often exceeding the total number of empirical draws.^[Hamiltonian Monte Carlo can produce more informative samples than even a Monte Carlo simulation because it can generate negatively correlated draws that explore the posterior space much more quickly.]  We also assess convergence using trace plots, one of which is shown below for the time-varying country policy activity scores for the United States. Strong mixing between chains can be observed in the plot. Finally, we report no divergent transitions or iterations where the sampler reached its maximum tree depth, which are both signs of poor mixing in the chains. For these reasons, we are confident than the sampler reached a stationary distribution and was able to adequately explore the high-density regions of the joint posterior.
 
 ```{r modelconv,fig.cap="Convergence Diagnostics for Random-Walk HMC Fit"}
 # rhat <- id_plot_rhats(severity_fit) +
@@ -670,11 +675,11 @@ knitr::include_graphics("mcmc_evaluate.png",dpi = 300)
 
 ```
 
-## Model Validity
+## Model Validity {-}
 
 While employing a measurement model ensures robustness to arbitrary data coding errors, it is still necessary to validate the model's over-time process, which imposes some assumptions on how policy activity scores change over time. The use of a random walk implies that policy differences will be relatively stable from one day to the next, which could limit the ability of scores to encompass quick, discontinuous changes [@reunig2019]. While we employ this particular specification because it has been applied previously to a variety of empirical phenomena and because of its relative parsimony, we can partially test for whether it captures changes by estimating a static IRT model for each day in the sample. The corresponding estimates represent cross-sections without any time process imposed. 
 
-Due to the complexity of comparing the estimates, we plot the results for six countries separately in Figure \@ref(timeest). This figure shows that indeed the cross-sectional estimates can show much more discontinuous jumps, though we note at the same time that there appears to be substantial noise in the estimates as they only incorporate information available at a single day. Nonetheless, while the random-walk estimates certainly exhibit less discontinuos change, they do still allow for very quick divergence in policy activity scores, with France and Russia moving from the bottom to the top of the index in the space of only a few weeks. 
+Due to the complexity of comparing the estimates, we plot the results for six countries separately in Figure \@ref(fig:timeest). This figure shows that indeed the cross-sectional estimates can show much more discontinuous jumps, though we note at the same time that there appears to be substantial noise in the estimates as they only incorporate information available at a single day. Nonetheless, while the random-walk estimates certainly exhibit less discontinuos change, they do still allow for very quick divergence in policy activity scores, with France and Russia moving from the bottom to the top of the index in the space of only a few weeks. 
 
 ```{r timeest,fig.cap="Comparison of Cross-sectional Estimates of Policy Activity Scores to the Random-Walk Time Series Estimates"}
 
@@ -756,7 +761,7 @@ compare_plot
 
 We note as well that the model is parameterized so that each country has its own variance parameter. This permits the rate of change to vary country, reducing the concern that the model may be overly restricting change. These variance parameters are shown in Figure \@ref(fig:plotvar), sorted in order of increasing over-time variance. These estimates are themselves substantively interesting, as the United States, which was used as the reference category, has actually one of the lowest rates of over-time change, while some countries like New Zealand, Spain and San Marino witnessed the highest variance in policy activity scores. Because at this time the index only captures increasing numbers of policies, the variance parameters can be given the interpretation of which countries responded in the shortest period of time across a broad array of policy indicators.
 
-```{r plotvar,fig.height=11,fig.width=5}
+```{r plotvar,fig.height=11,fig.width=5,fig.cap="Country-level Variance (Over-time Change) Parameters from Policy Activity Index Estimation"}
 # severity_fit <- readRDS("../data/activity_fit_rw.rds")
 # 
 # all_lev <- as.character(unique(clean_data$init_country))
@@ -779,11 +784,14 @@ get_var <- readRDS("../data/get_var.rds")
 
 get_var %>% 
   ggplot(aes(y=med_est2,x=reorder(country,med_est2))) +
-  geom_pointrange(aes(ymin=low_est2,
-                      ymax=high_est2)) +
+  geom_linerange(aes(ymin=low_est2,
+                      ymax=high_est2),alpha=0.3,colour="blue") +
+  geom_point(alpha=0.5,colour="blue") +
+  geom_text_repel(aes(label=country),size=3,force=1.8,segment.alpha=0.5,hjust=1) +
   theme(panel.grid = element_blank(),
         panel.background = element_blank(),
-        axis.text.y=element_text(size=5)) +
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
   coord_flip() +
   xlab("") +
   ylab("Over-Time Variance of Latent Scale")

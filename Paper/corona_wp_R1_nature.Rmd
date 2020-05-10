@@ -475,7 +475,7 @@ Table \@ref(tab:rankcount) shows the discrimination parameters from the underlyi
 We note that these are average values for the sample. Imposing these policies may be less costly for certain countries or for countries that share certain characteristics, such as smaller numbers of enrolled students or relatively healthy economies. However, it is important to note that we can see these patterns on a world-wide scale.
 
 
-Surprisingly, at the top of the index we see school closure as the most difficult/costly policy to implement. Closure of pre-schools, though, as opposed to other school types, appears to be relatively less costly for states to undertake, perhaps because pre-schools do not operate on a full-time basis. Generally speaking, the next most difficult policies are various business closure policies and mandatory social distancing policies. Internal border restrictions are considered more difficult to implement than external border restrictions, while relatively straightforward policies like public awareness campaigns, health monitoring and opening new task forces or bureaus are near the bottom of the index. 
+At the top of the index we see various business closure policies as the most difficult to implement, while school closures are the next most difficult. Closure of pre-schools, though, as opposed to other school types, appears to be relatively less costly for states to undertake, perhaps because pre-schools do not operate on a full-time basis. Internal border restrictions are considered more difficult to implement than external border restrictions, while relatively straightforward policies like public awareness campaigns, health monitoring and opening new task forces or bureaus are near the bottom of the index. Quarantines placing people in external facilities, such as hotels or government quarantine centers, are also estimated as being less costly than quarantine at home (stay-at-home orders).
 
 Given this distribution of discrimination parameters, we believe the index is a valid representation of the underlying process by which governments progressively impose more difficult policies. As states relax policies, we will further gain information about which policies appear to be more costly as we will be able to factor in the duration for which these policies were implemented. Consistent with our findings, we observe that the announced relaxation policies happening at the time of writing in European countries primarily center on businesses and school openings, suggesting that these policies are uniquely costly to keep in place compared to travel restrictions.^[See Doherty, Ben. "The exit strategy: how countries around the world are preparing for life after Covid-19." *The Guardian* 18 April 2020, https://www.theguardian.com/world/2020/apr/19/the-exit-strategy-how-countries-around-the-world-are-preparing-for-life-after-covid-19]
 
@@ -496,11 +496,43 @@ out_items %>%
                 `Closure of Schools_type_preschool`="Pre-school Closure",
                 `Closure of Schools_type_primaryschool`="Primary School Closure",
                 `Closure of Schools_type_secondschool`="High School Closure",
+                `Curfew_`="Curfew",
+                `Declaration of Emergency_`="Declaration of Emergency",
+                `External Border Restrictions_`="External Border Closure",
+                `External Border Restrictions_Other External Border Restriction`="Other Border Restriction",
+                `External Border Restrictions_health_cert`="Border Health Certificates",
+                `External Border Restrictions_travel_hist`="Travel History Required",
+                `External Border Restrictions_Visa restrictions (e.g. suspend issuance of visa)`="Suspend Visa Issuance",
+                `Health Monitoring_`="Monitoring Population Health",
+                `Health Resources_`="Other Health Resources",
+                `Health Resources_Doctors`="Mobilization of Doctors",
+                `Health Resources_health_research`="Biomedical Research",
+                `Health Resources_Hospitals`="Supporting Hospitals",
+                `Health Resources_Nurses`="Mobilization of Nurses",
+                `Health Resources_other_facilities`="Other Health Facilities",
+                `Health Resources_Personal Protective Equipment`="PPE Mobilization",
+                `Health Resources_public_tests`="Public Testing Mobilization",
+                `Health Resources_quar_facility`="Building Quarantine Facilities",
+                `Health Resources_Unspecified Health Infrastructure`="Other Health Facilities",
+                `Health Resources_ventilators`="Mobilization of Ventilators",
+                `Health Resources_volunteers`="Mobilization of Volunteers",
                 `External Border Restrictions_type_screenings`="Border Health Screenings",
                 `Health Resources`="General Health Resources",
+                `Health Testing_`="Mobilization of Testing",
+                `Internal Border Restrictions_`="Internal Border Restrictions",
+                `Public Awareness Measures_`="Public Awareness Measures",
+                `New Task Force, Bureau or Administrative Configuration_`="Task Force",
+                `Quarantine/Lockdown_`="Quarantine/Lockdown",
+                `Quarantine/Lockdown_hotel_quar`="Quarantine in Hotel",
+                `Quarantine/Lockdown_Other Quarantine`="Other Quarantine",
+                `Restriction of Non-Essential Businesses_`="Restriction Other Business",
+                `Restriction of Non-Essential Businesses_type_commerce`="Restriction Commercial Business",
+                `Restriction of Non-Essential Government Services_`="Restriction Government Services",
+                `Restrictions of Mass Gatherings_`="Restriction of Mass Gatherings",
+                `Social Distancing_`="Social Distancing",
                 `Health Resources_type_health_masks`="Masks Policies",
                 `Health Resources_type_health_other`="Other Health Resources",
-                `Health Resources_type_health_staff`="Health Staff",
+                `Health Resources_type_health_staff`="Other Health Staff",
                 `Health Resources_type_sanitizer`="Sanitizer Policies",
                 `Health Resources_type_temporary`="Temporary Medical Units",
                 `Health Resources_type_testing`="Test Production",
@@ -530,7 +562,7 @@ out_items %>%
   mutate_at(c("5% Low Estimate","Median Estimate","95% High Estimate"),~round(.,1)) %>%
     knitr::kable("latex",booktabs=T,longtable=T,
                caption="Discrimination of Item Parameters (Policies) in Policy Activity Index") %>%
-  kable_styling(latex_options = c("striped", "hold_position")) %>%
+  kable_styling(latex_options = c("striped", "hold_position"),font_size = 9) %>%
   column_spec(1,width="4cm") %>%
   column_spec(2:5,width="2.5cm")
 ```
@@ -591,7 +623,7 @@ For estimation, we sample from four Markov Chain Monte Carlo (MCMC) chains with 
 
 We assess convergence using split-$\hat{R}$ as we fit independent chains with over-dispersed starting values. $\hat{R}$ values for all parameters (which totaled more than 40,000) were 1.01 or less (see panel A in Figure \@ref(fig:modelconv)). Panel B in Figure \@ref(fig:modelconv) shows the distribution of effective number of samples for the parameters, which is a way of comparing the auto-correlation in MCMC draws to independent draws without auto-correlation, as we might obtain from a Monte Carlo simulation. Again, the number of effective samples is quite high, often exceeding the total number of empirical draws.^[Hamiltonian Monte Carlo can produce more informative samples than even a Monte Carlo simulation because it can generate negatively correlated draws that explore the posterior space much more quickly.]  We also assess convergence using trace plots, one of which is shown below for the time-varying country policy activity scores for the United States. Strong mixing between chains can be observed in the plot. Finally, we report no divergent transitions or iterations where the sampler reached its maximum tree depth, which are both signs of poor mixing in the chains. For these reasons, we are confident than the sampler reached a stationary distribution and was able to adequately explore the high-density regions of the joint posterior.
 
-```{r modelconv,fig.cap="Rhat Values of Parameters for Random-Walk MCMC Fit"}
+```{r modelconv,fig.cap="Convergence Diagnostics for Random-Walk HMC Fit"}
 # rhat <- id_plot_rhats(severity_fit) +
 #   xlab(expression("split-"~hat(R)))
 # 
@@ -634,10 +666,130 @@ We assess convergence using split-$\hat{R}$ as we fit independent chains with ov
 # 
 # ggsave("mcmc_evaluate.png",width=6.5,height=4.5)
 
-knitr::include_graphics("mcmc_evaluate.png")
+knitr::include_graphics("mcmc_evaluate.png",dpi = 300)
 
 ```
 
+## Model Validity
+
+While employing a measurement model ensures robustness to arbitrary data coding errors, it is still necessary to validate the model's over-time process, which imposes some assumptions on how policy activity scores change over time. The use of a random walk implies that policy differences will be relatively stable from one day to the next, which could limit the ability of scores to encompass quick, discontinuous changes [@reunig2019]. While we employ this particular specification because it has been applied previously to a variety of empirical phenomena and because of its relative parsimony, we can partially test for whether it captures changes by estimating a static IRT model for each day in the sample. The corresponding estimates represent cross-sections without any time process imposed. 
+
+Due to the complexity of comparing the estimates, we plot the results for six countries separately in Figure \@ref(timeest). This figure shows that indeed the cross-sectional estimates can show much more discontinuous jumps, though we note at the same time that there appears to be substantial noise in the estimates as they only incorporate information available at a single day. Nonetheless, while the random-walk estimates certainly exhibit less discontinuos change, they do still allow for very quick divergence in policy activity scores, with France and Russia moving from the bottom to the top of the index in the space of only a few weeks. 
+
+```{r timeest,fig.cap="Comparison of Cross-sectional Estimates of Policy Activity Scores to the Random-Walk Time Series Estimates"}
+
+# load all of the individual estimates, combine and plot vis-a-vis AR1 model
+
+all_mod_files <- list.files("../data/cluster/all_iter",full.names = T)
+
+get_est_sum2 <- get_est %>%
+            ungroup %>%
+  filter(country!="Chad") %>%
+            mutate(estimate=plogis(estimate)*100,
+                   date_announced=ymd(as.character(date_announced))) %>%
+  group_by(country,date_announced) %>%
+  summarize(med_est=median(estimate),
+            high_est=quantile(estimate,.95),
+            low_est=quantile(estimate,.05)) %>%
+  group_by(date_announced) %>%
+  mutate(`Country Rank`=rank(med_est))
+
+cross_sect <- lapply(all_mod_files, function(f) {
+  this_mod <- readRDS(f)
+
+est_mod <- as.data.frame(this_mod@stan_samples,"L_full") %>%
+  mutate(iter=1:n()) %>%
+  gather(key="parameter",value="estimate",-iter) %>%
+  mutate(date_announced=ymd(str_extract(f,"20[0-9]+-[0-9]+-[0-9]+")),
+         estimate=plogis(estimate)*100,
+         country=as.numeric(str_extract(parameter,"[1-9][0-9]?[0-9]?0?(?=\\])")),
+         country=factor(country,labels=levels(this_mod@score_data@score_matrix$person_id))) %>% 
+  group_by(country,date_announced) %>% 
+  summarize(med_est2=median(estimate),
+            high_est2=quantile(estimate,.95),
+            low_est2=quantile(estimate,.05))
+
+  est_mod
+
+}) %>% bind_rows
+
+# merge
+
+merge_est <- left_join(get_est_sum2,cross_sect,by=c("country","date_announced"))
+
+# let's just plot these relative to the other estimates
+
+robust_plot <- cross_sect  %>%
+  ggplot(aes(y=med_est2,x=date_announced)) +
+  #geom_ribbon(aes(ymin=low_est,ymax=high_est,group=country),alpha=0.2) +
+  geom_line(aes(group=country,colour=med_est2),alpha=0.7, size = 1) +
+  scale_color_distiller(palette="Reds",direction=1) +
+  theme_minimal() +
+  theme(panel.grid = element_blank()) +
+  xlab("") +
+  ylab("Policy Activity Index Scale (0 to 100)") +
+  guides(color="none")
+
+#robust_plot + overall
+
+compare_plot <- merge_est %>% 
+  gather(key="est_type",value="med_est",med_est,med_est2) %>% 
+  mutate(est_type=recode(est_type,`med_est`="Random Walk",
+                         `med_est2`="Cross Sections")) %>% 
+  filter(country %in% c("United States of America","South Korea","France","Germany","Mexico","Russia")) %>% 
+  ggplot(aes(y=med_est,x=date_announced)) +
+  #geom_ribbon(aes(ymin=low_est,ymax=high_est,group=country),alpha=0.2) +
+  geom_line(aes(group=est_type,colour=est_type),alpha=0.7, size = 1) +
+  scale_color_brewer(type="qual") +
+  #scale_color_distiller(palette="Reds",direction=1) +
+  theme_minimal() +
+  theme(panel.grid = element_blank()) +
+  xlab("") +
+  ylab("Policy Activity Index Scale (0 to 100)") +
+  guides(color=guide_legend(title="")) +
+  facet_wrap(~country)
+
+compare_plot
+
+```
+
+
+We note as well that the model is parameterized so that each country has its own variance parameter. This permits the rate of change to vary country, reducing the concern that the model may be overly restricting change. These variance parameters are shown in Figure \@ref(fig:plotvar), sorted in order of increasing over-time variance. These estimates are themselves substantively interesting, as the United States, which was used as the reference category, has actually one of the lowest rates of over-time change, while some countries like New Zealand, Spain and San Marino witnessed the highest variance in policy activity scores. Because at this time the index only captures increasing numbers of policies, the variance parameters can be given the interpretation of which countries responded in the shortest period of time across a broad array of policy indicators.
+
+```{r plotvar,fig.height=11,fig.width=5}
+# severity_fit <- readRDS("../data/activity_fit_rw.rds")
+# 
+# all_lev <- as.character(unique(clean_data$init_country))
+# 
+# get_var <- as.data.frame(severity_fit@stan_samples,"time_var_full") %>%
+#   mutate(iter=1:n()) %>%
+#   gather(key="parameter",value="estimate",-iter) %>%
+#   mutate(date_announced=ymd(str_extract(f,"20[0-9]+-[0-9]+-[0-9]+")),
+#          estimate=estimate,
+#          country=as.numeric(str_extract(parameter,"[1-9][0-9]?[0-9]?0?(?=\\])")),
+#          country=factor(country,labels=levels(this_mod@score_data@score_matrix$person_id))) %>%
+#   group_by(country,date_announced) %>%
+#   summarize(med_est2=median(estimate),
+#             high_est2=quantile(estimate,.95),
+#             low_est2=quantile(estimate,.05))
+# 
+# saveRDS(get_var,"../data/get_var.rds")
+
+get_var <- readRDS("../data/get_var.rds")
+
+get_var %>% 
+  ggplot(aes(y=med_est2,x=reorder(country,med_est2))) +
+  geom_pointrange(aes(ymin=low_est2,
+                      ymax=high_est2)) +
+  theme(panel.grid = element_blank(),
+        panel.background = element_blank(),
+        axis.text.y=element_text(size=5)) +
+  coord_flip() +
+  xlab("") +
+  ylab("Over-Time Variance of Latent Scale")
+
+
+```
 
 
 

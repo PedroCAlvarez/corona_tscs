@@ -496,9 +496,6 @@ release_long = release_long %>%
     else is.na(type_sub_cat) %>% row_number() == 1) %>%
   ungroup()
 
-names(release_long)
-head(release_long$source_file_Type)
-
 
 # add in update information
 

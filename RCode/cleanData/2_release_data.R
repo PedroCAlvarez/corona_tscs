@@ -125,7 +125,7 @@ niehaus <- read_csv("data/data_niehaus/03_21_20_0105am_wep.csv") %>%
 # load cleaned data
  
 clean_data <- readRDS("data/CoronaNet/coranaNetData_clean_wide.rds")
-
+ 
 # activity index
 
 get_est <- readRDS("data/get_est.rds")
@@ -143,11 +143,11 @@ get_est_sum <- get_est %>%
   mutate(index_country_rank=rank(index_med_est))
 
 # select only columns we need
-
+ 
 release <- filter(clean_data,!is.na(init_country),is.na(init_other),is.na(target_other) | target_other=="",
                   validation) %>% 
               select(record_id,policy_id,entry_type, 
-                      correct_type = "correct_dum",
+                     correct_type = "correct_dum",
                      update_type=update_end_dum,
                      event_description,country="init_country",
                      date_announced,
@@ -171,8 +171,8 @@ release <- filter(clean_data,!is.na(init_country),is.na(init_other),is.na(target
                      compliance,
                      enforcer,
                      link="sources_matrix_1_2") %>% 
-  select(-matches("TEXT"))
-
+  select(-matches("TEXT|^X|entry_corr_type|corr_entry_type|type_new_admin_coop|source_file_Type|link_type|source_file_2_Type"))
+ 
 # move visa restrictions from travel_mechanism to type_ext_restrict 
 release$type_ext_restrict = ifelse(grepl("Visa restrictions", release$travel_mechanism), 
                                    ifelse(is.na(release$type_ext_restrict),  'Visa restrictions (e.g. suspend issuance of visa)', paste(release$type_ext_restrict, 'Visa restrictions (e.g. suspend issuance of visa)', sep = ',')),release$type_ext_restrict )
@@ -289,7 +289,7 @@ release_long <- gather(release,key="discard",value="type_text",
 release_long <- left_join(release_long,select(cats,-vals_id),by=c(extra="type_var",
                                                  "type_sub_cat"="orig_val"))
 
-
+ 
 # merge back down
 release_long <- distinct(release_long,record_id,policy_id,new_id,.keep_all = T) %>% 
   ungroup %>% 
@@ -496,8 +496,10 @@ release_long = release_long %>%
     else is.na(type_sub_cat) %>% row_number() == 1) %>%
   ungroup()
 
+names(release_long)
+head(release_long$source_file_Type)
 
- 
+
 # add in update information
 
 update_orig <- qualtRics::read_survey("data/CoronaNet/RA/ra_update_first.csv")

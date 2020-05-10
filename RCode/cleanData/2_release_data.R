@@ -379,11 +379,11 @@ release_long = release_long %>%
 mutate_cond( type %in% c('Declaration of Emergency',
               'Internal Border Restrictions',
               'Curfew',
-              'Health Testing',
+              'Health Testing', 
               'Health Monitoring',
               'Other Policy Not Listed Above') & !is.na(type_sub_cat),
               type_sub_cat = NA) %>%
-mutate_cond( type == "Quarantine" &
+mutate_cond( type %in% c("Quarantine/Lockdown", "Quarantine") &
               type_sub_cat %!in% c("Self-Quarantine (i.e. quarantine at home)",
               "Government Quarantine (i.e. quarantine at a government hotel or facility)",
               "Quarantine outside the home or government facility (i.e. quarantine in a hotel)",

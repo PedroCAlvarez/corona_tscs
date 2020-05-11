@@ -89,8 +89,10 @@ findAllLinkedRecords = function(correct_id, data = qualtrics){
     return(correct_id_new) %>% sort()
    }
 }
+ 
 
-# the linkCorrectedEntries() function addresses the issue where some records are linked to the same original id in a daisy chain, but 
+ 
+ # the linkCorrectedEntries() function addresses the issue where some records are linked to the same original id in a daisy chain, but 
     # they currently do not have the same correct_record_match by:
   # i) linking all the records in this chain to have the same correct_record_match
   # ii) linking all the records in this chain to have the same entry type
@@ -113,7 +115,12 @@ linkCorrectedEntries = function(correct_id, data = qualtrics){
      if( which(corr_slice$record_id %in% x['correct_record_match'] & corr_slice$entry_type !='correction')%>% length() >0  ) {  
 
   # (3) if so, then change the correct_record_match in (1) to be the correct_record_match of policy_id (Y) in (2)
-      x['entry_type'] = corr_slice$entry_type[which(corr_slice$record_id %in% x['correct_record_match'] & corr_slice$entry_type !='correction')] %>% unique()
+
+      replaceSlice = corr_slice[which(corr_slice$record_id %in% x['correct_record_match'] & corr_slice$entry_type !='correction'),]
+      
+   
+      x['entry_type'] = ifelse(length(unique(replaceSlice$entry_type))==1, unique(replaceSlice$entry_type), unique(replaceSlice$entry_type[-which(replaceSlice$link_type == 'U')]))
+
       x['correct_record_match'] = corr_slice$correct_record_match[which(corr_slice$record_id %in% x['correct_record_match'] & corr_slice$entry_type !='correction')] %>% unique()
     } }
   return(x)
@@ -124,12 +131,12 @@ linkCorrectedEntries = function(correct_id, data = qualtrics){
                                         policy_id= str_trim(policy_id),
                                         correct_record_match = str_trim(correct_record_match))
 
-  # call this function recursively until you link all the corrections to the 'original' entries
+  #call this function recursively until you link all the corrections to the 'original' entries
   if(any(clean_slice$entry_type == 'correction')){
     linkCorrectedEntries(clean_slice$correct_record_match, data = clean_slice)
   }else{
-     return(clean_slice )
-   }
+      return(clean_slice )
+    }
 
  
 }
@@ -169,7 +176,6 @@ qualtrics = read_survey('data/CoronaNet/RA/ra_data_pull.csv') %>%
   filter(Progress>98)
 
 
- 
 # text entry cleaning ----------------------------------
 ## !!! NOTE need to  do this for all text entries
 qualtrics$target_city[which(qualtrics$target_city == 'bogota')] = "Bogota"
@@ -193,6 +199,7 @@ correction_record_ids = qualtrics[which(qualtrics$entry_type == 'correction'), '
 matched_corrections = qualtrics$record_id[which(qualtrics$record_id %in% correction_record_ids$entry_type_2_TEXT)]
 unmatched_corrections = setdiff(correction_record_ids$entry_type_2_TEXT, matched_corrections)
 
+
 # make a variable called correct_record_match: if entry is corrected, fill in the corresponding record id entered in entry_type_2_TEXT,
 #  if an entry was not corrected, fill in with original record id
 qualtrics$correct_record_match = ifelse(
@@ -206,6 +213,13 @@ qualtrics$correct_record_match = ifelse(
 # make a variable called correct_dum: dummy variable for if entry is corrected or not
 qualtrics$correct_dum = ifelse(qualtrics$entry_type == 'correction', 'correction', 'original')
 
+
+# correct the entry type 
+corrected_entry_ids = qualtrics[which(!is.na(qualtrics$corr_entry_type)), 'correct_record_match'] %>% pull()
+qualtrics[match(corrected_entry_ids, qualtrics$record_id), 'entry_type'] = qualtrics[which(!is.na(qualtrics$corr_entry_type)), 'corr_entry_type']
+qualtrics[match(corrected_entry_ids, qualtrics$record_id), 'correct_dum'] = 'correction'  
+
+
 # link updated policy(ies) with original entry with variable 'policy_id' ----------------------------------
 updated_record_ids = qualtrics[which(qualtrics$entry_type == 'update'), 'entry_type_3_TEXT']
 
@@ -213,11 +227,33 @@ matched_updates = qualtrics$record_id[which(qualtrics$record_id %in% updated_rec
 (unmatched_updates = setdiff(updated_record_ids$entry_type_3_TEXT, matched_updates)) # need to take a closer look later
 
 
+# contact people about unmatched corrections/unmatched updates --- its is probably due to typos
+# unmatched_ids = qualtrics %>% filter(entry_type_2_TEXT %in% unmatched_corrections[-1] | entry_type_3_TEXT %in% unmatched_updates[-1] )
+# unmatched_ids = unmatched_ids %>% unite(unmatched_ids, c(entry_type_2_TEXT, entry_type_3_TEXT) )
+# unmatched_ids$unmatched_ids = gsub("\\_NA|NA\\_", '', unmatched_ids$unmatched_ids)
+# unmatched_ids = unmatched_ids %>% filter(is.na(link_type))
+# write.csv(unmatched_ids %>% select(ra_name, record_id, unmatched_ids,  RecordedDate,entry_type, event_description, type, sources_matrix_1_1, sources_matrix_1_2) %>% arrange(ra_name), file = 'unmatchedRecordId.csv', row.names= FALSE)
+ 
+
+
 qualtrics <- group_by(qualtrics, record_id) %>% 
               mutate(policy_id=case_when(entry_type=="update" & !is.na(entry_type_3_TEXT)~entry_type_3_TEXT,
                                         TRUE~record_id)) %>% 
               ungroup()
 
+# some ppl were able to enter corrections/updates without specifying a corresponding
+# record id ...somehow? i'm not sure how
+  # cindy has contacted these people, remove these entries for now
+# missing_correct_ids <- filter(qualtrics, is.na(correct_record_match))
+# missing_update_ids = qualtrics %>% filter(entry_type == 'update' & is.na(entry_type_3_TEXT) & is.na(link_type) ) 
+# missing_ids = rbind(missing_correct_ids, missing_update_ids)
+
+# write.csv(missing_ids %>% select(ra_name, record_id, RecordedDate,entry_type, event_description, type, sources_matrix_1_1, sources_matrix_1_2)%>% arrange(ra_name), file = 'missingRecordMatchId.csv', row.names= FALSE)
+ 
+# remove these entries for now
+qualtrics <- filter(qualtrics, !is.na(correct_record_match))
+qualtrics <- qualtrics[-which(qualtrics$entry_type == 'update' & is.na(qualtrics$entry_type_3_TEXT) & is.na(qualtrics$link_type)),]
+ 
 #qualtrics= qualtrics[-which(is.na(qualtrics$policy_id)),]
  
 # note making manual corrections of the following type should not be necessary after adding in appropriate question to survey
@@ -294,10 +330,18 @@ varsToMatch = c('record_id',
              'correct_dum',
              'entry_type')
 
+ 
 
 qualtrics = data.frame(qualtrics)
 qualtrics[match(cleanAllLinkedRecords$new_id, qualtrics$new_id),varsToMatch]  = cleanAllLinkedRecords[varsToMatch]
+qualtrics$orphanDum = NA
+qualtrics$orphanDum[match(cleanAllLinkedRecords$new_id, qualtrics$new_id)]= cleanAllLinkedRecords$orphanDum
 qualtrics = tibble(qualtrics)
+ 
+# remove orphaned records and new id
+qualtrics = qualtrics %>% filter(orphanDum == 0 |is.na(orphanDum)) %>% select(-orphanDum, -new_id)
+ 
+
  
 # check only for vars with missing
  

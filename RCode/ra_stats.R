@@ -8,8 +8,8 @@ require(googlesheets4)
 require(lubridate)
 require(stringr)
 
-start_week <- ymd("2020-05-03")
-end_week <- ymd("2020-05-10")
+start_week <- ymd("2020-05-11")
+end_week <- ymd("2020-05-19")
 
 #sheets_auth()
 
@@ -146,6 +146,14 @@ export <- select(export,ra_name,
          link="sources_matrix_1_2") %>% 
   select(-matches("TEXT")) %>% 
   arrange(country,policy_id,date_start)
+
+# need to get rid of/change corrections
+
+export <- mutate(export,corrected=(entry_type=="correction")) %>% 
+  group_by(policy_id) %>% 
+  arrange(policy_id,recorded_date) %>% 
+  mutate(entry_type=case_when(entry_type=="correction" & recorded_date==min(recorded_date)~"new entry",
+                              TRUE~entry_type))
 
 export %>% 
   filter(entry_type!="correction") %>% 
@@ -297,10 +305,11 @@ current_sheet <- sheets_get("https://docs.google.com/spreadsheets/d/183lWnJH7rSV
 export %>% 
   mutate(record_date_day=lubridate::as_date(recorded_date)) %>% 
   select(-record_date_day) %>% 
+  ungroup %>% 
   mutate(link_correct=paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",ResponseId,
                             "&Q_R_DEL=1&record_id=",record_id,"&link_type=C"),
-         link_update=paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",ResponseId,
-                            "&record_id=",record_id,"&link_type=U")) %>% 
+         link_update=ifelse(entry_type=="new_entry",paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",ResponseId,
+                                                           "&record_id=",record_id,"&link_type=U"),"")) %>% 
   select(link_correct,link_update,everything()) %>% 
   arrange(country,policy_id,date_announced) %>% 
   sheets_write(ss=current_sheet,sheet="Sheet1")
@@ -309,11 +318,12 @@ export %>%
 
 export %>% 
   mutate(record_date_day=lubridate::as_date(recorded_date)) %>% 
+  ungroup %>% 
   select(-record_date_day) %>% 
   mutate(link_correct=paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",ResponseId,
                              "&Q_R_DEL=1&record_id=",record_id,"&link_type=C"),
-         link_update=paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",ResponseId,
-                            "&record_id=",record_id,"&link_type=U")) %>% 
+         link_update=ifelse(entry_type=="new_entry",paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",ResponseId,
+                            "&record_id=",record_id,"&link_type=U"),"")) %>% 
   select(link_correct,link_update,everything()) %>% 
   arrange(country,policy_id,date_announced) %>% 
   write_csv("data/CoronaNet/RA/ra_data_pull_purified.csv")

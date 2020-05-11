@@ -10,11 +10,11 @@ require(stringr)
 require(readxl)
 require(rstan)
 
-ar_mod <- read_stan_csv("data/cluster/ar/corona_ar.csv")
+ar_mod <- read_stan_csv("data/cluster/ar/corona_ar2.csv")
 
 # pop it into an idealstan model
 
-id_mod <- readRDS("data/activity_fit_collapse.rds")
+id_mod_data <- readRDS("data/cluster/ar/ar1/idealdata_object.rds")
 id_mod@stan_samples <- ar_mod
 
 id_plot_legis_dyn(id_mod)

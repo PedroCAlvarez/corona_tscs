@@ -1000,26 +1000,47 @@ We are in the process of completing our second coding of the validation sample. 
 %Bob's table could be helpful to point to in an appendix to back up that last assertion.
 
 
+
 \begin{table}[!h]
 \centering
 \caption{Inter-Coder Reliability Measures for On-Going Validation}
 \label{tab:validation}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{|c|l|c|c|c|c|}
+\begin{tabular}{lccc}
 \hline
-                      & \textbf{Scott's Pi} & \textbf{Krippendorf's Alpha} & \textbf{Fleiss' Kappa} & \textbf{Cohen's Kappa} & \textbf{Percentage Agreement} \\ \hline
-\textbf{Estimate}     & 0.513               & 0.514                        & 0.513                  & 0.577                  & 0.610                         \\ \hline
-\textbf{Std. Error}   & 0.040               &                              &                        &                        &                               \\ \hline
-\textbf{Coders}       & 2                   & 2                            & 2                      & 2                      & 2                             \\ \hline
-\textbf{Observations} & 192                 & 192                          & 192                    & 192                    & 192                           \\ \hline
-\end{tabular}%
+\textbf{Policy} & \multicolumn{1}{c}{\textbf{(n)}} & \multicolumn{1}{c}{\textbf{Percentage Agreement}} & \multicolumn{1}{c}{\textbf{Cohen's Kappa}} \\ \hline
+Restrictions of Mass Gatherings & 21 & 95.2 & 0.95 \\
+Closure of Schools & 13 & 92.3 & 0.92 \\
+Restriction of Non-Essential Businesses & 15 & 88.9 & 0.88 \\
+External Border Restrictions & 50 & 86.0 & 0.85 \\
+Curfew & 6 & 83.4 & 0.82 \\
+Internal Border Restrictions & 11 & 81.8 & 0.80 \\
+Quarantine/Lockdown & 28 & 67.9 & 0.65 \\
+Declaration of National Emergency & 15 & 66.7 & 0.64 \\
+Restriction of Non-Essential Government Services & 15 & 66.7 & 0.63 \\
+Health & 51 & 66.7 & 0.63 \\
+Public Awareness Measures & 15 & 53.3 & 0.49 \\
+New Task Force, Bureau or Administrative Configuration & 8 & 50.0 & 0.46 \\
+Social Distancing & 14 & 42.9 & 0.38 \\
+ &  &  &  \\
+ \hline
+ \hline
+ &  &  &  \\
+\textbf{Summary Intercoder Reliability Scores} &  &  &  \\
+Percentage Agreement & \multicolumn{1}{c}{0.74} & &  \\
+Cohen's Kappa & \multicolumn{1}{c}{0.72} & & \multicolumn{1}{l}{} \\
+Krippendorff's alpha & \multicolumn{1}{c}{0.64} & & \multicolumn{1}{l}{} \\
+Fleiss' Kappa (2 raters) & \multicolumn{1}{c}{0.65} & & \multicolumn{1}{l}{} \\
+Scott's PI -- Estimate (SE) & \multicolumn{1}{c}{0.64 (0.03)} & & \multicolumn{1}{l}{} \\ \hline
+\end{tabular}
 }
 \end{table}
 
 
+
 # Conclusion {-}
 
-As policymakers, researchers and the broader public debate and compare how to succeed against the novel threats posed by COVID-19, they need real-time, traceable data on government policies in order to understand which of these policies are effective, and under what conditions.  This requires specific knowledge of the variation in such policies and the extent of their implementation across countries and time. The goal of the dataset and policy action index presented here is to provide this information. 
+As policymakers, researchers and the broader public debate and compare how to succeed against the novel threats posed by COVID-19, they need real-time, traceable data on government policies in order to understand which of these policies are effective, and under what conditions. This requires specific knowledge of the variation in such policies and the extent of their implementation across countries and time. The goal of the dataset and policy action index presented here is to provide this information.
 
 We have tried to match our data collection efforts to keep up with the exponential speed with which COVID-19 has already upended global public health and the international economy while also maintaining high levels of quality. However, we will inevitably be refining, revising and updating our data to reflect new knowledge and trends as the pandemic unfolds. The data that we present in this first version of the dataset represents only the initial release of the data, and we will continue to validate and release data so long as governments continue to develop policies in response to COVID-19.
 

@@ -585,7 +585,7 @@ Our time-varying item response model follows the specification in @kubinec2019. 
 The likelihood function for the model is as follows for a set of countries $i \in I$, items $j \in J$, time points $t \in T$ and ordinal categories $k \in K$:
 
 \begin{align}
-	L(Y_{ijtk}|\alpha_{it},\gamma_j,\beta_j) =  \prod_{i-1}^{I} \prod_{j=1}^{J} \prod_{t=1}^{T}
+	L(Y_{ijtk}|\alpha_{it},\gamma_j,\beta_j) =  \prod_{i=1}^{I} \prod_{j=1}^{J} \prod_{t=1}^{T}
 	\begin{cases} 
 	1 -  \zeta(\gamma_j \alpha_{it} - \beta_j - c_1) & \text{if } K = 0 \\
 	\zeta(\gamma_j \alpha_i - \beta_j - c_{k-1}) - \zeta(\gamma_j \alpha_{it} - \beta_j - c_{k})       & \text{if } 0 < k < K, \text{ and} \\
@@ -614,10 +614,11 @@ c_k - c_{k-1} &\sim N(0,5)
 
 Finally, to model the policy scores $\alpha_{it}$ as a random walk, we assign a prior to that is equal to the prior period policy score plus Normally-distributed noise:
 
-\begin{equation}
-\alpha_{it} \sim N(\alpha_{it-1},\sigma_i)
+\begin{align}
+\alpha_{it} &\sim N(\alpha_{it-1},\sigma_i)
+\sigma_i &\sim E(1)
 (\#eq:rwc)
-\end{equation}
+\end{align}
 
 The over-time dimension induces a new source of identifiability issues, which we resolve by fixing the variance $\sigma_i$ of one of the countries (the United States) to 0.1 so that the over-time variance is relative to this constant. This constraint has a similar identification effect to the informative prior on the first period policy activity scores in \@ref(eq:id1).
 

@@ -995,7 +995,7 @@ We further implement the following processes to validate the quality of the data
 
 If the majority achieves consensus, then we consider the entry valid. If a discrepancy exists, a fourth RA or PI evaluates between the three entries to determine whether one, some, a combination of all three is most accurate. Reconciled policies are then entered into the dataset as a correction for full transparency. If an RA was found to have made a coding mistake, then we sample six of their previous entries: 3 entries which correspond to the type of mistake made^[e.g. if the RA incorrectly codes an 'External Border Restriction' as a 'Quarantine', we sample 3 entries where the RA has coded a policy as being about a 'Quarantine.'] and randomly sample 3 more entries to ascertain whether the mistake was systematic or not. If systematic errors are found, entries coded by that individual will be entirely recoded by a new RA.
 
-At the time of writing, we are in the process of completing our second coding of the validation sample. Thus far, 285 policies have been double coded---265 double-coded policies after excluding the category 'Other policies' from the analysis---out of the original 500 randomly-selected policies included in our validation set. This is equivalent to the 10\% of the first 5,000 policies in the dataset, although will be gradually expand the validation set until we cover all observations. To evaluate the inter-coder reliability at this early stage of validation, we provide several measures in Table \ref{tab:validation}. We find remarkable heterogeneity in the inter-coder reliability across types of policies. Our coders show a high level of agreement on policies such as 'Restrictions of Mass Gatherings', 'Closure of Schools', 'Restrictions of Non-Essential' and 'External Border Restrictions'. However, the inter-rater agreement score remains poor for some policies such as 'Social Distancing', 'New Task Force, Bureau or Administrative Configuration' and 'Public Awareness Measures'. Further, we detect substantial disagreements across the different health-related measures: health resources (n = 34, k = 0.69), health testing (n = 7, k = 0.08), and health monitoring (n = 10, k = 0.14). Hence, we decide to combine them under the category of 'Health measures' in this on-going validation. Overall, these statistics indicate substantial levels of overall agreement between coders with inter-coder reliability scores above 0.70, although we also acknowledge that there remain some ambiguities providing evidence for the utility of our planned ``majority voting'' validation strategy.
+At the time of writing, we are in the process of completing our second coding of the validation sample. Thus far, 297 policies have been double coded---276 double-coded policies after excluding the category 'Other policies' from the analysis---out of the original 500 randomly-selected policies included in our validation set. This is equivalent to the 10\% of the first 5,000 policies in the dataset, although will be gradually expand the validation set until we cover all observations. To evaluate the inter-coder reliability at this early stage of validation, we provide several measures in Table \ref{tab:validation}. We find remarkable heterogeneity in the inter-coder reliability across types of policies. Our coders show a high level of agreement on policies such as 'Restrictions of Mass Gatherings', 'Closure of Schools', 'Restrictions of Non-Essential' and 'External Border Restrictions'. However, the inter-rater agreement score remains poor for some policies such as 'Social Distancing', 'New Task Force, Bureau or Administrative Configuration' and 'Public Awareness Measures'. Further, we detect substantial disagreements across the different health-related measures: health resources (n = 35, k = 0.66), health testing (n = 7, k = 0.08), and health monitoring (n = 10, k = 0.14). Hence, we decide to combine them under the category of 'Health measures' in this on-going validation. Overall, these statistics indicate substantial levels of overall agreement between coders with inter-coder reliability scores above 0.70, although we also acknowledge that there remain some ambiguities providing evidence for the utility of our planned ``majority voting'' validation strategy.
 
 \begin{table}[!h]
 \centering
@@ -1006,17 +1006,17 @@ At the time of writing, we are in the process of completing our second coding of
 \hline
 \textbf{Policy} & \multicolumn{1}{c}{\textbf{(n)}} & \multicolumn{1}{c}{\textbf{Percentage Agreement}} & \multicolumn{1}{c}{\textbf{Cohen's Kappa (k)}} \\ \hline
 Restrictions of Mass Gatherings & 21 & 95.2 & 0.95 \\
-Closure of Schools & 13 & 92.3 & 0.92 \\
-Restriction of Non-Essential Businesses & 15 & 88.9 & 0.88 \\
-External Border Restrictions & 50 & 86.0 & 0.85 \\
+Closure of Schools & 14 & 92.9 & 0.92 \\
+Restriction of Non-Essential Businesses & 19 & 89.5 & 0.89 \\
+External Border Restrictions & 52 & 84.6 & 0.83 \\
 Curfew & 6 & 83.4 & 0.82 \\
 Internal Border Restrictions & 11 & 81.8 & 0.80 \\
+Declaration of National Emergency & 19 & 73.7 & 0.71 \\
 Quarantine/Lockdown & 28 & 67.9 & 0.65 \\
-Declaration of National Emergency & 15 & 66.7 & 0.64 \\
-Restriction of Non-Essential Government Services & 15 & 66.7 & 0.64 \\
-Health Measures & 51 & 66.7 & 0.64 \\
+Health Measures & 52 & 65.4 & 0.63 \\
+Restriction of Non-Essential Government Services & 16 & 62.5 & 0.59 \\
+New Task Force, Bureau or Administrative Configuration & 9 & 55.6 & 0.52 \\
 Public Awareness Measures & 15 & 53.3 & 0.49 \\
-New Task Force, Bureau or Administrative Configuration & 8 & 50.0 & 0.46 \\
 Social Distancing & 14 & 42.9 & 0.38 \\
  &  &  &  \\
  \hline

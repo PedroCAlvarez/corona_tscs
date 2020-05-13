@@ -995,11 +995,7 @@ We further implement the following processes to validate the quality of the data
 
 If the majority achieves consensus, then we consider the entry valid. If a discrepancy exists, a fourth RA or PI evaluates between the three entries to determine whether one, some, a combination of all three is most accurate. Reconciled policies are then entered into the dataset as a correction for full transparency. If an RA was found to have made a coding mistake, then we sample six of their previous entries: 3 entries which correspond to the type of mistake made^[e.g. if the RA incorrectly codes an 'External Border Restriction' as a 'Quarantine', we sample 3 entries where the RA has coded a policy as being about a 'Quarantine.'] and randomly sample 3 more entries to ascertain whether the mistake was systematic or not. If systematic errors are found, entries coded by that individual will be entirely recoded by a new RA.
 
-We are in the process of completing our second coding of the validation sample. Thus far, 192 entries have been double coded out of the original 480 randomly-selected policies included in our validaiton set. To evaluate the inter-coder reliability at this early stage of validation, we provide several measures in Table \ref{tab:validation}. These statistics indicate moderate levels of agreement between coders, and much of the disagreement arises between policy types that are analytically similiar, such as quarantine and lockdown or different health measures such as health testing, health monitoring, and health resources. When these categories are collapsed in to quarantine lockdown and health, respectively, the validation set's Cohen's Kappa increases from 0.577 to 0.667. This ambiguities provide further evidence for the utility of our planned ``majority voting'' validation strategy.
-%Add information about the validation sample - until what date is it current?
-%Bob's table could be helpful to point to in an appendix to back up that last assertion.
-
-
+At the time of writing, we are in the process of completing our second coding of the validation sample. Thus far, 285 entries have been double coded out of the original 500 randomly-selected policies included in our validation set.^[This is equivalent to the 10\% of the first 5,000 policies in the dataset. We will be gradually expand the validation set until we cover all observations. The policy type 'Other policies' has been excluded from the validation analysis, which yields a total of 265 double-coded policies.] To evaluate the inter-coder reliability at this early stage of validation, we provide several measures in Table \ref{tab:validation}. We find remarkable heterogeneity in the inter-coder reliability across types of policies. Our coders show a high level of agreement on policies such as 'Restrictions of Mass Gatherings', 'Closure of Schools', 'Restrictions of Non-Essential' and 'External Border Restrictions'. However, the inter-rater agreement score remains poor for some policies such as 'Social Distancing', 'New Task Force, Bureau or Administrative Configuration' and 'Public Awareness Measures'. While these statistics indicate substantial levels of overall agreement between coders, there remain some ambiguities providing evidence for the utility of our planned ``majority voting'' validation strategy.^[We detect substantial disagreements across the different health-related measures: health resources (n = 34, k = 0.69), health testing (n = 7, k = 0.08), and health monitoring (n = 10, k = 0.14). Hence, we decide to combine them under the category 'Health measures' in the preliminary inter-coder reliability analysis. We are currently working on clarifying these distinctions among our coders.]
 
 \begin{table}[!h]
 \centering
@@ -1008,7 +1004,7 @@ We are in the process of completing our second coding of the validation sample. 
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lccc}
 \hline
-\textbf{Policy} & \multicolumn{1}{c}{\textbf{(n)}} & \multicolumn{1}{c}{\textbf{Percentage Agreement}} & \multicolumn{1}{c}{\textbf{Cohen's Kappa}} \\ \hline
+\textbf{Policy} & \multicolumn{1}{c}{\textbf{(n)}} & \multicolumn{1}{c}{\textbf{Percentage Agreement}} & \multicolumn{1}{c}{\textbf{Cohen's Kappa (k)}} \\ \hline
 Restrictions of Mass Gatherings & 21 & 95.2 & 0.95 \\
 Closure of Schools & 13 & 92.3 & 0.92 \\
 Restriction of Non-Essential Businesses & 15 & 88.9 & 0.88 \\
@@ -1018,7 +1014,7 @@ Internal Border Restrictions & 11 & 81.8 & 0.80 \\
 Quarantine/Lockdown & 28 & 67.9 & 0.65 \\
 Declaration of National Emergency & 15 & 66.7 & 0.64 \\
 Restriction of Non-Essential Government Services & 15 & 66.7 & 0.63 \\
-Health & 51 & 66.7 & 0.63 \\
+Health Measures & 51 & 66.7 & 0.63 \\
 Public Awareness Measures & 15 & 53.3 & 0.49 \\
 New Task Force, Bureau or Administrative Configuration & 8 & 50.0 & 0.46 \\
 Social Distancing & 14 & 42.9 & 0.38 \\
@@ -1029,13 +1025,11 @@ Social Distancing & 14 & 42.9 & 0.38 \\
 \textbf{Summary Intercoder Reliability Scores} &  &  &  \\
 Percentage Agreement & \multicolumn{1}{c}{0.74} & &  \\
 Cohen's Kappa & \multicolumn{1}{c}{0.72} & & \multicolumn{1}{l}{} \\
-Krippendorff's alpha & \multicolumn{1}{c}{0.64} & & \multicolumn{1}{l}{} \\
-Fleiss' Kappa (2 raters) & \multicolumn{1}{c}{0.65} & & \multicolumn{1}{l}{} \\
-Scott's PI -- Estimate (SE) & \multicolumn{1}{c}{0.64 (0.03)} & & \multicolumn{1}{l}{} \\ \hline
+Krippendorff's alpha & \multicolumn{1}{c}{0.71} & & \multicolumn{1}{l}{} \\
+Scott's PI -- Estimate (SE) & \multicolumn{1}{c}{0.71 (0.03)} & & \multicolumn{1}{l}{} \\ \hline
 \end{tabular}
 }
 \end{table}
-
 
 
 # Conclusion {-}

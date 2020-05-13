@@ -1013,8 +1013,8 @@ Curfew & 6 & 83.4 & 0.82 \\
 Internal Border Restrictions & 11 & 81.8 & 0.80 \\
 Quarantine/Lockdown & 28 & 67.9 & 0.65 \\
 Declaration of National Emergency & 15 & 66.7 & 0.64 \\
-Restriction of Non-Essential Government Services & 15 & 66.7 & 0.63 \\
-Health Measures & 51 & 66.7 & 0.63 \\
+Restriction of Non-Essential Government Services & 15 & 66.7 & 0.64 \\
+Health Measures & 51 & 66.7 & 0.64 \\
 Public Awareness Measures & 15 & 53.3 & 0.49 \\
 New Task Force, Bureau or Administrative Configuration & 8 & 50.0 & 0.46 \\
 Social Distancing & 14 & 42.9 & 0.38 \\

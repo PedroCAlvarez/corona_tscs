@@ -958,35 +958,39 @@ The format of the data is in country-day-`record_id` format. Some `record_id` va
 
 1. `record_id` Unique identifier for each unique policy record
 2. `policy_id` Identifier linking new policies with subsequent updates to policies
-3. `recorded_date` When the record was entered into our data 
-4. `date_announced` When the policy is announced
-5. `date_start` When the policy goes into effect
-6. `date_end` When the policy ends (if it has an explicit end date)
-7. `entry_type` Whether the record is new, meaning no restriction had been in place before, or an update (restriction was in place but changed). Corrections are corrections to previous entries.
-8. `event_description` A short description of the policy change
-9. `type` The category of the policy
-10. `type_sub_cat` The sub-category of the policy (if one exists)
-11. `type_text` Any additional information about the policy type (such as the number of ventilators/days of quarantine/etc.)
-12. `country` The country initiating the policy
-13. `init_country_level` Whether the policy came from the national level or a sub-national unit
-14. `province` Name of sub-national unit
-15. `target_country` Which foreign country a policy is targeted at (i.e. travel policies)
-16. `target_geog_level` Whether the target of the policy is a country as a whole or a sub-national unit of that country
-17. `target_region` The name of a regional grouping (like ASEAN) that is a target of the policy (if any)
-18. `target_province` The name of a province targeted by the policy (if any)
-19. `target_city` The name of a city targeted by the policy (if any)
-20. `target_other` Any geographical entity that does not fit into the targeted categories mentioned above
-21. `target_who_what` Who the policy is targeted at
-22. `target_direction` Whether a travel-related policy affects people coming in (Inbound) or leaving (Outbound)
-23. `travel_mechanism` If a travel policy, what kind of transportation it affects
-24. `compliance` Whether the policy is voluntary or mandatory
-25. `enforcer` What unit in the country is responsible for enforcement
-26. `link` A link to at least one source for the policy
-27. `ISO_A3` 3-digit ISO country codes
-28. `ISO_A2` 2-digit ISO country codes
-<!-- 22. `severity_index_5perc` 5% posterior low estimate (i.e. lower bound of uncertainty interval) for severity index -->
-<!-- 23. `severity_index_median` posterior median estimate (point estimate) for severity index, which comes from a Bayesian latent variable model aggregating across policy types to measure country-level policy severity (see paper on our website) -->
-<!-- 24. `severity_index_5perc` 95% posterior high estimate (i.e. upper bound of uncertainty interval) for severity index -->
+3. `recorded_date` When the record was entered into our data
+4. `date_updated` When we can confirm the country - policy type was last checked/updated (we can only confirm  policy type for a given country is up to date as of this date)
+5. `date_announced` When the policy is announced
+6. `date_start` When the policy goes into effect
+7. `date_end` When the policy ends (if it has an explicit end date)
+8. `entry_type` Whether the record is new, meaning no restriction had been in place before, or an update (restriction was in place but changed). 
+9. `correct_type` Whether a record as been corrected or not. 
+10. `event_description` A short description of the policy change
+11. `domestic_policy` Indicates where policy targets an area within the initiating country (i.e. is domestic in nature)
+12. `type` The category of the policy
+13. `type_sub_cat` The sub-category of the policy (if one exists)
+14. `type_text` Any additional information about the policy type (such as the number of ventilators/days of quarantine/etc.)
+15. `index_high_est` The high (95% posterior density) estimate of the country policy activity score (0-100)
+16. `index_med_est` The median (most likely) estimate of the country policy activity score (0-100)
+17. `index_low_est` The low (95% posterior density) estimate of the country policy activity score (0-100)
+18. `index_country_rank` The relative rank by each day for each country on the policy activity score
+19. `country` The country initiating the policy
+20. `init_country_level` Whether the policy came from the national level or a sub-national unit
+21. `province` Name of sub-national unit
+22. `target_country` Which foreign country a policy is targeted at (i.e. travel policies)
+23. `target_geog_level` Whether the target of the policy is a country as a whole or a sub-national unit of that country
+24. `target_region` The name of a regional grouping (like ASEAN) that is a target of the policy (if any)
+25. `target_province` The name of a province targeted by the policy (if any)
+26. `target_city` The name of a city targeted by the policy (if any)
+27. `target_other` Any geographical entity that does not fit into the targeted categories mentioned above
+28. `target_who_what` Who the policy is targeted at
+29. `target_direction` Whether a travel-related policy affects people coming in (Inbound) or leaving (Outbound)
+30. `travel_mechanism` If a travel policy, what kind of transportation it affects
+31. `compliance` Whether the policy is voluntary or mandatory
+32. `enforcer` What unit in the country is responsible for enforcement
+33. `link` A link to at least one source for the policy
+34. `ISO_A3` 3-digit ISO country codes
+35. `ISO_A2` 2-digit ISO country codes
 
 ## `coronanet_release_allvars.csv` Field Dictionary {-}
 

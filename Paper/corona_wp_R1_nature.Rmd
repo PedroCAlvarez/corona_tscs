@@ -26,16 +26,16 @@ toc: false
 bibliography: BibTexDatabase.bib
 #always_allow_html: yes
 output: 
-  #bookdown::word_document2
-  bookdown::pdf_document2:
-    keep_tex: true
-    latex_engine: xelatex
-    includes:
-      in_header:
-          preamble.tex
-    pandoc_args:
-      - '--lua-filter=scholarly-metadata.lua'
-      - '--lua-filter=author-info-blocks.lua'
+  bookdown::word_document2
+  #bookdown::pdf_document2:
+    #keep_tex: true
+    #latex_engine: xelatex
+    # includes:
+    #   in_header:
+    #       preamble.tex
+    # pandoc_args:
+    #   - '--lua-filter=scholarly-metadata.lua'
+    #   - '--lua-filter=author-info-blocks.lua'
 urlcolor: blue
 mask: yes
 abstract: "Governments worldwide have implemented countless policies in response to the COVID-19 pandemic. We present an initial public release of a large hand-coded dataset of over 12,000 separate policy announcements in response to the pandemic across more than 190 countries. The dataset is updated daily, with a 5-day lag for validity checking. We document policies across numerous dimensions, including the type of policy; national vs. sub-national enforcement; the specific human group and geographic region targeted by the policy; and the time frame within which the policy is implemented. We further analyze the dataset using a Bayesian measurement model which shows the quick acceleration of the adoption of costly policies across countries beginning in mid-March and continuing to the present. We believe that the data will be invaluable for helping policy makers and researchers assess, among other aspects, how effective different policies are in addressing the spread and health outcomes of COVID-19."
@@ -417,7 +417,7 @@ calc_ranks <- select(to_plot,country_spread,country,month_var) %>% distinct %>%
   ungroup %>% 
   ggplot(aes(y=med_est,x=date_announced)) +
   #geom_ribbon(aes(ymin=low_est,ymax=high_est,group=country),alpha=0.2) +
-  geom_line(aes(group=country,colour=med_est),alpha=0.7, size = 1) +
+  geom_line(aes(group=country,colour=med_est),alpha=0.2, size = 1) +
   scale_color_distiller(palette="Blues",direction=1) +
   gghighlight(count_rank<4,
               calculate_per_facet = T,
@@ -444,8 +444,11 @@ overall <- to_plot  %>%
   ungroup %>% 
   ggplot(aes(y=med_est,x=date_announced)) +
   #geom_ribbon(aes(ymin=low_est,ymax=high_est,group=country),alpha=0.2) +
-  geom_line(aes(group=country,colour=med_est),alpha=0.7, size = 1) +
-  scale_color_distiller(palette="Blues",direction=1) +
+  #geom_line(aes(group=country,colour=med_est),alpha=0.7, size = 1) +
+  #scale_color_distiller(palette="Blues",direction=1) +
+  geom_line(aes(group=country), color="lightgrey", size=0.1) +
+  geom_line(data=to_plot[to_plot$country%in% c("Spain","Italy","United Kingdom","United States of America","Comoros","Yemen","Malaysia"),],aes(group=country,colour=med_est),alpha=0.7, size = 1) +
+     scale_color_distiller(palette="Blues",direction=1) +
   geom_label_repel(aes(label=lab_country),size=2.5) +
   # scale_color_manual(name="Country",values=c('#00CC33','#E69F00','#CC0000',"#FF99FF","#99CCFF","#006699","#990099","orangered1","#9933FF","yellow3", "blue1" ))+
   theme_minimal() +

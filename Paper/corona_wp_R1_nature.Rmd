@@ -340,8 +340,9 @@ Figure \@ref(fig:plotindex) shows the estimated index scores for the `r length(u
 Of course, a caveat with the index is that we may be missing some possible policy measures that have occurred due to the difficulty in finding them in published sources. However, there is still clear differentiation within the index in terms of when policies were imposed, with some countries starting to impose policies much earlier than others. Furthermore, there is a clear break about March 1st when countries began to impose more stringent policies across the world.
 
 
+                  caption=str_wrap("",width=110)
 
-```{r plotindex,fig.cap="CoronaNet Time-Varying Index of National Policy Activity of Measures Opposing COVID-19 Pandemic"}
+```{r plotindex,fig.cap="CoronaNet Time-Varying Index of National Policy Activity of Measures Opposing COVID-19 Pandemic. Estimates are derived from Stan, a Markov Chain Monte Carlo sampler. Median posterior estimates are shown. Plot A shows the full distribution of countries, while plot B shows each month separately with the top 3 countries for that month in terms of increases in activity scores from start of the month to the end of the month."}
 
 # severity_fit <- readRDS("../data/activity_fit_rw.rds")
 # 
@@ -418,7 +419,7 @@ calc_ranks <- select(to_plot,country_spread,country,month_var) %>% distinct %>%
   ggplot(aes(y=med_est,x=date_announced)) +
   #geom_ribbon(aes(ymin=low_est,ymax=high_est,group=country),alpha=0.2) +
   geom_line(aes(group=country,colour=med_est),alpha=0.7, size = 1) +
-  scale_color_distiller(palette="Reds",direction=1) +
+  scale_color_distiller(palette="Blues",direction=1) +
   gghighlight(count_rank<4,
               calculate_per_facet = T,
               label_params=list(size=2.5,colour="black",direction="both",
@@ -439,14 +440,14 @@ overall <- to_plot  %>%
   mutate(all_rank=rev(rank(med_est))) %>% 
   ungroup %>% 
     mutate(last_rank = ifelse(date_announced==max(date_announced),`Country Rank`,NA),
-         lab_country = ifelse(last_rank %in% c(1,10,20,30,50,100,190),as.character(country),
+         lab_country = ifelse(last_rank %in% c(1,4,10,14,64,81,115,180,191),as.character(country),
                               NA)) %>% 
   ungroup %>% 
   ggplot(aes(y=med_est,x=date_announced)) +
   #geom_ribbon(aes(ymin=low_est,ymax=high_est,group=country),alpha=0.2) +
   geom_line(aes(group=country,colour=med_est),alpha=0.7, size = 1) +
-  scale_color_distiller(palette="Reds",direction=1) +
-  geom_label_repel(aes(label=lab_country),size=3) +
+  scale_color_distiller(palette="Blues",direction=1) +
+  geom_label_repel(aes(label=lab_country),size=2.5) +
   # scale_color_manual(name="Country",values=c('#00CC33','#E69F00','#CC0000',"#FF99FF","#99CCFF","#006699","#990099","orangered1","#9933FF","yellow3", "blue1" ))+
   theme_minimal() +
   theme(panel.grid = element_blank()) +
@@ -456,8 +457,7 @@ overall <- to_plot  %>%
   guides(color="none")
 
 overall + breakout +
-  plot_annotation(tag_levels="A",
-                  caption=str_wrap("Estimates are derived from Stan, a Markov Chain Monte Carlo sampler. Median posterior estimates are shown. Plot A shows the full distribution of countries, while plot B shows each month separately with the top 3 countries for that month in terms of increases in activity scores from start of the month to the end of the month.",width=110))
+  plot_annotation(tag_levels="A")
 
 ggsave("index.png")
 
@@ -621,7 +621,7 @@ For estimation, we sample from four Markov Chain Monte Carlo (MCMC) chains with 
 
 We assess convergence using split-$\hat{R}$ by fitting four independent chains with over-dispersed starting values. $\hat{R}$ values for all parameters (which totaled more than 40,000) were 1.01 or less (see plot A in Figure \@ref(fig:modelconv)). Plot B in Figure \@ref(fig:modelconv) shows the distribution of effective number of samples for the parameters, which is a way of comparing the auto-correlation in MCMC draws to independent draws without auto-correlation, such as we might obtain from a Monte Carlo simulation. Again, the number of effective samples is quite high, often exceeding the total number of empirical draws. This occurred because Hamiltonian Monte Carlo can produce more informative samples than even a Monte Carlo simulation because it can generate negatively correlated draws that explore the posterior space much more quickly.  We also assess convergence using trace plots, one of which is shown below for the time-varying country policy activity scores for the United States. Strong mixing between chains can be observed in the plot. Finally, we report no divergent transitions or iterations where the sampler reached its maximum tree depth, which are both signs of poor mixing in the chains. For these reasons, we are confident than the sampler reached a stationary distribution and was able to adequately explore the high-density regions of the joint posterior.
 
-```{r modelconv,fig.cap="Convergence Diagnostics for Random-Walk HMC Fit"}
+```{r modelconv,fig.cap="Convergence Diagnostics for Random-Walk HMC Fit. Plot A shows the distribution of split-Rhat values for all 40,000 parameters in the model, revealing most parameters are close to 1, which indicates strong convergence. The effective number of samples for parameters in plot B is also very high, often exceeding the total number of posterior draws. Plots C and D show strong mixing across chains for the intercept and over-time parameter for the United States for January 30th."}
 # rhat <- id_plot_rhats(severity_fit) +
 #   xlab(expression("split-"~hat(R)))
 # 
@@ -659,8 +659,7 @@ We assess convergence using split-$\hat{R}$ by fitting four independent chains w
 #         axis.title = element_text(size=8)) +
 #   guides(color='none')
 # rhat + ess_plot / (trace1 + trace2 +   plot_layout(guides="collect") & theme(legend.position = "top")) +
-#   plot_annotation(tag_levels="A",
-#                   caption=str_wrap("Plot A shows the distribution of split-Rhat values for all 40,000 parameters in the model, revealing most parameters are close to 1, which indicates strong convergence. The effective number of samples for parameters in plot B is also very high, often exceeding the total number of posterior draws. Plots C and D show strong mixing across chains for the intercept and over-time parameter for the United States for January 30th.",width=115)) 
+#   plot_annotation(tag_levels="A") 
 # 
 # ggsave("mcmc_evaluate.png",width=6.5,height=4.5)
 
@@ -929,9 +928,11 @@ Interested readers may also find our code for collecting the data and maintainin
 ## Acknowledgements {-}
 
 We thank the very large number of research assistants who coded this data. Their affiliations and vita are listed in the appendix.  Our research assistants include:
+
 Abdelaziz Ibn Abdelouahab, Abhyudaya Tyagi, Adriana Poppe, Advait Arya, Alette Mengerink, Alexander Pachanov, Alexandra Michaelsen, Alisa Udodik, Amadeus Albrecht, Amanda Panella, Ana Acero, Anabella McElroy, Anastasia Steinbrunner, Andreas Duncan, Andres Lopez Schrader, Anelia Petrova, Angad Johar, Angela Herz, Angeline Kanyangi, Anke Horn, Anna Sophia Körner, Annika Kaiser, Anoushka Thakre, Antonia Pérez, Ariana Barrenechea, Arianna Schouten, Avery Edelman, Aysina Maria, Babrik Kushwaha, Barbora Bromová, Beatrice Di Giulio, Beatrice von Braunschweig, Bianca Grizhar, Borja Arrue-Astrain, Brahim Ouerghi, Brian Chesney Quartey, Bruno Ciccarini, Calvin Kaleel, Cara Kim, Caress Schenk, Carl Philip Dybwad, Carlos Velez, Carly Kimmett, Carmen Alija, Caroline Beale, Charlotte Vorbauer, Cheng-Hao Shen, Chloë Fraser, Cornelia Marie Dybwad, Cory Martin, Csilla Horvath, Dan Downes, Dan Wu, Daniel Boey, Daniel Martínek, Dariga Abilova, Davit Jintcharadzé, Deborah Agboola, Dick Paul Ouko, Diego Calvo, Dominik Juling, Donia Kamel, Dorian Quelle, Dotrus Wilstic, Dovile Jankunaite, Dr Michelle King-Okoye, Dylan Ollivier, Eduardo Landaeta, Elaine Lin, Elfriede Derrer-Merk, Elisa Seith, Elizabeth (Lizzie) Jones, Ella Pettersen, Elliot Weir, Emma Hutchinson, Esther Ollivier, Eugene Kwizera, Fabienne Lind, Fabio Kadner, Fadhilah Fitri Primandari, Farah Sadek, Feifei Wang, Felix Willuweit, Fernanda Werneck, Francis Yoon, Frank Yuxuan Sun, Franziska Nguyen, Frederic Denker, Gloria Mutheu, Godfrey Katiambo, Griffyne Makaoko, Ha-Neul Yu, Hafsa Ahmed, Hajar Chams Eddine, Helene Paul, Helwan Felappi, Heman Asibuo, Henry Okwatch, Ilona Koch, Imogen Rickert, Ines Böhret, Ingeborg Sæle Helland, Ingrid Ravnanger, Isabela Russo, Isabelle Smith, Ismail Jamai Ait Hmitti, Jack Kubinec, Jakob Berg, Jane Murutu, Janet Li, Janice Klaiber, Janne Luise Piper, Jasmina Sowa, Jean von Agris, Jennifer Noguera Barrera, Jessica Johansson, Jiho Yoo, Joana Lencastre Morais, Joel Gräff, Josef Montag, Jule Scholten, Julia Dröge, Julia Nassl, Julia Smakman, Julia Wießmann, Kadriye Nisa Başkan, Karina Lisboa Båsund, Karlotta Schultz, Katharina Klaunig, Kayla Schwoerer, Khoa Tran, Klea Vogli, Kojo Vandyck, Konstanze Schönfeld, Laura Cadena, Laura Williamson, Laureen Hannig, Laurent Frick, Lea Clara Frömchen-Zwick, Lea Wiedmann, Lena Kolb, Leon Kohrt, Leonie Imberger, Li Cheng, Lilli Tabea Albrecht, Lily Zandstra, Lincoln Dow, Linlin Chen, Luise Modrakowski, Lya Cuéllar, Magdalena Strebling, Maheen Zahra, Maira Sheikh, Maisa Nasirova, Maite Spel, Malina Winking, Mamle Akosua Kwao, Mara Förster, Marianne Sievers, Marius Deierl, Marlies Hofmann, Mary Nussbaumer, Maryam AlHammadi, Mascha Hotopp, Mats Jensen, Matthew Cottrell, Matthew Hargreaves, Matthew Tan, Maximilian Dirks, Maya Rollberg, Maya Sugden, Mehdi Bhouri, Michaela Balluff, Milan Chen, Milos Moskovljevic, Miranda Tessore Janowski, Miriam Witte, Mirjam Muller, Mona Horn, Muhammad Masood, Muhannad Alramlawi, Museera Moghis, Mustafa Nasery, Nadja Grossenbacher, Natalia Filkina-Spreizer, Nathan Ruhde, Nicolas Göller, Nicole Oubre, Nida Hasan, Niklas Illenseer, Nikolina Klatt, Nivedita Darshini Bholah, Noah Fröhlich, Noelle Kubinec, Noor Altunaiji, Océane Mauffrey, Oketch Juliet Anyango, Oliver Pollex, Oliver Weber, Olzhas Gibatov, Omer Syed, Ongun Durhan, Oscar Courtier, Pablo Robles, Paula Germana, Philipp Weber, Pia Bansagi, Racha Hanine, Rachel Dada, Rahman Demirkol, Raquel Karl, Rebecca Beigel, Ricardo Buitrago, Richmond Silvanus Baye, Robin Fischer, Rosana Fayazzadh, Saif Khan, Salma Soliman, Samantha Law, Samantha Reinard, Sana Moghis, Sarah Edmonds, Sarah Sleigh, Sau Kan Chan, Saw Eh Doh Soe, Sean-Michael Pigeon, Seung-A Paik, Shalini Corea, Shruti Shukla, Simon Hüttemann, Sonja Müller, Sophia Tomany, Stefanie Mallow, Stella Dold, Su Ülkenli, Surendra Belbase, Symrun Razaque, Tanja Matheis, Tara Goodsir, Tasia Wagner, Temur Davronov, Tess de Rooij, Tess Martin, Tilda Nilsson Gige, Tom Seiler, Tristan Brömsen, Ugochukwu Okoye, Ursela Barteczko, Vellah Kedogo Kigwiru, Veronica Velasquez Mesa, Veronika Bartáková, Victor Abuor, Victoria Atanasov, Vida Han, Vinayak Rajesekhar, Winrose Njuguna, Xian Jin, Yifei Zhu, Yoes C. Kenawas, Zhandos Ybrayev.
 
-
+&nbsp;
+&nbsp;
 
 We also thank Tim Büthe, the Chair for International Relations, the Hochschule für Politik at the Technical University of Munich (TUM), the TUM School of Governance, and the TUM School of Management for the many ways he has supported this project. We further thank New York University Abu Dhabi for funding in support of this endeavor. Moreover, we appreciate the support by Slack Technologies and RStudio Inc. who provided access to their technical infrastructure.
 
@@ -1027,12 +1028,12 @@ The format of the data is in country-day-`record_id` format. Some `record_id` va
 ## RA Training
 
 
-All RAs watch a mandatory 50 minute video training of the survey instrument which explains how to use the survey instrument. RAs are also provided with written guidelines on how to collect data and a comprehensive codebook. To briefly describe it here, the written guidelines provide a definition of what counts as a new or updated policy (see Data section for more details) and provides a checklist for RAs to follow in order to identify and document different policies. In the checklist, RAs are instructed to find policies by checking the sources in the order given in the guidelines to identify policies, to document the relevant information into the survey and to save and upload a document of the source they found for each policy into Qualtrics. The codebook meanwhile provides descriptions and examples of the different possible response options in the survey. Using a training video and the written codebook also has the added benefit of helping us efficiently disseminate the information RAs need to use the survey experiment consistently. 
+In order to register as a research assistant, RAs watch a mandatory 2 hour video training of the survey instrument which explains how to use the survey, update, and correct entries. RAs are also provided with written guidelines on how to collect data and a comprehensive codebook. To briefly describe it here, the written guidelines provide a definition of what counts as a new or updated policy (see Data section for more details) and provides a checklist for RAs to follow in order to identify and document different policies. In the checklist, RAs are instructed to find policies by checking the sources in the order given in the guidelines to identify policies, to document the relevant information into the survey and to save and upload a document of the source they found for each policy into Qualtrics. The codebook meanwhile provides descriptions and examples of the different possible response options in the survey. Using a training video and the written codebook also has the added benefit of helping us efficiently disseminate the information RAs need to use the survey experiment consistently. Before getting allocated to a country based on language skills and interests, RAs participate in an online test which randomly assigns policies that the applicants need to enter correctly. To pass the test and, RAs need to get at least 70% of the entries correct.
 
-In order to participate as an RA in this project, RAs must fill out a form^[See here for the [link to the form](https://docs.google.com/forms/d/e/1FAIpQLSeybAW0DC0UE1x2EqLiTifVFuSUxqJLGFB8VI4wVCG61tVYKg/viewform).] in which:
+In order to participate as an RA in this project, RAs must fill out a consent form ^[See here for the [link to the form](https://docs.google.com/forms/d/e/1FAIpQLSeybAW0DC0UE1x2EqLiTifVFuSUxqJLGFB8VI4wVCG61tVYKg/viewform).] in which:
 
 * They identify themselves.
-* They certify that they have viewed the training video in which we explain how to use the survey instrument.
+* They certify that they have viewed the training video and passed the test.
 * They certify they have joined the CoronaNet Slack Channel (see section below for more information).
 * They certify that they understand that RA responsibilities entail 
   + gathering historical data on COVID-19 government policy actions for their country, and;
@@ -1040,11 +1041,11 @@ In order to participate as an RA in this project, RAs must fill out a form^[See 
 * They certify that they understand they can access the data collection guidelines and codebook or pose their questions on the Slack Channel.
 * They certify that they are expected to upload .pdfs of the sources they access to the survey instrument.
 
-Once the RA submits the form, they are sent a personalized link to access the survey. With the customized link, we are also able to keep track of which RA coded what entries.
+Once the RA submits the form, they are sent a personalized link to access the survey. With the customized link, we are also able to keep track of which RA coded what entries and when the last policy entry was.
 
 ## Real-Time Communication and Feedback
 
-Once an RA joins the project, they can pose their questions on a CoronaNet Slack channel, which they must join in order to participate in the project. The channel allows any RA to pose a question or issue they may have in using the survey instrument to any of the PIs and allows all other RAs to learn from the exchange at the same time. As such, RAs are able to receive feedback and learn from each other's questions in a timely and centralized manner. Since the data collection effort was launched on March 28, 2020 until April 18, 2020, both RAs and PIs have actively used Slack to communicate with one another.  On the Slack channel devoted to asking questions about the Qualtrics data survey in particular, there were 1,752 messages posted by 130 project members. 
+Once an RA joins the project, they can pose their questions on a CoronaNet Slack channel, which they must join in order to participate in the project. The channel allows any RA to pose a question or issue they may have in using the survey instrument to any of the PIs and allows all other RAs to learn from the exchange at the same time. As such, RAs are able to receive feedback and learn from each other's questions in a timely and centralized manner. Since the data collection effort was launched on March 28, 2020 both RAs and PIs have actively used Slack to communicate with one another.  On the Slack channel devoted to asking questions about the Qualtrics data survey in particular, there were 2600 messages posted by 154 project members. 
 
 <!---To provide a better sense of the level of activity on Slack, Figure \@ref(fig:members) plots the number of project members who had logged into the Slack per day as well as the number of project members who posted at least one message per day and shows that participation and activity Slack  has steadily grown over time.^[Note, the dip in the overall trend corresponds to weekend days.]
 

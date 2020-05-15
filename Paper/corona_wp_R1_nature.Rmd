@@ -24,7 +24,7 @@ institute:
 date: "April 24th, 2020"
 toc: false
 bibliography: BibTexDatabase.bib
-#always_allow_html: yes
+always_allow_html: yes
 output: 
   bookdown::word_document2
   #bookdown::pdf_document2:
@@ -447,7 +447,7 @@ overall <- to_plot  %>%
   #geom_line(aes(group=country,colour=med_est),alpha=0.7, size = 1) +
   #scale_color_distiller(palette="Blues",direction=1) +
   geom_line(aes(group=country), color="lightgrey", size=0.1) +
-  geom_line(data=to_plot[to_plot$country%in% c("Spain","Italy","United Kingdom","United States of America","Comoros","Yemen","Malaysia"),],aes(group=country,colour=med_est),alpha=0.7, size = 1) +
+  geom_line(data=to_plot[to_plot$country%in% c("Spain","Italy","United Kingdom","United States of America","Comoros","Yemen"),],aes(group=country,colour=med_est),alpha=0.7, size = 1) +
      scale_color_distiller(palette="Blues",direction=1) +
   geom_label_repel(aes(label=lab_country),size=2.5) +
   # scale_color_manual(name="Country",values=c('#00CC33','#E69F00','#CC0000',"#FF99FF","#99CCFF","#006699","#990099","orangered1","#9933FF","yellow3", "blue1" ))+

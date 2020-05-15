@@ -207,120 +207,118 @@ clean_data %>%
 
 We can also explore the extent to which other countries are affected by policies that can have a geographic target outside the policy initiator (e.g. 'external border restrictions', 'quarantine') across time. For example, in Figure \@ref(fig:biofe), we map a network of bans on inbound flights to European countries initiated by European countries^[In this paper, the following countries are defined as being in Europe: Albania, Andorra, Armenia, Austria, Belarus, Belgium, Bosnia and Herzegovina, Bulgaria, Croatia, Cyprus, Czech Republic, Denmark, Estonia, Finland, France, Georgia, Germany, Greece, Hungary, Iceland, Ireland, Italy, Kosovo, Latvia, Liechtenstein, Lithuania, Luxembourg, Macedonia, Malta, Moldova, Monaco, Montenegro, Netherlands, Norway, Poland, Portugal, Romania, San Marino, Serbia, Slovakia, Slovenia, Spain, Sweden, Switzerland, Ukraine, United Kingdom, and the Vatican.] as of March 15, 2020. In the plot, each horizontal line represents a potential geographical target of a flight ban. The vertical lines denote whether there was such a flight ban and the arrow of the vertical line indicates the direction in which the ban is applied.^[See @longabaugh2012 for more information on how to interpret this plot.] The figure shows that by March 15, 2020, the governments of Poland and San Marino had banned all flights into Poland and San Marino respectively while the government of Italy banned incoming flights from China, Hong Kong, Macau and Taiwan. Additionally, the governments of Greece and Romania both banned flights from Italy while the government of Albania banned incoming flights from Greece. According to our data, up until this point in time, no other European governments at the national level had banned inbound flights from other countries.^[However, at the provincial level, our dataset documents that the government of the autonomous region of Madeira, Portugal had banned flights from Denmark, Finland, France, Germany, Spain, and Switzerland while the government of Sardinia, Italy closed all airports by March 15, 2020.]
 
-![Network Map of Bans on Inbound Flights by European Countries as of March 15, 2020](corona_wp_R1_nature_files/biofe-1.jpg)
+<!--![Network Map of Bans on Inbound Flights by European Countries as of March 15, 2020](corona_wp_R1_nature_files/biofe-1.jpg)-->
 
-<!--
-<!-- ```{r, results='hide'} -->
+```{r, results='hide'}
 
-<!-- # add region variable -->
-<!-- clean_data$region = regions_df$regions[match(clean_data$country, regions_df$country)]  -->
+# add region variable
+clean_data$region = regions_df$regions[match(clean_data$country, regions_df$country)]
 
-<!-- # create numeric ids per country; needed to create igraph  -->
-<!-- country_id = factor(unique(countries$Country)) -->
-<!-- levels(country_id ) = 1:length(country_id ) -->
-<!-- country_id = as.numeric(as.character(country_id)) -->
-<!-- cid = data.frame(country_name = countries$Country, country_id) -->
-<!-- clean_data$country_id = cid$country_id[match(clean_data$country, cid$country_name)] -->
-<!-- clean_data$target_country_id = cid$country_id[match(clean_data$target_country, cid$country_name)] -->
+# create numeric ids per country; needed to create igraph
+country_id = factor(unique(countries$Country))
+levels(country_id ) = 1:length(country_id )
+country_id = as.numeric(as.character(country_id))
+cid = data.frame(country_name = countries$Country, country_id)
+clean_data$country_id = cid$country_id[match(clean_data$country, cid$country_name)]
+clean_data$target_country_id = cid$country_id[match(clean_data$target_country, cid$country_name)]
 
-<!-- # user function for plotting biofabric plots by region, policy type, date, travel mechanism and travel direction -->
+# user function for plotting biofabric plots by region, policy type, date, travel mechanism and travel direction
 
-<!-- plotBioGraph = function(regionName,  -->
-<!--                         policyType,  -->
-<!--                         dateStart,  -->
-<!--                         allDum  = FALSE,  -->
-<!--                         travelMech = c('Flights' ,'All kinds of transport'), -->
-<!--                         travelDir = c("Inbound", "Inbound/Outbound")){ -->
+plotBioGraph = function(regionName,
+                        policyType,
+                        dateStart,
+                        allDum  = FALSE,
+                        travelMech = c('Flights' ,'All kinds of transport'),
+                        travelDir = c("Inbound", "Inbound/Outbound")){
 
-<!--   # subset data -->
-<!--   sub_data = clean_data %>% filter(date_start<= dateStart)  -->
-<!--   sub_data =  sub_data %>% filter(type == policyType )  -->
-<!--   sub_data = sub_data %>% separate_rows(travel_mechanism, sep = ',') -->
-<!--   sub_data = sub_data %>% filter(travel_mechanism %in% travelMech)   -->
-<!--   sub_data = sub_data %>% filter(target_direction %in% travelDir )   -->
+  # subset data
+  sub_data = clean_data %>% filter(date_start<= dateStart)
+  sub_data =  sub_data %>% filter(type == policyType )
+  sub_data = sub_data %>% separate_rows(travel_mechanism, sep = ',')
+  sub_data = sub_data %>% filter(travel_mechanism %in% travelMech)
+  sub_data = sub_data %>% filter(target_direction %in% travelDir )
 
-<!--   # mandatory compliance -->
-<!--   sub_data = sub_data %>% separate_rows(compliance, sep = ',' )   -->
-<!--   sub_data = sub_data %>% filter(compliance %!in% "Voluntary/Recommended but No Penalties")   -->
-<!--   sub_data = sub_data %>% filter(target_country!="Other (please specify below)") -->
-
-
-<!--   # conditional logic for only selecting inbound flight bans external border restrctions -->
-<!--   if(policyType == 'External Border Restrictions'){ -->
-<!--     sub_data = sub_data %>% filter(type_sub_cat %!in% c("Health Screenings (e.g. temperature checks)", "Health Certificates", "Travel History Form (e.g. documents where traveler has recently been)") ) -->
-<!--     sub_data = sub_data %>% filter(target_who_what %in% c("All (Travelers + Residents)", "All Travelers (Citizen Travelers + Foreign Travelers )") ) -->
-<!--   } -->
-
-<!--   ## Note, the following entry is not 'wrong', but is not a sweeping travel ban -->
-<!--   # Macau, not travel ban but health declaration doesn't fit into existing categories -->
-<!--   sub_data = sub_data %>% filter(policy_id %!in% c(4638284 )) -->
-
-<!--   # Italian ban only for Sardenia -->
-<!--   sub_data = sub_data %>% filter(policy_id %!in% c(4539256)) -->
-
-<!--   # Portugal ban only for Maideria -->
-<!--    sub_data = sub_data %>% filter(policy_id %!in% c(6369772)) -->
-<!--   ## FIX THE BELOW LATER IN QUALTRICS -->
-
-<!--   # this is not a travel ban for people entering Italy,but a health declaration form -->
-<!--   sub_data = sub_data %>% filter(policy_id %!in% c(1727181)) -->
-
-<!--   # South Sudan, not a ban on all countries, but on unsepcified countries affected by covid -->
-<!--   sub_data = sub_data %>% filter(policy_id %!in% c(5302981)) -->
-
-<!--   # add data for italy's ban of inbound flights from Taiwan, Hong Kong and Macau -->
-<!--   # currently not in the data but we should add these entries -->
-<!--   # https://www.reuters.com/article/china-health-taiwan-italy/italy-says-taiwan-flight-resumption-request-noted-after-virus-ban-idUSL4N2A52YR -->
-
-<!--   sub_data = sub_data %>% add_row(country = 'Italy', target_country = 'Taiwan', type = 'External Border Restrictions', target_direction = 'Inbound', travel_mechanism = "Flights", date_start = as.Date("2020-02-02"), region = 'Europe') -->
-<!--   sub_data = sub_data %>% add_row(country = 'Italy', target_country = 'Hong Kong', type = 'External Border Restrictions', target_direction = 'Inbound', travel_mechanism = "Flights", date_start = as.Date("2020-02-02"), region = 'Europe') -->
-<!--   sub_data = sub_data %>% add_row(country = 'Italy', target_country = 'Macau', type = 'External Border Restrictions', target_direction = 'Inbound', travel_mechanism = "Flights", date_start = as.Date("2020-02-02"), region = 'Europe') -->
-
-<!--   # add data for greece's ban of inbound/outbound flights from Italy -->
-<!--   # https://www.reuters.com/article/us-health-coronavirus-greece-death/greece-reports-two-more-coronavirus-fatalities-suspends-all-flights-to-italy-idUSKBN2110H1 -->
-<!--   sub_data = sub_data %>% add_row(country = 'Greece', target_country = 'Italy', type = 'External Border Restrictions', target_direction = 'Inbound', travel_mechanism = "Flights", date_start = as.Date("2020-03-14"), region = 'Europe') -->
+  # mandatory compliance
+  sub_data = sub_data %>% separate_rows(compliance, sep = ',' )
+  sub_data = sub_data %>% filter(compliance %!in% "Voluntary/Recommended but No Penalties")
+  sub_data = sub_data %>% filter(target_country!="Other (please specify below)")
 
 
-<!--   # expand dataset to include disaggregated country data when applicable -->
-<!--   sub_data[which(sub_data$target_country == 'All countries'), 'target_country'] = paste(cid$country_name, collapse = ',') -->
-<!--   sub_data = sub_data %>% separate_rows(target_country, sep = ',') -->
+  # conditional logic for only selecting inbound flight bans external border restrctions
+  if(policyType == 'External Border Restrictions'){
+    sub_data = sub_data %>% filter(type_sub_cat %!in% c("Health Screenings (e.g. temperature checks)", "Health Certificates", "Travel History Form (e.g. documents where traveler has recently been)") )
+    sub_data = sub_data %>% filter(target_who_what %in% c("All (Travelers + Residents)", "All Travelers (Citizen Travelers + Foreign Travelers )") )
+  }
 
-<!--   # remove duplicates -->
-<!--   sub_data = sub_data %>%    -->
-<!--     distinct(country, target_country, .keep_all = TRUE)   -->
+  ## Note, the following entry is not 'wrong', but is not a sweeping travel ban
+  # Macau, not travel ban but health declaration doesn't fit into existing categories
+  sub_data = sub_data %>% filter(policy_id %!in% c(4638284 ))
 
-<!--   # subset to a region, if applicable -->
-<!--   if(allDum == FALSE){ -->
-<!--     sub_data = sub_data %>% filter(region %in% regionName)} -->
+  # Italian ban only for Sardenia
+  sub_data = sub_data %>% filter(policy_id %!in% c(4539256))
 
-<!--   # extract edges and nodes for network -->
-<!--   nodes = data.frame(unique(c(sub_data$country,sub_data$target_country))) -->
-<!--   edges = data.frame(from = sub_data$country,to = sub_data$target_country) -->
+  # Portugal ban only for Maideria
+   sub_data = sub_data %>% filter(policy_id %!in% c(6369772))
+  ## FIX THE BELOW LATER IN QUALTRICS
 
-<!--   # create network from subdata -->
-<!--   sub_data_net = graph_from_data_frame(edges, nodes, directed = TRUE) -->
+  # this is not a travel ban for people entering Italy,but a health declaration form
+  sub_data = sub_data %>% filter(policy_id %!in% c(1727181))
 
-<!--   #format .pdf size and save pdf of bifabric -->
-<!--   height <- vcount(sub_data_net) -->
-<!--   width <- ecount(sub_data_net) -->
-<!--   aspect <- height / width; -->
-<!--   plotWidth <- 100.0 -->
-<!--   plotHeight <- plotWidth * (aspect * 1.2) -->
+  # South Sudan, not a ban on all countries, but on unsepcified countries affected by covid
+  sub_data = sub_data %>% filter(policy_id %!in% c(5302981))
 
-<!--   # make biofabric plot -->
-<!--   bioFabric(passthroughNodeOrder(sub_data_net) ) -->
+  # add data for italy's ban of inbound flights from Taiwan, Hong Kong and Macau
+  # currently not in the data but we should add these entries
+  # https://www.reuters.com/article/china-health-taiwan-italy/italy-says-taiwan-flight-resumption-request-noted-after-virus-ban-idUSL4N2A52YR
 
-<!-- } -->
+  sub_data = sub_data %>% add_row(country = 'Italy', target_country = 'Taiwan', type = 'External Border Restrictions', target_direction = 'Inbound', travel_mechanism = "Flights", date_start = as.Date("2020-02-02"), region = 'Europe')
+  sub_data = sub_data %>% add_row(country = 'Italy', target_country = 'Hong Kong', type = 'External Border Restrictions', target_direction = 'Inbound', travel_mechanism = "Flights", date_start = as.Date("2020-02-02"), region = 'Europe')
+  sub_data = sub_data %>% add_row(country = 'Italy', target_country = 'Macau', type = 'External Border Restrictions', target_direction = 'Inbound', travel_mechanism = "Flights", date_start = as.Date("2020-02-02"), region = 'Europe')
+
+  # add data for greece's ban of inbound/outbound flights from Italy
+  # https://www.reuters.com/article/us-health-coronavirus-greece-death/greece-reports-two-more-coronavirus-fatalities-suspends-all-flights-to-italy-idUSKBN2110H1
+  sub_data = sub_data %>% add_row(country = 'Greece', target_country = 'Italy', type = 'External Border Restrictions', target_direction = 'Inbound', travel_mechanism = "Flights", date_start = as.Date("2020-03-14"), region = 'Europe')
 
 
+  # expand dataset to include disaggregated country data when applicable
+  sub_data[which(sub_data$target_country == 'All countries'), 'target_country'] = paste(cid$country_name, collapse = ',')
+  sub_data = sub_data %>% separate_rows(target_country, sep = ',')
 
-<!-- ``` -->
+  # remove duplicates
+  sub_data = sub_data %>%
+    distinct(country, target_country, .keep_all = TRUE)
 
-<!-- ```{r biofe,fig.cap="Network Map of Bans on Inbound Flights by European Countries as of March 15, 2020"} -->
+  # subset to a region, if applicable
+  if(allDum == FALSE){
+    sub_data = sub_data %>% filter(region %in% regionName)}
 
-<!-- plotBioGraph("Europe", "External Border Restrictions", "2020-03-15")  -->
-<!-- ``` -->
--->
+  # extract edges and nodes for network
+  nodes = data.frame(unique(c(sub_data$country,sub_data$target_country)))
+  edges = data.frame(from = sub_data$country,to = sub_data$target_country)
+
+  # create network from subdata
+  sub_data_net = graph_from_data_frame(edges, nodes, directed = TRUE)
+
+  #format .pdf size and save pdf of bifabric
+  height <- vcount(sub_data_net)
+  width <- ecount(sub_data_net)
+  aspect <- height / width;
+  plotWidth <- 100.0
+  plotHeight <- plotWidth * (aspect * 1.2)
+
+  # make biofabric plot
+  bioFabric(passthroughNodeOrder(sub_data_net) )
+
+}
+
+```
+
+
+```{r biofe,fig.cap="Network Map of Bans on Inbound Flights by European Countries as of March 15, 2020"}
+
+plotBioGraph("Europe", "External Border Restrictions", "2020-03-15")
+```
+ 
 
 
 

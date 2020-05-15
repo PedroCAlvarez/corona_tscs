@@ -1,62 +1,40 @@
-% Options for packages loaded elsewhere
-\PassOptionsToPackage{unicode}{hyperref}
-\PassOptionsToPackage{hyphens}{url}
-\PassOptionsToPackage{dvipsnames,svgnames*,x11names*}{xcolor}
-%
-\documentclass[
-]{article}
+\documentclass[]{article}
 \usepackage{lmodern}
 \usepackage{amssymb,amsmath}
 \usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
-  \usepackage{textcomp} % provide euro and other symbols
-\else % if luatex or xetex
-  \usepackage{unicode-math}
-  \defaultfontfeatures{Scale=MatchLowercase}
-  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
 \fi
-% Use upquote if available, for straight quotes in verbatim environments
+% use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
-\IfFileExists{microtype.sty}{% use microtype if available
-  \usepackage[]{microtype}
-  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
 }{}
-\makeatletter
-\@ifundefined{KOMAClassName}{% if non-KOMA class
-  \IfFileExists{parskip.sty}{%
-    \usepackage{parskip}
-  }{% else
-    \setlength{\parindent}{0pt}
-    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
-}{% if KOMA class
-  \KOMAoptions{parskip=half}}
-\makeatother
-\usepackage{xcolor}
-\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
-\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
-\hypersetup{
-  pdftitle={CoronaNet: A Dyadic Dataset of Government Responses to the COVID-19 Pandemic},
-  pdfauthor={Cindy Cheng1,; Joan Barceló2; Allison Spencer Hartnett3; Robert Kubinec2; Luca Messerschmidt1},
-  colorlinks=true,
-  linkcolor=Maroon,
-  filecolor=Maroon,
-  citecolor=Blue,
-  urlcolor=blue,
-  pdfcreator={LaTeX via pandoc}}
-\urlstyle{same} % disable monospaced font for URLs
 \usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\PassOptionsToPackage{usenames,dvipsnames}{color} % color is loaded by hyperref
+\hypersetup{unicode=true,
+            pdftitle={CoronaNet: A Dyadic Dataset of Government Responses to the COVID-19 Pandemic},
+            pdfauthor={Cindy Cheng1,; Joan Barceló2; Allison Spencer Hartnett3; Robert Kubinec2; Luca Messerschmidt1},
+            colorlinks=true,
+            linkcolor=Maroon,
+            citecolor=Blue,
+            urlcolor=blue,
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
 \usepackage{longtable,booktabs}
-% Correct order of tables after \paragraph or \subparagraph
-\usepackage{etoolbox}
-\makeatletter
-\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
-\makeatother
-% Allow footnotes in longtable head/foot
-\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
-\makesavenoteenv{longtable}
-\usepackage{graphicx}
+\usepackage{graphicx,grffile}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
 \def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
@@ -65,17 +43,53 @@
 % margins by default, and it is still possible to overwrite the defaults
 % using explicit options in \includegraphics[width, height, ...]{}
 \setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
-% Set default figure placement to htbp
-\makeatletter
-\def\fps@figure{htbp}
-\makeatother
-\setlength{\emergencystretch}{3em} % prevent overfull lines
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \setcounter{secnumdepth}{5}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\providecommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{CoronaNet: A Dyadic Dataset of Government Responses to the COVID-19 Pandemic}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Cindy Cheng\textsuperscript{1,*} \\ Joan Barceló\textsuperscript{2} \\ Allison Spencer Hartnett\textsuperscript{3} \\ Robert Kubinec\textsuperscript{2} \\ Luca Messerschmidt\textsuperscript{1}}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{April 24th, 2020}
+
 \linespread{1.6}
-\usepackage{lineno}
-\linenumbers
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -90,31 +104,25 @@
 \usepackage[normalem]{ulem}
 \usepackage{makecell}
 \usepackage{xcolor}
-\newlength{\cslhangindent}
-\setlength{\cslhangindent}{1.5em}
-\newenvironment{cslreferences}%
-  {}%
-  {\par}
 
-\title{CoronaNet: A Dyadic Dataset of Government Responses to the COVID-19 Pandemic}
-\author{Cindy Cheng\textsuperscript{1,*} \and Joan Barceló\textsuperscript{2} \and Allison Spencer Hartnett\textsuperscript{3} \and Robert Kubinec\textsuperscript{2} \and Luca Messerschmidt\textsuperscript{1}}
-\date{April 24th, 2020}
+\usepackage{lineno}
+\linenumbers
 
 \begin{document}
 \maketitle
 \begin{abstract}
-Governments everywhere have implemented numerous policies that have been influential in shaping the COVID-19 pandemic. We present an initial public release of a large hand-coded dataset of over 12,000 separate policy announcements in response to the pandemic across more than 190 countries. The dataset will be updated daily, with a 5-day lag for validity checking. We document policies across numerous dimensions, including the type of policy; national vs.~sub-national enforcement; the specific group and country targeted by the policy; and the time frame within which the policy is implemented. We further analyze the dataset using a Bayesian measurement model which shows the quick acceleration of the adoption of costly policies across countries beginning in mid-March and continuing to the present. Furthermore, we find that the rate of policy adoption varied widely across countries, with New Zealand having the fastest response across policy categories and the United States the most gradual.
+Governments everywhere have implemented numerous policies that have been influential in shaping the COVID-19 pandemic. We present an initial public release of a large hand-coded dataset of over 12,000 separate policy announcements in response to the pandemic across more than 190 countries. The dataset is updated daily, with a 5-day lag for validity checking. We document policies across numerous dimensions, including the type of policy; national vs.~sub-national enforcement; the specific human group and geographic region targeted by the policy; and the time frame within which the policy is implemented. We further analyze the dataset using a Bayesian measurement model which shows the quick acceleration of the adoption of costly policies across countries beginning in mid-March and continuing to the present. Furthermore, we find that the rate of policy adoption varied widely across countries, with New Zealand having the fastest response across policy categories and the United States the most gradual.
 \end{abstract}
 
 \textsuperscript{1} Hochschule für Politik at the Technical University of Munich (TUM) and the TUM School of Governance, Munich, Germany\\
 \textsuperscript{2} Social Science Division, New York University Abu Dhabi, Abu Dhabi, UAE\\
-\textsuperscript{3} Departmnet of Political Science, Yale University, New Haven, USA
+\textsuperscript{3} Department of Political Science, Yale University, New Haven, USA
 
 \textsuperscript{*} Correspondence: \href{mailto:cindy.cheng@hfp.tum.de}{Cindy Cheng \textless{}\href{mailto:cindy.cheng@hfp.tum.de}{\nolinkurl{cindy.cheng@hfp.tum.de}}\textgreater{}}
 
 \newpage
 
-Governments all around the world have implemented an astonishing number and variety of policies in reaction to the COVID-19 pandemic in a very short time frame. However, policy makers and researchers have to date lacked access to the quality, up-to-date data they need for conducting rigorous analyses of whether, how, and to what degree these fast changing policies have worked in brunting the health, political and economic effects of the pandemic. To address this concern, in this paper, we present the CoronaNet COVID-19 Government Response Database, which provides fine-grained, dyadic data on policy actions taken by governments across the world since the Chinese government reported the COVID-19 outbreak on December 31, 2019. At the time of writing, the dataset covers the policy actions of 195 countries\footnote{Note, we will include additional countries in future versions of the dataset.} up until 2020-05-06, for a total of 12418 events.
+Governments all around the world have implemented an astonishing number and variety of policies in reaction to the COVID-19 pandemic in a very short time frame. However, policy makers and researchers have to date lacked access to the quality, up-to-date data they need for conducting rigorous analyses of whether, how, and to what degree these fast changing policies have worked in brunting the health, political and economic effects of the pandemic. To address this concern, in this paper, we present the CoronaNet COVID-19 Government Response Database, which provides fine-grained, dyadic data on policy actions taken by governments across the world since the Chinese government reported the COVID-19 outbreak on December 31, 2019. At the time of writing, the dataset covers the policy actions of 196 countries\footnote{Note, we will include additional countries in future versions of the dataset.} up until 2020-05-08, for a total of 12607 events.
 
 With the help of a team of over 260 research assistants in 18 time zones, we are releasing the data on a daily basis. We are implementing a five-day lag between data collection and release to evaluate and validate ongoing coding efforts for random samples of the data to ensure the best possible quality given the considerable time constraints. More specifically, the CoronaNet database collects daily data on government policy actions taken against COVID-19 across the following dimensions:
 
@@ -140,9 +148,11 @@ With the help of a team of over 260 research assistants in 18 time zones, we are
   The timing of the policy action (e.g.~date announced, date implemented)
 \end{itemize}
 
-We believe that this data can help policy makers and researchers better understand which policies are more effective in addressing the spread and health outcomes of COVID-19.\textsuperscript{1} It will also permit crucial inference on the effects COVID-19 has had on societies and economies. Indeed, anecdotal evidence suggests that the pandemic has already had substantial consequences for the nature of political institutions,\textsuperscript{2,3} the stability of financial markets\textsuperscript{4} and the way of life of billions of people.\textsuperscript{5} Data on government reactions to the COVID-19 pandemic can help provide systematic evidence of these effects. Moreover, it can further help us better understand the determinants of these influential policies at both the structural\textsuperscript{6,7} and interpersonal levels.\textsuperscript{8}
+Though government responses to the COVID-19 pandemic have inaugurated unprecedented changes in how billions of people live their lives, they draw on the lessons learned from the endless series of pandemics and epidemics that came before. Indeed, the earliest written sources document how ancient Mesopotamian responded to the constant threat of epidemic by, on the one hand drawing on spiritual practices and on the other hand, isolating people showing the first symptoms of a disease from others.\textsuperscript{1,2} As time has marched forward, pandemics and epidemics have consistently and dramatically changed the course of human history\textsuperscript{3--7} and governments have continued to implement a variety of policies in response.\textsuperscript{1,8,9} Over time, the collection of reliable data has helped advance collective understanding of which policies are effective in curbing the effects of a given pandemic.\textsuperscript{10,11} This is no trivial task given that a policy that is effective in one context may be ineffective in another due to a whole host of potentially conditioning factors, including the pathogenesis of the particular disease\textsuperscript{12,13}, the characteristics of the underlying population\textsuperscript{14--17}, and the available medical\textsuperscript{18,19} and communication\textsuperscript{20--23} technology at the time.
 
-Meanwhile, given the exogenous timing of the initial outbreak in Wuhan, China, government policies made in reaction to the COVID-19 pandemic constitute the single largest natural experiment in recent memory, allowing researchers to improve causal inference in any number of fields. Indeed, government reactions to the COVID-19 epidemic will have long-lasting implications on a wide-range of social phenomena, from the evolution of political institutions\textsuperscript{9} to the progression of economic development\textsuperscript{10--12} to say nothing of its potential ramifications for environmental outcomes,\textsuperscript{13,14} mental health,\textsuperscript{15,16} or disaster preparedness.\textsuperscript{17} While scholars have always sought to understand how large-scale historical events have shaped contemporary phenomena, modern technological tools allow us to document such events more quickly and more precisely than ever before.
+We believe that the data presented in this paper will be similarly invaluable for helping policy makers and researchers assess how effective different policies are in addressing the spread and health outcomes of COVID-19\textsuperscript{24}. While available research is necessarily preliminary, it suggests that which policies governments have implemented in response to COVID-19\textsuperscript{25--27}, when they decided to implement them\textsuperscript{29,30}, who they were targeted toward\textsuperscript{31,32} and what state capacity they possessed to do so\textsuperscript{33,34} have all significantly influenced how the virus has affected health outcomes both within and across different country contexts\textsuperscript{35,36}, and which is readily captured by our dataset. Equally important is understanding why countries adopt different policies, with early analyses suggesting that institutional and political factors, e.g.~the authoritarian or democratic nature of a country's institutions\textsuperscript{37} or its level of political partisanship\textsuperscript{38}, play an important role. These findings will not only improve the global response to the current crisis, but can also build an influential foundation of knowledge for responding to future outbreaks\textsuperscript{39,40}.
+
+Meanwhile, given the exogenous timing of the initial outbreak in Wuhan, China, government policies made in reaction to the COVID-19 pandemic constitute the single largest natural experiment in recent memory, allowing researchers to improve causal inference in any number of fields. Indeed, government reactions to the COVID-19 epidemic may forward our understanding of a wide-range of social phenomena, from the evolution of political institutions\textsuperscript{41--45} to the progression of economic development\textsuperscript{46--50} and the stability of financial markets\textsuperscript{51,52} to say nothing of what we might learn about what we might learn about environmental economics\textsuperscript{53,54}, mental health\textsuperscript{55,56}, disaster response\textsuperscript{57,58} and disaster preparedness\textsuperscript{59--61}. Some initial analyses suggest that the COVID-19 pandemic has already led to authoritarian backsliding in some countries\textsuperscript{62}, unprecedented shocks to the economy\textsuperscript{63,64}, and serious negative mental health effects for millions of people\textsuperscript{65,66}. While scholars have always sought to understand how large-scale historical events have shaped contemporary phenomena, modern technological tools allow us to document such events more quickly and more precisely than ever before.
 
 In what follows, we provide a description of the data, as well as an application of the data in which we model policy activity of countries over time. Using a Bayesian dynamic item-response theory model, we produce a statistically valid index that summarizes countries in terms of their response to the pandemic, and further shows how quickly policy responses have changed over time. We document clear evidence of rapid policy diffusion of harsh measures opposing the virus, indicating some of the most extensive evidence of this type of diffusion ever documented. In the methodology section, we provide a thorough discussion of the procedures used to collate the data and to manage the more than 260 research assistants coding this data around the world in real time.
 
@@ -156,9 +166,9 @@ In this section, we first present some descriptive statistics that illustrate ho
 \subsection*{Descriptive Statistics}\label{descriptive-statistics}}
 \addcontentsline{toc}{subsection}{Descriptive Statistics}
 
-Here we present some descriptive statistics for key variables available in the data. Table \ref{tab:desctab} shows the number of records for each policy type, the number of unique countries for each policy type as well as how many countries are targeted in total by each policy type. We note that these are cumulative totals for the different categories in the data, except for the number of targeted countries, which is an average number. Table \ref{tab:desctab} also provides information on the degree to which a given policy must be complied with.
+Here we present some descriptive statistics for key variables available in the data. Table \ref{tab:desctab} shows the number of records for each policy type (please see Data Schema section for more information on how a policy type is defined), the number of unique countries for each policy type, how many countries are targeted in total by each policy type and the degree to which a given policy must be complied with. We present cumulative totals for the different categories in the data, except for the number of targeted countries, which is an average number. While, we highlight the number of targeted countries in this table, we note that our data also captures other potential geographic targets. For instance, it is possible for a national policy to be targetd toward a particular sub-national province or a provincial policy to be targeted toward a certain sub-provincial regions.
 
-According to our data, the most common government policy implemented in reaction to COVID-19 is external border restrictions, i.e.~policies that seek to limit access to ports of entry or exit across different governmental jurisdictions. We find that 186 countries have made 1050 policy announcements about such restrictions since December 31, 2019. Meanwhile, the second policy that most countries, by our count 165, have implemented is `Closure of Schools', of which we document 1548 such policies. Governments have implemented `Restriction of Non-Essential Businesses' policies with the second highest frequency; we document that 132 countries have implemented 1769 such policies. However, we note that a strict comparison of policy types by this metric is not perfect, given that, for example, there may be a need for more individualized policies regarding external border restrictions (given the number of countries which a government can restrict travel access to) as opposed to closing schools. In the next subsection, we provide a more rigorous method of comparing policies while taking their depth into account.
+Table \ref{tab:desctab} shows that the most common government policy implemented in reaction to COVID-19 is external border restrictions, i.e.~policies that seek to limit access to ports of entry or exit across different governmental jurisdictions. We find that 186 countries have made 1064 policy announcements about such restrictions since December 31, 2019. Meanwhile, the second policy that most countries, by our count 169, have implemented is `Closure of Schools', of which we document 1583 such policies. Governments have implemented `Restriction of Non-Essential Businesses' policies with the second highest frequency; we document that 135 countries have implemented 1855 such policies. However, we note that a strict comparison of policy types by this metric is not perfect, given that, for example, there may be a need for more individualized policies regarding external border restrictions (given the number of countries which a government can restrict travel access to) as opposed to closing schools. In the next subsection, we provide a more rigorous method of comparing policies while taking their depth into account.
 
 Meanwhile, our dataset also shows that virtually all countries in the world are a target of an external border restriction, quarantine measure, or health monitoring measure from another country. Moreover, a high percentage of policies documented in our dataset have mandatory enforcement.
 
@@ -166,32 +176,30 @@ Meanwhile, our dataset also shows that virtually all countries in the world are 
 
 \caption{\label{tab:desctab}Descriptive Information about the CoronaNet Government Response Dataset}
 \centering
-\begin{tabular}[t]{>{\raggedright\arraybackslash}p{4cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{4cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}}
 \toprule
 Type & Total Number of Policies & Number of Countries & Average Number of Targeted Countries & \% With Mandatory Enforcement\\
 \midrule
-\rowcolor{gray!6}  Health Resources & 2297 & 146 & 154 & 58\\
-Restriction of Non-Essential Businesses & 1769 & 132 & 132 & 92\\
-\rowcolor{gray!6}  Closure of Schools & 1548 & 165 & 165 & 88\\
-Quarantine & 1086 & 157 & 206 & 87\\
-\rowcolor{gray!6}  External Border Restrictions & 1050 & 186 & 205 & 81\\
+\rowcolor{gray!6}  Health Resources & 2342 & 148 & 67 & 54\\
+Restriction of Non-Essential Businesses & 1855 & 135 & 1 & 92\\
+\rowcolor{gray!6}  Closure of Schools & 1583 & 169 & 1 & 90\\
+Quarantine & 1102 & 161 & 103 & 87\\
+\rowcolor{gray!6}  External Border Restrictions & 1064 & 186 & 163 & 83\\
 \addlinespace
-Other & 794 & 127 & 144 & 58\\
-\rowcolor{gray!6}  Public Awareness Measures & 596 & 134 & 134 & 27\\
-Restrictions of Mass Gatherings & 556 & 158 & 159 & 86\\
-\rowcolor{gray!6}  Social Distancing & 508 & 124 & 124 & 71\\
-Restriction of Non-Essential Government Services & 360 & 96 & 96 & 87\\
+Other & 819 & 132 & 26 & 60\\
+\rowcolor{gray!6}  Public Awareness Measures & 609 & 137 & 1 & 23\\
+Restrictions of Mass Gatherings & 575 & 159 & 1 & 87\\
+\rowcolor{gray!6}  Social Distancing & 518 & 127 & 1 & 71\\
+Restriction of Non-Essential Government Services & 373 & 99 & 1 & 80\\
 \addlinespace
-\rowcolor{gray!6}  New Task Force, Bureau or Administrative Configuration & 337 & 102 & 102 & 55\\
-Declaration of Emergency & 326 & 113 & 113 & 100\\
-\rowcolor{gray!6}  Health Monitoring & 313 & 110 & 202 & 71\\
-Internal Border Restrictions & 300 & 111 & 111 & 89\\
-\rowcolor{gray!6}  Health Testing & 271 & 94 & 117 & 64\\
+\rowcolor{gray!6}  New Task Force, Bureau or Administrative Configuration & 345 & 104 & 1 & 100\\
+Declaration of Emergency & 330 & 114 & 1 & 100\\
+\rowcolor{gray!6}  Health Monitoring & 318 & 110 & 83 & 71\\
+Internal Border Restrictions & 313 & 111 & 1 & 89\\
+\rowcolor{gray!6}  Health Testing & 283 & 98 & 61 & 67\\
 \addlinespace
-Curfew & 166 & 90 & 89 & 96\\
-\rowcolor{gray!6}  Hygiene & 122 & 38 & 38 & 77\\
-Anti-Disinformation Measures & 17 & 16 & 16 & 88\\
-\rowcolor{gray!6}  Quarantine/Lockdown & 2 & 2 & 1 & 100\\
+Curfew & 172 & 91 & 1 & 95\\
+\rowcolor{gray!6}  Lockdown & 6 & 5 & 1 & 80\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -204,7 +212,7 @@ In addition, we can look at the cumulative incidence of different types of polic
 \caption{\label{fig:overtime}Cumulative Incidence of Policy Event Types Over Time}
 \end{figure}
 
-We can also explore the extent to which other countries are affected by policies that can have a geographic target outside the policy initiator (e.g.~`external border restrictions', `quarantine') across time. For example, in Figure \ref{fig:biofe}, we map a network of bans on inbound flights to European countries initiated by European countries\footnote{In this paper, the following countries are defined as being in Europe: Albania, Andorra, Armenia, Austria, Belarus, Belgium, Bosnia and Herzegovina, Bulgaria, Croatia, Cyprus, Czech Republic, Denmark, Estonia, Finland, France, Georgia, Germany, Greece, Hungary, Iceland, Ireland, Italy, Kosovo, Latvia, Liechtenstein, Lithuania, Luxembourg, Macedonia, Malta, Moldova, Monaco, Montenegro, Netherlands, Norway, Poland, Portugal, Romania, San Marino, Serbia, Slovakia, Slovenia, Spain, Sweden, Switzerland, Ukraine, United Kingdom, and the Vatican.} as of March 15, 2020. In the plot, each horizontal line represents a potential geographical target of a flight ban. The vertical lines denote whether there was such a flight ban and the arrow of the vertical line indicates the direction in which the ban is applied.\footnote{See 18 for more information on how to interpret this plot.} The figure shows that by March 15, 2020, the governments of Poland and San Marino had banned all flights into Poland and San Marino respectively while the government of Italy banned incoming flights from China, Hong Kong, Macau and Taiwan. Additionally, the governments of Greece and Romania both banned flights from Italy while the government of Albania banned incoming flights from Greece. According to our data, up until this point in time, no other European governments at the national level had banned inbound flights from other countries.\footnote{However, at the provincial level, our dataset documents that the government of the autonomous region of Madeira, Portugal had banned flights from Denmark, Finland, France, Germany, Spain, and Switzerland while the government of Sardinia, Italy closed all airports by March 15, 2020.}
+We can also explore the extent to which other countries are affected by policies that can have a geographic target outside the policy initiator (e.g.~`external border restrictions', `quarantine') across time. For example, in Figure \ref{fig:biofe}, we map a network of bans on inbound flights to European countries initiated by European countries\footnote{In this paper, the following countries are defined as being in Europe: Albania, Andorra, Armenia, Austria, Belarus, Belgium, Bosnia and Herzegovina, Bulgaria, Croatia, Cyprus, Czech Republic, Denmark, Estonia, Finland, France, Georgia, Germany, Greece, Hungary, Iceland, Ireland, Italy, Kosovo, Latvia, Liechtenstein, Lithuania, Luxembourg, Macedonia, Malta, Moldova, Monaco, Montenegro, Netherlands, Norway, Poland, Portugal, Romania, San Marino, Serbia, Slovakia, Slovenia, Spain, Sweden, Switzerland, Ukraine, United Kingdom, and the Vatican.} as of March 15, 2020. In the plot, each horizontal line represents a potential geographical target of a flight ban. The vertical lines denote whether there was such a flight ban and the arrow of the vertical line indicates the direction in which the ban is applied.\footnote{See 67 for more information on how to interpret this plot.} The figure shows that by March 15, 2020, the governments of Poland and San Marino had banned all flights into Poland and San Marino respectively while the government of Italy banned incoming flights from China, Hong Kong, Macau and Taiwan. Additionally, the governments of Greece and Romania both banned flights from Italy while the government of Albania banned incoming flights from Greece. According to our data, up until this point in time, no other European governments at the national level had banned inbound flights from other countries.\footnote{However, at the provincial level, our dataset documents that the government of the autonomous region of Madeira, Portugal had banned flights from Denmark, Finland, France, Germany, Spain, and Switzerland while the government of Sardinia, Italy closed all airports by March 15, 2020.}
 
 \begin{figure}
 \centering
@@ -216,19 +224,19 @@ We can also explore the extent to which other countries are affected by policies
 \section*{Government Policy Activity Index}\label{government-policy-activity-index}}
 \addcontentsline{toc}{section}{Government Policy Activity Index}
 
-In this section, we briefly present our new index for tracking the relative government activity with regards to policies targeting COVID-19 across countries and over time. The model is a version of item-response theory known as ideal point modeling that incorporates over-time trends,\textsuperscript{19--24} permitting inference on how a latent construct, in this case total policy activity, responds to changes in the pandemic. To fit the model, the different policy types shown in Table \ref{tab:desctab} were coded in terms of ordinal values, with lower values for sub-national targets of policies and higher values for policies applying to the entire country, or in the case of external border restrictions, to one or more external countries. For instance, internal country policies can take on three possible values: no policy, sub-national policy, or policy covering the whole country. Meanwhile external border restrictions can take on four possible values: no policy, policy targeting one other country, policy targeting multiple countries, and policy targeting all countries in the world (i.e., border closure).
+In this section, we briefly present our new index for tracking the relative government activity with regards to policies targeting COVID-19 across countries and over time. The model is a version of item-response theory known as ideal point modeling that incorporates over-time trends\textsuperscript{68--73}, permitting inference on how a latent construct, in this case total policy activity, responds to changes in the pandemic. To fit the model, the different policy types shown in Table \ref{tab:desctab} were coded in terms of ordinal values, with lower values for sub-national targets of policies and higher values for policies applying to the entire country, or in the case of external border restrictions, to one or more external countries. For instance, internal country policies can take on three possible values: no policy, sub-national policy, or policy covering the whole country. Meanwhile external border restrictions can take on four possible values: no policy, policy targeting one other country, policy targeting multiple countries, and policy targeting all countries in the world (i.e., border closure).
 
-We employed ideal point modeling because it can be given a latent utility interpretation.\textsuperscript{20} We assume that each country has an unobserved ``ideal point'' on a unidimensional space representing its willingness to impose policies, while each policy likewise has a position on the same space. The relative cost of different policies can be thought of as the distance between a country's ideal point and the ideal point of the policy relative to other policies. While the meaning of this implied cost will vary from country to country, it is likely a combination of the social, political and economic costs of implementing the policy at a given time point.
+We employed ideal point modeling because it can be given a latent utility interpretation\textsuperscript{69}. We assume that each country has an unobserved ``ideal point'' on a unidimensional space representing its willingness to impose policies, while each policy likewise has a position on the same space. The relative cost of different policies can be thought of as the distance between a country's ideal point and the ideal point of the policy relative to other policies. While the meaning of this implied cost will vary from country to country, it is likely a combination of the social, political and economic costs of implementing the policy at a given time point.
 
-As countries become more willing to pay the implied cost (i.e.~the latent distance between ideal point and policy), the country's ideal points/policy activity score will rise and they will implement more policies. This interpretation is similar to the traditional item-response theory approach for analyzing test questions in which students who correctly answer more questions on a test are considered to have higher ``ability''.\textsuperscript{25,26} Following this logic, we are able to estimate latent country scores that represent the readiness of a country to impose a set number of policies. The implied cost of policies is estimated via discrimination parameters, which indicate how strongly policies discriminate between countries.
+As countries become more willing to pay the implied cost (i.e.~the latent distance between country and policy decreases), the country's ideal points/policy activity score will rise and they will implement more policies. This interpretation is similar to the traditional item-response theory approach for analyzing test questions in which students who correctly answer more questions on a test are considered to have higher ``ability''\textsuperscript{74,75}. Following this logic, we are able to estimate latent country scores that represent the readiness of a country to impose a set number of policies. The implied cost of policies is estimated via discrimination parameters, which indicate how strongly policies discriminate between countries.
 
-The country-level policy activity score is further allowed to vary over time in a random-walk process with a country-specific variance parameter to incorporate heteroskedasticity.\textsuperscript{22} Incorporating over-time trends explicitly is very important for capturing the nuances of policy implementation over time. For example, countries that impose more restrictive policies at an earlier date will be rewarded with higher policy activity scores compared to those who impose such policies at a later date. Imposing a given policy when most countries have already imposed them will result in little if any change in the policy activity score.
+The country-level policy activity score is further allowed to vary over time in a random-walk process with a country-specific variance parameter to incorporate heteroskedasticity\textsuperscript{71}. Incorporating over-time trends explicitly is very important for capturing the nuances of policy implementation over time. For example, countries that impose more restrictive policies at an earlier date will be rewarded with higher policy activity scores compared to those who impose such policies at a later date. Imposing a given policy when most countries have already imposed them will result in little if any change in the policy activity score.
 
-The advantage of employing a statistical model, rather than simply summing across policies, is that the index ends up as a weighted average, where the weights are derived from the probability that a certain policy is enforced. In other words, while many countries set up task forces, relatively few imposed curfews at an early stage. As a result, the model adjusts for these distinctions, producing a score that aggregates across the patterns in the data.
+The advantage of employing a statistical model, rather than simply summing across policies, is that the index ends up as a weighted average, where the weights are derived from the probability that a certain policy is implemented. In other words, while many countries set up task forces, relatively few imposed curfews at an early stage. As a result, the model adjusts for these distinctions, producing a score that aggregates across the patterns in the data.
 
 Furthermore, because the model is stochastic, it is robust to some of the coding errors of the kind that often occur in these types of datasets. As we discuss in our validation section, while we are continuing to validate the data on a daily basis, the massive speed and scope of data collection means that we cannot identify all issues with the data in real time. However, the measurement model employed only requires us to assume that on average the policy codings are correct, not that they are correct for each instance. Coding error, such as incorrectly selecting a policy type, will propagate through the model as higher uncertainty intervals, but will not affect average posterior estimates. As our data quality improves, and we are able to collect more data over time, the model will produce more variegated estimates with smaller uncertainty intervals.
 
-Figure \ref{fig:plotindex} shows the estimated index scores for the 195 countries in our dataset at present, and suggests strong evidence of policy diffusion effects. While information about COVID-19 existed at least as early as January, we do not see large-scale changes occurring in activity scores until March. Furthermore, the trajectories are highly non-linear, with a large number of countries quickly transitioning from relatively low to relatively high scores. This non-linear movement could be due to a variety of factors, including the rapid spread of the virus and policy learning as states observe other states' policy actions. We note that the country that appeared to take the quickest action in the shortest amount of time is New Zealand, as can be seen in Figure \ref{fig:plotvar} where we show over-time variance parameters for each country.
+Figure \ref{fig:plotindex} shows the estimated index scores for the 196 countries in our dataset at present, and suggests strong evidence of policy diffusion effects. While information about COVID-19 existed at least as early as January, we do not see large-scale changes occurring in activity scores until March. Furthermore, the trajectories are highly non-linear, with a large number of countries quickly transitioning from relatively low to relatively high scores. This non-linear movement could be due to a variety of factors, including the rapid spread of the virus and policy learning as states observe other states' policy actions. We note that the country that appeared to take the quickest action in the shortest amount of time is New Zealand, as can be seen in Figure \ref{fig:plotvar} where we show over-time variance parameters for each country.
 
 Of course, a caveat with the index is that we may be missing some possible policy measures that have occurred due to the difficulty in finding them in published sources. However, there is still clear differentiation within the index in terms of when policies were imposed, with some countries starting to impose policies much earlier than others. Furthermore, there is a clear break about March 1st when countries began to impose more stringent policies across the world.
 
@@ -238,7 +246,7 @@ Of course, a caveat with the index is that we may be missing some possible polic
 \caption{\label{fig:plotindex}CoronaNet Time-Varying Index of National Policy Activity of Measures Opposing COVID-19 Pandemic}
 \end{figure}
 
-Table \ref{tab:rankcount} shows the discrimination parameters from the underlying Bayesian model for each policy type. These parameters suggest which policies governments find relatively difficult or costly to implement, and for that reason tend to separate more active from less active states in terms of response to COVID-19. Two of these policies (Closure of Restaurants and Quarantine at Home) were given fixed values in order to identify the direction and rotation of the latent scale, and so their discrimination parameters are not informative. However, the rest of the parameters were allowed to float, which provides inference as to which policies appear to be the most difficult/costly to implement.
+Table \ref{tab:rankcount} shows the discrimination parameters from the underlying Bayesian model for each policy type. These parameters suggest which policies governments find relatively difficult or costly to implement, and for that reason tend to separate more active from less active states in terms of response to COVID-19. Two of these policies (Closure of Restaurants and Quarantine at Home) were given fixed values in order to identify the direction and rotation of the latent scale, and so their discrimination parameters are not informative. These policies were chosen as a priori we can identify them as being relatively high cost. However, the rest of the parameters were allowed to float, which provides inference as to which policies appear to be the most difficult/costly to implement.
 
 We note that these are average values for the sample. Imposing these policies may be less costly for certain countries or for countries that share certain characteristics, such as having smaller numbers of enrolled students or relatively healthy economies. However, it is important to note that we can see these patterns on a world-wide scale.
 
@@ -248,7 +256,7 @@ Given this distribution of discrimination parameters, we believe the index is a 
 
 \begingroup\fontsize{9}{11}\selectfont
 
-\begin{longtable}[t]{>{\raggedright\arraybackslash}p{4cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{}p{2.5cm}}
+\begin{longtable}{>{\raggedright\arraybackslash}p{4cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{}p{2.5cm}}
 \caption{\label{tab:rankcount}Discrimination of Item Parameters (Policies) in Policy Activity Index}\\
 \toprule
 Policy & 5\% Low Estimate & Median Estimate & 95\% High Estimate\\
@@ -326,7 +334,7 @@ In this section, we first describe the variables that our dataset provides as we
 \subsection*{Time-Varying Item Response Model}\label{time-varying-item-response-model}}
 \addcontentsline{toc}{subsection}{Time-Varying Item Response Model}
 
-Our time-varying item response model follows the specification in 27. We review that notation here to show how it relates to classical item-response theory as well as the ideal point modeling literature.
+Our time-varying item response model follows the specification in 76. We review that notation here to show how it relates to classical item-response theory as well as the ideal point modeling literature.
 
 The likelihood function for the model is as follows for a set of countries \(i \in I\), items \(j \in J\), time points \(t \in T\) and ordinal categories \(k \in K\):
 
@@ -342,7 +350,7 @@ The likelihood function for the model is as follows for a set of countries \(i \
 
 In this equation, the time-varying country parameters \(\alpha_{it}\), also called person abilities or ideal points, are our estimate of policy activity scores. They are estimated jointly with the item (policy type) discrimination parameters \(\gamma_j\) and item difficulty (intercept) parameters \(\beta_j\). To address the ordinal nature of the outcome \(Y_{ijtk}\), ordinal cutpoints \(c_{k}\) are used to model the varying levels of enforcement and geographical targets in the data. The logit function, represented by \(\zeta(\cdot)\), maps the latent scale to probability that a given ordinal outcome is chosen. Because we have two separate type of ordered measures (domestic versus international policies) with either three or four ordered categories, we estimate the model jointly as two ordered logit specifications.
 
-The likelihood in \eqref{eq:basic} is not fully identified due to possible scaling issues with the latent variable \(\alpha_{it}\) (i.e., it has no natural units) and due to potential sign reflection (also called multi-modality) where \(L(Y_{ijtk})\) could be unchanged even if \(\alpha_{it}\) is multiplied by -1. These identification issues are well-known in the literature,\textsuperscript{21} and we resolve them with standard practices. First, we assign a reasonably informative prior distribution on the \(t=1\) ideal points:
+The likelihood in \eqref{eq:basic} is not fully identified due to possible scaling issues with the latent variable \(\alpha_{it}\) (i.e., it has no natural units) and due to potential sign reflection (also called multi-modality) where \(L(Y_{ijtk})\) could be unchanged even if \(\alpha_{it}\) is multiplied by -1. These identification issues are well-known in the literature\textsuperscript{70}, and we resolve them with standard practices. First, we assign a reasonably informative prior distribution on the \(t=1\) ideal points:
 
 \begin{equation}
 \alpha_{it=1} \sim N(0,1)
@@ -361,7 +369,7 @@ c_k - c_{k-1} &\sim N(0,5)
 Finally, to model the policy scores \(\alpha_{it}\) as a random walk, we assign a prior to that is equal to the prior period policy score plus Normally-distributed noise:
 
 \begin{align}
-\alpha_{it} &\sim N(\alpha_{it-1},\sigma_i)
+\alpha_{it} &\sim N(\alpha_{it-1},\sigma_i)\\
 \sigma_i &\sim E(1)
 \label{eq:rwc}
 \end{align}
@@ -372,9 +380,9 @@ The over-time dimension induces a new source of identifiability issues, which we
 \subsection*{Model Convergence}\label{model-convergence}}
 \addcontentsline{toc}{subsection}{Model Convergence}
 
-For estimation, we sample from four Markov Chain Monte Carlo (MCMC) chains with over-dispersed starting values using Stan, a Hamiltonian Markov Chain Monte Carlo (HMC) sampler.\textsuperscript{28} We run the sampler for 800 iterations, 400 of which are discarded as warmup. While this number of iterations is far less than other MCMC samplers, HMC is a far more efficient at exploring the posterior density and we are able to achieve convergence using this number of iterations.
+For estimation, we sample from four Markov Chain Monte Carlo (MCMC) chains with over-dispersed starting values using Stan, a Hamiltonian Markov Chain Monte Carlo (HMC) sampler\textsuperscript{77}. We run the sampler for 800 iterations, 400 of which are discarded as warmup. While this number of iterations is far less than other MCMC samplers, HMC is far more efficient at exploring the posterior density and we are able to achieve convergence using this number of iterations.
 
-We assess convergence using split-\(\hat{R}\) by fitting four independent chains with over-dispersed starting values. \(\hat{R}\) values for all parameters (which totaled more than 40,000) were 1.01 or less (see plot A in Figure \ref{fig:modelconv}). Plot B in Figure \ref{fig:modelconv} shows the distribution of effective number of samples for the parameters, which is a way of comparing the auto-correlation in MCMC draws to independent draws without auto-correlation, such as we might obtain from a Monte Carlo simulation. Again, the number of effective samples is quite high, often exceeding the total number of empirical draws.\footnote{Hamiltonian Monte Carlo can produce more informative samples than even a Monte Carlo simulation because it can generate negatively correlated draws that explore the posterior space much more quickly.} We also assess convergence using trace plots, one of which is shown below for the time-varying country policy activity scores for the United States. Strong mixing between chains can be observed in the plot. Finally, we report no divergent transitions or iterations where the sampler reached its maximum tree depth, which are both signs of poor mixing in the chains. For these reasons, we are confident than the sampler reached a stationary distribution and was able to adequately explore the high-density regions of the joint posterior.
+We assess convergence using split-\(\hat{R}\) by fitting four independent chains with over-dispersed starting values. \(\hat{R}\) values for all parameters (which totaled more than 40,000) were 1.01 or less (see plot A in Figure \ref{fig:modelconv}). Plot B in Figure \ref{fig:modelconv} shows the distribution of effective number of samples for the parameters, which is a way of comparing the auto-correlation in MCMC draws to independent draws without auto-correlation, such as we might obtain from a Monte Carlo simulation. Again, the number of effective samples is quite high, often exceeding the total number of empirical draws. This occurred because Hamiltonian Monte Carlo can produce more informative samples than even a Monte Carlo simulation because it can generate negatively correlated draws that explore the posterior space much more quickly. We also assess convergence using trace plots, one of which is shown below for the time-varying country policy activity scores for the United States. Strong mixing between chains can be observed in the plot. Finally, we report no divergent transitions or iterations where the sampler reached its maximum tree depth, which are both signs of poor mixing in the chains. For these reasons, we are confident than the sampler reached a stationary distribution and was able to adequately explore the high-density regions of the joint posterior.
 
 \begin{figure}
 \includegraphics[width=6.5in]{mcmc_evaluate} \caption{Convergence Diagnostics for Random-Walk HMC Fit}\label{fig:modelconv}
@@ -384,7 +392,7 @@ We assess convergence using split-\(\hat{R}\) by fitting four independent chains
 \subsection*{Model Validity}\label{model-validity}}
 \addcontentsline{toc}{subsection}{Model Validity}
 
-While employing a measurement model ensures robustness to arbitrary data coding errors, it is still necessary to validate the model's over-time process, which imposes some assumptions on how policy activity scores change over time. The use of a random walk implies that policy differences will be relatively stable from one day to the next, which could limit the ability of scores to encompass quick, discontinuous changes.\textsuperscript{29} While we employ this particular specification because it has been applied previously to a variety of empirical phenomena and because of its relative parsimony, we can partially test for whether it captures changes by estimating a static IRT model for each day in the sample. The corresponding estimates represent cross-sections without any time process imposed.
+While employing a measurement model ensures robustness to arbitrary data coding errors, it is still necessary to validate the model's over-time process, which imposes some assumptions on how policy activity scores change over time. The use of a random walk implies that policy differences will be relatively stable from one day to the next, which could limit the ability of scores to encompass quick, discontinuous changes\textsuperscript{78}. While we employ this particular specification because it has been applied previously to a variety of empirical phenomena and because of its relative parsimony, we can partially test for whether it captures changes by estimating a static IRT model for each day in the sample. The corresponding estimates represent cross-sections without any time process imposed.
 
 Due to the complexity of comparing the estimates, we plot the results for six countries separately in Figure \ref{fig:timeest}. This figure shows that indeed the cross-sectional estimates can show much more discontinuous jumps, though we note at the same time that there appears to be substantial noise in the estimates as they only incorporate information available at a single day. Nonetheless, while the random-walk estimates certainly exhibit less discontinuos change, they do still allow for very quick divergence in policy activity scores, with France and Russia moving from the bottom to the top of the index in the space of only a few weeks.
 
@@ -394,7 +402,7 @@ Due to the complexity of comparing the estimates, we plot the results for six co
 \caption{\label{fig:timeest}Comparison of Cross-sectional Estimates of Policy Activity Scores to the Random-Walk Time Series Estimates}
 \end{figure}
 
-We note as well that the model is parameterized so that each country has its own variance parameter. This permits the rate of change to vary country, reducing the concern that the model may be overly restricting change. These variance parameters are shown in Figure \ref{fig:plotvar}, sorted in order of increasing over-time variance. These estimates are themselves substantively interesting, as the United States, which was used as the reference category, has actually one of the lowest rates of over-time change, while some countries like New Zealand, Spain and San Marino witnessed the highest variance in policy activity scores. Because at this time the index only captures increasing numbers of policies, the variance parameters can be given the interpretation of which countries responded in the shortest period of time across a broad array of policy indicators.
+We note as well that the model is parameterized so that each country has its own variance parameter. This permits the rate of change to vary by country, reducing the concern that the model may be overly restricting change. These variance parameters are shown in Figure \ref{fig:plotvar}, sorted in order of increasing over-time variance. These estimates are themselves substantively interesting, as the United States, which was used as the reference category, has actually one of the lowest rates of over-time change, while some countries like New Zealand, Spain and San Marino witnessed the highest variance in policy activity scores. Because at this time the index only captures increasing numbers of policies, the variance parameters can be given the interpretation of which countries responded in the shortest period of time across a broad array of policy indicators.
 
 \begin{figure}
 \centering
@@ -406,15 +414,19 @@ We note as well that the model is parameterized so that each country has its own
 \subsection*{Data Schema}\label{data-schema}}
 \addcontentsline{toc}{subsection}{Data Schema}
 
-Each policy records at the minimum, the following monadic information: the policy type, the name of the country from which a policy originates,\footnote{If the policy originates from a province or state, that information is also documented. Future versions of the dataset will also include information on whether a policy was initiated from a city or municipality or another level of government.} the degree to which a policy must be complied with, the entity enforcing the policy, and the date a policy is announced, implemented and ends.\footnote{Note that sometimes policies are announced without a pre-determined end date. In those cases, this field is left blank.} When a policy is dyadic in nature, the database further documents information about the geographic target of the policy, the human or material target of a policy, the directional flow of the policy, and the mechanism of travel. Where applicable, all of the information documented above is also provided qualitatively via a textual policy description. Additional meta-data that is available for all policies include when the record entered into the database and a link for the information source for the policy. See the appendix for a list of currently available fields in the data, along with a list of external data variables such as country-level covariates that are added in to daily releases, including COVID-19 tests and cases.
+Each policy records at the minimum, the following information: The policy type; the name of the country from which a policy originates. If the policy originates from a province or state, that information is also documented. Future versions of the dataset will also include information on whether a policy was initiated from a city or municipality or another level of government; the degree to which a policy must be complied with; the entity enforcing the policy; The date a policy is announced, implemented and ends. Note that sometimes policies are announced without a pre-determined end date. In those cases, this field is left blank.
 
-There is a unique record ID for each unique policy announcement, which we code at the policy sub category type.\footnote{That is, some policy types are further categorized into sub-categories. E.g. `Quarantine/Lockdown' can be further classified into one or more of the following sub categories: `Self-Quarantine', `Government Quarantine', `Quarantine outside the home or government facility', `Quarantine only applies to people of certain ages' and `Other'.} Of the 12418 such events in the dataset, we have identified 10704 unique events. That is, some events in the database are updates or changes to existing policies. We link such events over time using a unique ID, which we term the policy ID as opposed to the record ID. An event counts as an update if it deals with a change in either the:
+For all policies, the database further documents information about the geographic target of the policy and the human or material target of a policy. Note however, for some policies, the geographic target may be the same as the policy initiator and in those cases can be considered monadic. Where applicable, we also document the directional flow of the policy, and the mechanism of travel.
+
+All of the information mentioned above is also provided qualitatively via a textual policy description. Additional meta-data that is available for all policies include when the record entered into the database and a link for the information source for the policy. See the appendix for a list of currently available fields in the data, along with a list of external data variables such as country-level covariates that are added in to daily releases, including COVID-19 tests and cases.
+
+There is a unique record ID for each unique policy announcement, which we code at the policy sub category type. That is, some policy types are further categorized into sub-categories. E.g. `Quarantine' can be further classified into one or more of the following sub categories: `Self-Quarantine', `Government Quarantine', `Quarantine outside the home or government facility', `Quarantine only applies to people of certain ages' and `Other'. Of the 12607 such events in the dataset, we have identified 10804 unique events. That is, some events in the database are updates or changes to existing policies. We link such events over time using a unique ID, which we term the policy ID as opposed to the record ID. An event counts as an update if it deals with a change in either the:
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  Time duration or\footnote{E.g. A country lengthens its quarantine to 28 days from 14 days.}
+  Time duration (E.g. A country lengthens its quarantine to 28 days from 14 days.);
 \item
   Strength of an existing policy in terms of either:
 
@@ -422,15 +434,15 @@ There is a unique record ID for each unique policy announcement, which we code a
   \def\labelenumii{\alph{enumii}.}
   \tightlist
   \item
-    the nature of the policy\footnote{E.g. People can no longer leave their houses to go to work whereas before they could}
+    quantitative `amount' of the policy (E.g. A restriction of mass gatherings was previously set at 100 people and now it is set at 50 people)
   \item
-    compliance rules for the policy\footnote{E.g. The quarantine used to be voluntary but now its mandatory}
+    compliance rules for the policy (E.g. The quarantine used to be voluntary but now its mandatory.)
   \item
-    who the policy applies towards\footnote{E.g. The quarantine used to apply to people of all ages and now it only applies to the elderly.}
+    who the policy applies towards (E.g. The quarantine used to apply to people of all ages and now it only applies to the elderly.)
   \end{enumerate}
 \end{enumerate}
 
-A policy counts as a new entry and not an update if it deals with a change in any other dimension, e.g.~policy type, targeted country.
+A policy counts as a new entry and not an update if it deals with a change in any other dimension, e.g.~the qualtitative policy type (e.g.~a quarantine used to mandate a stay in a government facility but now quarantine at home is allowed), targeted country (e.g.~quarantine upon arrival was mandated for people traveling from China but now these rules also apply to people traveling from Italy) etc.
 
 \hypertarget{data-collection-methodology}{%
 \subsection*{Data Collection Methodology}\label{data-collection-methodology}}
@@ -438,7 +450,7 @@ A policy counts as a new entry and not an update if it deals with a change in an
 
 As researchers learn more about the various health, economic, and social effects of the COVID-19 pandemic, it is crucial that they have access to data that is reliable, valid, and timely (to the greatest extent possible). We have adopted a data collection methodology that we believe optimizes over all three of these constraints.
 
-To collect the data, we recruited more than 260 research assistants (RAs) from colleges and universities around the world, representing 18 out of the 24 time zones.\footnote{For more information on the individual RAs, please visit \url{http://coronanet-project.org/}} Large social scientific datasets typically rely on experts, coders, or crowd-sourcing to input data. The literature has shown that common coding tasks can be completed via crowd-sourcing,\textsuperscript{30,31} but that there are also limitations to the wisdom of crowds when specific contextual or subject knowledge is required.\textsuperscript{32,33} To address these trade offs, we decided to train current students to code our entries, leveraging the benefits of wide-spread recruitment and a diverse pool of country-specific knowledge from across the globe. Data collection started on March 28, 2020 and has proceeded rapidly, reaching 12418 records as of the date of this article. Each RA is responsible for tracking government policy actions for at least one country. RAs were allocated depending on their background, language skills and expressed interest in certain countries.\textsuperscript{34}\footnote{Note depending on the level of policy coordination at the national level, certain countries were assigned multiple RAs, e.g.~the United States, Germany, or France.}
+To collect the data, we recruited more than 260 research assistants (RAs) from colleges and universities around the world, representing 18 out of the 24 time zones.\footnote{For more information on the individual RAs, please visit \url{http://coronanet-project.org/}} Large social scientific datasets typically rely on experts, coders, or crowd-sourcing to input data. The literature has shown that common coding tasks can be completed via crowd-sourcing\textsuperscript{79,80}, but that there are also limitations to the wisdom of crowds when specific contextual or subject knowledge is required\textsuperscript{81,82}. To address these trade offs, we decided to train current students to code our entries, leveraging the benefits of wide-spread recruitment and a diverse pool of country-specific knowledge from across the globe. Data collection started on March 28, 2020 and has proceeded rapidly, reaching 12607 records as of the date of this article. Each RA is responsible for tracking government policy actions for at least one country. RAs were allocated depending on their background, language skills and expressed interest in certain countries\textsuperscript{83}.\footnote{Note depending on the level of policy coordination at the national level, certain countries were assigned multiple RAs, e.g.~the United States, Germany, or France.}
 
 We have also partnered with the machine learning company Jataware to automate the collection of more than 200,000 news articles from around the world related to COVID-19.\footnote{We thank Brandon Rose and Jataware for making the news database available to this project.} Jataware employs a natural language processing (NLP) classifier using Bidirectional Encoder Representations from Transformers (BERT) to detect whether a given article is indicative of a governmental policy intervention related to COVID-19. They then apply a secondary NLP classifier to categorize the type of policy intervention (e.g.~``declaration of emergency'', ``quarantine'', ``travel restrictions'', etc.). Next, Jataware extracts the geospatial and temporal extent of the policy intervention (e.g.~``Washington DC'' and ``March 15, 2020'') whenever possible. The resulting list of news sources is then provided to our RAs as an additional source for manual coding and further data validation.
 
@@ -448,7 +460,7 @@ In what follows, we describe in greater detail how RAs document the policies tha
 \subsubsection*{Data Collection Software Instrument}\label{data-collection-software-instrument}}
 \addcontentsline{toc}{subsubsection}{Data Collection Software Instrument}
 
-We designed a Qualtrics survey with survey questions about different aspects of a government policy action to streamline the CoronaNet data collection effort. With this tool, RAs can easily and efficiently document different policy actions by answering the relevant questions posed in the survey.\footnote{See 35 for an example of a similar use of Qualtrics in collecting data.} For example, instead of entering the country that initiated a policy action into a spreadsheet, RAs answer the following question in the survey: ``From what country does this policy originate?'' and choose from the available options given in the survey.
+We designed a Qualtrics survey with survey questions about different aspects of a government policy action to streamline the CoronaNet data collection effort. With this tool, RAs can easily and efficiently document different policy actions by answering the relevant questions posed in the survey.\footnote{See 84 for an example of a similar use of Qualtrics in collecting data.} For example, instead of entering the country that initiated a policy action into a spreadsheet, RAs answer the following question in the survey: ``From what country does this policy originate?'' and choose from the available options given in the survey.
 
 By using a survey instrument to collect data, we are able to systematize the collection of very fine-grained data while minimizing coding errors common to tools like shared spreadsheets. The value of this approach of course, depends on the comprehensiveness of the questions posed in the survey, especially in terms of the universe of policy actions that countries have implemented against COVID-19. For example, if the survey only allowed RAs to select `quarantines' as a government policy, it would not capture any data on `external border restrictions', which would seriously reduce the value of the resulting data.
 
@@ -483,14 +495,20 @@ We further implement the following processes to validate the quality of the data
 \item
   Cleaning. Before validation, we use a team of RAs to check the raw data for logical inconsistencies and typographical errors.
 \item
-  Multiple Coding for Validation. Others have shown that the random allocation of tasks and the validation of labels by more than one coder are among the best ways to improve the quality of a dataset.\textsuperscript{36,37} We randomly sample 10\% of the dataset using the source of the data (e.g.~newspaper article, government press release) as our unit of randomization. We use the source as our unit of randomization because one source may detail many different policy types. We then provide this source to a fully independent RA and ask her to code for the government policy contained in the sampled source in a separate, but identical, survey instrument. If the source is in a language the RA cannot read, then a new source is drawn. The RA then codes all policies in the given source. This practice is repeated a third time by a third independent coder. Given the fact that each source in the sample is coded three times, we can assess the reliability of our measures and report the reliability score of each coder.
+  Multiple Coding for Validation. Others have shown that the random allocation of tasks and the validation of labels by more than one coder are among the best ways to improve the quality of a dataset\textsuperscript{85,86}. We randomly sample 10\% of the dataset using the source of the data (e.g.~newspaper article, government press release) as our unit of randomization. We use the source as our unit of randomization because one source may detail many different policy types. We then provide this source to a fully independent RA and ask her to code for the government policy contained in the sampled source in a separate, but identical, survey instrument. If the source is in a language the RA cannot read, then a new source is drawn. The RA then codes all policies in the given source. This practice is repeated a third time by a third independent coder. Given the fact that each source in the sample is coded three times, we can assess the reliability of our measures and report the reliability score of each coder.
 \item
-  Evaluation and Reconciliation. We then check for discrepancies between the originally coded data and the second and third coding of the data through two primary methods. First, we use majority-voting to establish a consensus for policy labels. Using the majority label as an estimate of the ``hidden true label'' is a common method to address classification problems.\textsuperscript{38} One issue with this approach is that it assumes that all coders are equally competent.\textsuperscript{39} This criticism is generally levied at data creation with crowd-sourced laborers. We mitigate this problem by training our RAs in the data collection process and prioritizing RA country-knowledge and language skills, therefore ensuring a more equal baseline for RA quality. In addition, we provide RA ID codes that will allow users to evaluate coder accuracy.
+  Evaluation and Reconciliation. We then check for discrepancies between the originally coded data and the second and third coding of the data through two primary methods. First, we use majority-voting to establish a consensus for policy labels. Using the majority label as an estimate of the ``hidden true label'' is a common method to address classification problems\textsuperscript{87}. One issue with this approach is that it assumes that all coders are equally competent\textsuperscript{88}. This criticism is generally levied at data creation with crowd-sourced laborers. We mitigate this problem by training our RAs in the data collection process and prioritizing RA country-knowledge and language skills, therefore ensuring a more equal baseline for RA quality. In addition, we provide RA ID codes that will allow users to evaluate coder accuracy.
 \end{enumerate}
 
 If the majority achieves consensus, then we consider the entry valid. If a discrepancy exists, a fourth RA or PI evaluates between the three entries to determine whether one, some, a combination of all three is most accurate. Reconciled policies are then entered into the dataset as a correction for full transparency. If an RA was found to have made a coding mistake, then we sample six of their previous entries: 3 entries which correspond to the type of mistake made\footnote{e.g.~if the RA incorrectly codes an `External Border Restriction' as a `Quarantine', we sample 3 entries where the RA has coded a policy as being about a `Quarantine.'} and randomly sample 3 more entries to ascertain whether the mistake was systematic or not. If systematic errors are found, entries coded by that individual will be entirely recoded by a new RA.
 
-At the time of writing, we are in the process of completing our second coding of the validation sample. Thus far, 285 entries have been double coded out of the original 500 randomly-selected policies included in our validation set.\footnote{This is equivalent to the 10\% of the first 5,000 policies in the dataset. We will be gradually expand the validation set until we cover all observations. The policy type `Other policies' has been excluded from the validation analysis, which yields a total of 265 double-coded policies.} To evaluate the inter-coder reliability at this early stage of validation, we provide several measures in Table \ref{tab:validation}. We find remarkable heterogeneity in the inter-coder reliability across types of policies. Our coders show a high level of agreement on policies such as `Restrictions of Mass Gatherings', `Closure of Schools', `Restrictions of Non-Essential' and `External Border Restrictions'. However, the inter-rater agreement score remains poor for some policies such as `Social Distancing', `New Task Force, Bureau or Administrative Configuration' and `Public Awareness Measures'. While these statistics indicate substantial levels of overall agreement between coders, there remain some ambiguities providing evidence for the utility of our planned ``majority voting'\,' validation strategy.\footnote{We detect substantial disagreements across the different health-related measures: health resources (n = 34, k = 0.69), health testing (n = 7, k = 0.08), and health monitoring (n = 10, k = 0.14). Hence, we decide to combine them under the category `Health measures' in the preliminary inter-coder reliability analysis. We are currently working on clarifying these distinctions among our coders.}
+At the time of writing, we are in the process of completing our second coding of the validation sample. Thus far, 297 policies have been double coded---276 double-coded policies after excluding the category `Other policies' from the analysis---out of the original 500 randomly-selected policies included in our validation set. This is equivalent to 10\% of the first 5,000 policies in the dataset. We will be gradually expanding the validation set until we cover all observations.
+
+We provide several measures in Table \ref{tab:validation} to evaluate the inter-coder reliability at this early stage of validation. We find remarkable heterogeneity in the inter-coder reliability across types of policies. Our coders show a substantial level of agreement on policies such as `Restrictions of Mass Gatherings' (n = 21, k = 0.95), `Closure of Schools' (n = 14, k = 0.92), `Restrictions of Non-Essential' (n = 19, k = 0.89), `External Border Restrictions' (n = 52, k = 0.83), `Curfew' (n = 6, k = 0.82), and Internal Border Restrictions (n = 11, k = 0.80). However, we also observe poor inter-rater agreement scores in other policies such as `Social Distancing' (n = 14, k = 0.38), `Public Awareness Measures' (n = 15, k = 0.49), and `New Task Force, Bureau or Administrative Configuration' (n = 9, k = 0.52). Overall, these statistics indicate substantial levels of overall agreement between coders with inter-coder reliability scores between 0.71 and 0.74 (n = 276).
+
+Our initial assessment of miscodings suggests that `Quarantine/Lockdowns' and `Social Distancing' policies are conceptually difficult to distinguish for our coders. To ameliorate this issue, we have recently separated Quarantine from Lockdowns and added branching logic into the Qualtrics survey that also clarifies the specific sub-policies that fall under `Quarantine', `Lockdowns', and `Social Distancing'. Additionally, our coders often fail to distinguish between `Public Awareness Campaigns' and `Social Distancing' policies. Our recent survey additions add several sub-types of `Public Awareness Campaigns' that should conceptually clarify these policies. Further, the creation of a `New Task Force, Bureau or Administrative Configuration' often goes together with a number of additional policies. In these cases, some of our coders seem to focus on these additional policies rather than on the creation of administrative units, which lowers the reliability of the coding system for this policy. Finally, we have detected extremely poor reliability for the health-related policies of `Health Monitoring' and `Health Testing'. We have clarified the distinction across the three health-related policies---namely, `Health Resources', `Health Monitoring' and `Health Testing'---in the codebook and we combine them under the category of `Health Measures' in this on-going validation.
+
+In the following weeks, we expect inter-coder reliability scores to improve as a consequence of three processes: (a) our coders are becoming more experience with the codebook and the coding task in general; (b) we are cleaning the dataset of obvious errors and logical inconsistencies; and, (c) we are working on clarifying and improving the codebook and the coding system. Notwithstanding these processes, we acknowledge that some ambiguities will unavoidably remain providing evidence for the utility of our planned ``majority voting'' validation strategy.
 
 \begin{table}[!h]
 \centering
@@ -501,27 +519,29 @@ At the time of writing, we are in the process of completing our second coding of
 \hline
 \textbf{Policy} & \multicolumn{1}{c}{\textbf{(n)}} & \multicolumn{1}{c}{\textbf{Percentage Agreement}} & \multicolumn{1}{c}{\textbf{Cohen's Kappa (k)}} \\ \hline
 Restrictions of Mass Gatherings & 21 & 95.2 & 0.95 \\
-Closure of Schools & 13 & 92.3 & 0.92 \\
-Restriction of Non-Essential Businesses & 15 & 88.9 & 0.88 \\
-External Border Restrictions & 50 & 86.0 & 0.85 \\
+Closure of Schools & 14 & 92.9 & 0.92 \\
+Restriction of Non-Essential Businesses & 19 & 89.5 & 0.89 \\
+External Border Restrictions & 52 & 84.6 & 0.83 \\
 Curfew & 6 & 83.4 & 0.82 \\
 Internal Border Restrictions & 11 & 81.8 & 0.80 \\
+Declaration of National Emergency & 19 & 73.7 & 0.71 \\
 Quarantine/Lockdown & 28 & 67.9 & 0.65 \\
-Declaration of National Emergency & 15 & 66.7 & 0.64 \\
-Restriction of Non-Essential Government Services & 15 & 66.7 & 0.63 \\
-Health Measures & 51 & 66.7 & 0.63 \\
+Health Measures & 52 & 65.4 & 0.63 \\
+Restriction of Non-Essential Government Services & 16 & 62.5 & 0.59 \\
+New Task Force, Bureau or Administrative Configuration & 9 & 55.6 & 0.52 \\
 Public Awareness Measures & 15 & 53.3 & 0.49 \\
-New Task Force, Bureau or Administrative Configuration & 8 & 50.0 & 0.46 \\
 Social Distancing & 14 & 42.9 & 0.38 \\
  &  &  &  \\
  \hline
  \hline
  &  &  &  \\
-\textbf{Summary Intercoder Reliability Scores} &  &  &  \\
+\textbf{Summary Inter-coder Reliability Scores} &  &  &  \\
 Percentage Agreement & \multicolumn{1}{c}{0.74} & &  \\
 Cohen's Kappa & \multicolumn{1}{c}{0.72} & & \multicolumn{1}{l}{} \\
 Krippendorff's alpha & \multicolumn{1}{c}{0.71} & & \multicolumn{1}{l}{} \\
-Scott's PI -- Estimate (SE) & \multicolumn{1}{c}{0.71 (0.03)} & & \multicolumn{1}{l}{} \\ \hline
+Scott's PI -- Estimate (SE) & \multicolumn{1}{c}{0.71 (0.03)} & & \\ 
+ &  & & \\
+\hline \hline
 \end{tabular}
 }
 \end{table}
@@ -556,10 +576,10 @@ Interested readers may also find our code for collecting the data and maintainin
 \subsection*{Acknowledgements}\label{acknowledgements}}
 \addcontentsline{toc}{subsection}{Acknowledgements}
 
-We thank the very large number of research assistants who coded this data. Their affiliations and vita are listed in the appendix
-Abdelaziz Ibn Abdelouahab, Abhyudaya Tyagi, Adriana Poppe, Advait Arya, Alette Mengerink, Alexander Pachanov, Alexandra Michaelsen, Alisa Udodik, Amadeus Albrecht, Amanda Panella, Ana Acero, Anabella McElroy, Anastasia Steinbrunner, Andreas Duncan, Andres Lopez Schrader, Anelia Petrova, Angad Johar, Angela Herz, Angeline Kanyangi, Anke Horn, Anna Sophia Körner, Annika Kaiser, Anoushka Thakre, Antonia Pérez, Ariana Barrenechea, Arianna Schouten, Avery Edelman, Aysina Maria, Babrik Kushwaha, Barbora Bromová, Beatrice Di Giulio, Beatrice von Braunschweig, Bianca Grizhar, Borja Arrue-Astrain, Brahim Ouerghi, Brian Chesney Quartey, Bruno Ciccarini, Calvin Kaleel, Cara Kim, Caress Schenk, Carl Philip Dybwad, Carlos Velez, Carly Kimmett, Carmen Alija, Caroline Beale, Charlotte Vorbauer, Cheng-Hao SHEN, Chloë Fraser, Cornelia Marie Dybwad, Cory Martin, Csilla Horvath, Dan Downes, Dan Wu, Daniel Boey, Daniel Martínek, Dariga Abilova, Davit Jintcharadzé, Deborah Agboola, DICK PAUL OUKO, Diego Calvo, Dominik Juling, Donia Kamel, Dorian Quelle, Dotrus Wilstic, Dovile Jankunaite, Dr Michelle King-Okoye, Dylan Ollivier, Eduardo Landaeta, Elaine Lin, Elfriede Derrer-Merk, Elisa Seith, Elizabeth (Lizzie) Jones, Ella Pettersen, Elliot Weir, Emma Hutchinson, Esther Ollivier, Eugene Kwizera, Fabienne Lind, Fabio Kadner, Fadhilah Fitri Primandari, Farah Sadek, Feifei Wang, Felix Willuweit, Fernanda Werneck, Francis Yoon, Frank Yuxuan Sun, Franziska Nguyen, Frederic Denker, Gloria Mutheu, Godfrey Katiambo, Griffyne Makaoko, Ha-Neul Yu, Hafsa Ahmed, Hajar Chams Eddine, Helene Paul, Helwan Felappi, Heman Asibuo, Henry Okwatch, Ilona Koch, Imogen Rickert, Ines Böhret, Ingeborg Sæle Helland, Ingrid Ravnanger, Isabela Russo, Isabelle Smith, Ismail Jamai Ait Hmitti, Jack Kubinec, Jakob Berg, Jane Murutu, Janet Li, Janice Klaiber, Janne Luise Piper, Jasmina Sowa, Jean von Agris, Jennifer Noguera Barrera, Jessica Johansson, Jiho Yoo, Joana Lencastre Morais, Joel Gräff, Josef Montag, Jule Scholten, Julia Dröge, Julia Nassl, Julia Smakman, Julia Wießmann, Kadriye Nisa Başkan, Karina Lisboa Båsund, Karlotta Schultz, Katharina Klaunig, Kayla Schwoerer, Khoa Tran, Klea Vogli, Kojo Vandyck, Konstanze Schönfeld, Laura Cadena, Laura Williamson, Laureen Hannig, Laurent Frick, Lea Clara Frömchen-Zwick, Lea Wiedmann, Lena Kolb, Leon Kohrt, Leonie Imberger, Li Cheng, Lilli Tabea Albrecht, Lily Zandstra, Lincoln Dow, Linlin Chen, Luise Modrakowski, Lya Cuéllar, Magdalena Strebling, Maheen Zahra, Maira Sheikh, Maisa Nasirova, Maite Spel, Malina Winking, Mamle Akosua Kwao, Mara Förster, Marianne Sievers, Marius Deierl, Marlies Hofmann, Mary Nussbaumer, Maryam AlHammadi, Mascha Hotopp, Mats Jensen, Matthew Cottrell, Matthew Hargreaves, Matthew Tan, Maximilian Dirks, Maya Rollberg, Maya Sugden, Mehdi Bhouri, Michaela Balluff, Milan Chen, Milos Moskovljevic, Miranda Tessore Janowski, Miriam Witte, Mirjam Muller, Mona Horn, Muhammad Masood, Muhannad Alramlawi, Museera Moghis, Mustafa Nasery, Nadja Grossenbacher, Natalia Filkina-Spreizer, Nathan Ruhde, Nicolas Göller, Nicole Oubre, Nida Hasan, Niklas Illenseer, Nikolina Klatt, Nivedita Darshini Bholah, Noah Fröhlich, Noelle Kubinec, Noor Altunaiji, Océane Mauffrey, Oketch Juliet Anyango, Oliver Pollex, Oliver Weber, Olzhas Gibatov, Omer Syed, Ongun Durhan, Oscar Courtier, Pablo Robles, Paula Germana, Philipp Weber, Pia Bansagi, Racha Hanine, Rachel Dada, Rahman Demirkol, Raquel Karl, Rebecca Beigel, Ricardo Buitrago, Richmond Silvanus Baye, Robin Fischer, Rosana Fayazzadh, Saif Khan, Salma Soliman, Samantha Law, Samantha Reinard, Sana Moghis, Sarah Edmonds, Sarah Sleigh, Sau Kan Chan, Saw Eh Doh Soe, Sean-Michael Pigeon, Seung-A Paik, Shalini Corea, Shruti Shukla, Simon Hüttemann, Sonja Müller, Sophia Tomany, Stefanie Mallow, Stella Dold, Su Ülkenli, Surendra Belbase, Symrun Razaque, Tanja Matheis, Tasia Wagner, Temur Davronov, Tess de Rooij, Tess Martin, Tilda Nilsson Gige, Tom Seiler, Tristan Brömsen, Ugochukwu Okoye, Ursela Barteczko, Vellah Kedogo Kigwiru, Veronica Velasquez Mesa, Veronika Bartáková, Victor Abuor, Victoria Atanasov, Vida Han, Vinayak Rajesekhar, Winrose Njuguna, Xian Jin, Yifei Zhu, Yoes C. Kenawas, Zhandos Ybrayev
+We thank the very large number of research assistants who coded this data. Their affiliations and vita are listed in the appendix. Our research assistants include:
+Abdelaziz Ibn Abdelouahab, Abhyudaya Tyagi, Adriana Poppe, Advait Arya, Alette Mengerink, Alexander Pachanov, Alexandra Michaelsen, Alisa Udodik, Amadeus Albrecht, Amanda Panella, Ana Acero, Anabella McElroy, Anastasia Steinbrunner, Andreas Duncan, Andres Lopez Schrader, Anelia Petrova, Angad Johar, Angela Herz, Angeline Kanyangi, Anke Horn, Anna Sophia Körner, Annika Kaiser, Anoushka Thakre, Antonia Pérez, Ariana Barrenechea, Arianna Schouten, Avery Edelman, Aysina Maria, Babrik Kushwaha, Barbora Bromová, Beatrice Di Giulio, Beatrice von Braunschweig, Bianca Grizhar, Borja Arrue-Astrain, Brahim Ouerghi, Brian Chesney Quartey, Bruno Ciccarini, Calvin Kaleel, Cara Kim, Caress Schenk, Carl Philip Dybwad, Carlos Velez, Carly Kimmett, Carmen Alija, Caroline Beale, Charlotte Vorbauer, Cheng-Hao Shen, Chloë Fraser, Cornelia Marie Dybwad, Cory Martin, Csilla Horvath, Dan Downes, Dan Wu, Daniel Boey, Daniel Martínek, Dariga Abilova, Davit Jintcharadzé, Deborah Agboola, Dick Paul Ouko, Diego Calvo, Dominik Juling, Donia Kamel, Dorian Quelle, Dotrus Wilstic, Dovile Jankunaite, Dr Michelle King-Okoye, Dylan Ollivier, Eduardo Landaeta, Elaine Lin, Elfriede Derrer-Merk, Elisa Seith, Elizabeth (Lizzie) Jones, Ella Pettersen, Elliot Weir, Emma Hutchinson, Esther Ollivier, Eugene Kwizera, Fabienne Lind, Fabio Kadner, Fadhilah Fitri Primandari, Farah Sadek, Feifei Wang, Felix Willuweit, Fernanda Werneck, Francis Yoon, Frank Yuxuan Sun, Franziska Nguyen, Frederic Denker, Gloria Mutheu, Godfrey Katiambo, Griffyne Makaoko, Ha-Neul Yu, Hafsa Ahmed, Hajar Chams Eddine, Helene Paul, Helwan Felappi, Heman Asibuo, Henry Okwatch, Ilona Koch, Imogen Rickert, Ines Böhret, Ingeborg Sæle Helland, Ingrid Ravnanger, Isabela Russo, Isabelle Smith, Ismail Jamai Ait Hmitti, Jack Kubinec, Jakob Berg, Jane Murutu, Janet Li, Janice Klaiber, Janne Luise Piper, Jasmina Sowa, Jean von Agris, Jennifer Noguera Barrera, Jessica Johansson, Jiho Yoo, Joana Lencastre Morais, Joel Gräff, Josef Montag, Jule Scholten, Julia Dröge, Julia Nassl, Julia Smakman, Julia Wießmann, Kadriye Nisa Başkan, Karina Lisboa Båsund, Karlotta Schultz, Katharina Klaunig, Kayla Schwoerer, Khoa Tran, Klea Vogli, Kojo Vandyck, Konstanze Schönfeld, Laura Cadena, Laura Williamson, Laureen Hannig, Laurent Frick, Lea Clara Frömchen-Zwick, Lea Wiedmann, Lena Kolb, Leon Kohrt, Leonie Imberger, Li Cheng, Lilli Tabea Albrecht, Lily Zandstra, Lincoln Dow, Linlin Chen, Luise Modrakowski, Lya Cuéllar, Magdalena Strebling, Maheen Zahra, Maira Sheikh, Maisa Nasirova, Maite Spel, Malina Winking, Mamle Akosua Kwao, Mara Förster, Marianne Sievers, Marius Deierl, Marlies Hofmann, Mary Nussbaumer, Maryam AlHammadi, Mascha Hotopp, Mats Jensen, Matthew Cottrell, Matthew Hargreaves, Matthew Tan, Maximilian Dirks, Maya Rollberg, Maya Sugden, Mehdi Bhouri, Michaela Balluff, Milan Chen, Milos Moskovljevic, Miranda Tessore Janowski, Miriam Witte, Mirjam Muller, Mona Horn, Muhammad Masood, Muhannad Alramlawi, Museera Moghis, Mustafa Nasery, Nadja Grossenbacher, Natalia Filkina-Spreizer, Nathan Ruhde, Nicolas Göller, Nicole Oubre, Nida Hasan, Niklas Illenseer, Nikolina Klatt, Nivedita Darshini Bholah, Noah Fröhlich, Noelle Kubinec, Noor Altunaiji, Océane Mauffrey, Oketch Juliet Anyango, Oliver Pollex, Oliver Weber, Olzhas Gibatov, Omer Syed, Ongun Durhan, Oscar Courtier, Pablo Robles, Paula Germana, Philipp Weber, Pia Bansagi, Racha Hanine, Rachel Dada, Rahman Demirkol, Raquel Karl, Rebecca Beigel, Ricardo Buitrago, Richmond Silvanus Baye, Robin Fischer, Rosana Fayazzadh, Saif Khan, Salma Soliman, Samantha Law, Samantha Reinard, Sana Moghis, Sarah Edmonds, Sarah Sleigh, Sau Kan Chan, Saw Eh Doh Soe, Sean-Michael Pigeon, Seung-A Paik, Shalini Corea, Shruti Shukla, Simon Hüttemann, Sonja Müller, Sophia Tomany, Stefanie Mallow, Stella Dold, Su Ülkenli, Surendra Belbase, Symrun Razaque, Tanja Matheis, Tara Goodsir, Tasia Wagner, Temur Davronov, Tess de Rooij, Tess Martin, Tilda Nilsson Gige, Tom Seiler, Tristan Brömsen, Ugochukwu Okoye, Ursela Barteczko, Vellah Kedogo Kigwiru, Veronica Velasquez Mesa, Veronika Bartáková, Victor Abuor, Victoria Atanasov, Vida Han, Vinayak Rajesekhar, Winrose Njuguna, Xian Jin, Yifei Zhu, Yoes C. Kenawas, Zhandos Ybrayev.
 
-We also thank Tim Büthe, the Chair for International Relations, the Hochschule für Politik at the Technical University of Munich (TUM), the TUM School of Governance, and the TUM School of Management for supporting this project in various ways. We further thank New York University Abu Dhabi for funding in support of this endeavor. Moreover, we appreciate the support by the companies Slack and RStudio who provided access to their technical infrastructure.
+We also thank Tim Büthe, the Chair for International Relations, the Hochschule für Politik at the Technical University of Munich (TUM), the TUM School of Governance, and the TUM School of Management for the many ways he has supported this project. We further thank New York University Abu Dhabi for funding in support of this endeavor. Moreover, we appreciate the support by Slack Technologies and RStudio Inc.~who provided access to their technical infrastructure.
 
 \hypertarget{competing-interests}{%
 \subsection*{Competing interests}\label{competing-interests}}
@@ -773,7 +793,7 @@ Once an RA joins the project, they can pose their questions on a CoronaNet Slack
 \subsection*{Appendix C: List of Contributors to Dataset}\label{appendix-c-list-of-contributors-to-dataset}}
 \addcontentsline{toc}{subsection}{Appendix C: List of Contributors to Dataset}
 
-\begin{longtable}[t]{l>{\raggedright\arraybackslash}p{2cm}>{\raggedright\arraybackslash}p{2cm}>{\raggedright\arraybackslash}p{3cm}}
+\begin{longtable}{l>{\raggedright\arraybackslash}p{2cm}>{\raggedright\arraybackslash}p{2cm}>{\raggedright\arraybackslash}p{3cm}}
 \caption{\label{tab:ratable}Contributing Researchers and their Responsible Countries}\\
 \toprule
 Name & Affiliation & Country & Vita\\
@@ -1054,123 +1074,269 @@ Yoes C. Kenawas & Northwestern University & Bahamas, Philippines & I am PhD Cand
 \addcontentsline{toc}{section}{References}
 
 \hypertarget{refs}{}
-\begin{cslreferences}
+\leavevmode\hypertarget{ref-porter2005health}{}%
+1. Porter, D. \emph{Health, civilization and the state: A history of public health from ancient to modern times}. (Routledge, 2005).
+
+\leavevmode\hypertarget{ref-scott2017against}{}%
+2. Scott, J. C. \emph{Against the grain: A deep history of the earliest states}. (Yale University Press, 2017).
+
+\leavevmode\hypertarget{ref-behbehani1983smallpox}{}%
+3. Behbehani, A. M. The smallpox story: Life and death of an old disease. \emph{Microbiological reviews} \textbf{47}, 455 (1983).
+
+\leavevmode\hypertarget{ref-duncan1996impact}{}%
+4. Duncan-Jones, R. P. The impact of the antonine plague. \emph{Journal of Roman Archaeology} \textbf{9}, 108--136 (1996).
+
+\leavevmode\hypertarget{ref-crosby2003columbian}{}%
+5. Crosby, A. W. \emph{The columbian exchange: Biological and cultural consequences of 1492}. vol. 2 (Greenwood Publishing Group, 2003).
+
+\leavevmode\hypertarget{ref-ziegler2013black}{}%
+6. Ziegler, P. \emph{The black death}. (Faber \& Faber, 2013).
+
+\leavevmode\hypertarget{ref-jannetta2014epidemics}{}%
+7. Jannetta, A. B. \emph{Epidemics and mortality in early modern japan}. (Princeton University Press, 2014).
+
+\leavevmode\hypertarget{ref-hatchett2007public}{}%
+8. Hatchett, R. J., Mecher, C. E. \& Lipsitch, M. Public health interventions and epidemic intensity during the 1918 influenza pandemic. \emph{Proceedings of the National Academy of Sciences} \textbf{104}, 7582--7587 (2007).
+
+\leavevmode\hypertarget{ref-shah2016pandemic}{}%
+9. Shah, S. \emph{Pandemic: Tracking contagions, from cholera to ebola and beyond}. (Macmillan, 2016).
+
+\leavevmode\hypertarget{ref-snow1854cholera}{}%
+10. Snow, J. The cholera near golden-square, and at deptford. \emph{Medical Times and Gazette} \textbf{9}, 321--322 (1854).
+
+\leavevmode\hypertarget{ref-paneth2004assessing}{}%
+11. Paneth, N. Assessing the contributions of john snow to epidemiology: 150 years after removal of the broad street pump handle. \emph{Epidemiology} \textbf{15}, 514--516 (2004).
+
+\leavevmode\hypertarget{ref-taubenberger20061918}{}%
+12. Taubenberger, J. K. \& Morens, D. M. 1918 influenza: The mother of all pandemics. \emph{Revista Biomedica} \textbf{17}, 69--79 (2006).
+
+\leavevmode\hypertarget{ref-kilbourne2006influenza}{}%
+13. Kilbourne, E. D. Influenza pandemics of the 20th century. \emph{Emerging infectious diseases} \textbf{12}, 9 (2006).
+
+\leavevmode\hypertarget{ref-farmer1996social}{}%
+14. Farmer, P. Social inequalities and emerging infectious diseases. \emph{Emerging infectious diseases} \textbf{2}, 259 (1996).
+
+\leavevmode\hypertarget{ref-van2020using}{}%
+15. Van Bavel, J. J. \emph{et al.} Using social and behavioural science to support covid-19 pandemic response. \emph{Nature Human Behaviour} 1--12 (2020).
+
+\leavevmode\hypertarget{ref-bootsma2007effect}{}%
+16. Bootsma, M. C. \& Ferguson, N. M. The effect of public health measures on the 1918 influenza pandemic in us cities. \emph{Proceedings of the National Academy of Sciences} \textbf{104}, 7588--7593 (2007).
+
+\leavevmode\hypertarget{ref-hunter2007changing}{}%
+17. Hunter, M. The changing political economy of sex in south africa: The significance of unemployment and inequalities to the scale of the aids pandemic. \emph{Social science \& medicine} \textbf{64}, 689--700 (2007).
+
+\leavevmode\hypertarget{ref-bandayrel2013information}{}%
+18. Bandayrel, K., Lapinsky, S. \& Christian, M. Information technology systems for critical care triage and medical response during an influenza pandemic: A review of current systems. \emph{Disaster medicine and public health preparedness} \textbf{7}, 287--291 (2013).
+
+\leavevmode\hypertarget{ref-abelin2011lessons}{}%
+19. Abelin, A., Colegate, T., Gardner, S., Hehme, N. \& Palache, A. Lessons from pandemic influenza a (h1n1): The research-based vaccine industry's perspective. \emph{Vaccine} \textbf{29}, 1135--1138 (2011).
+
+\leavevmode\hypertarget{ref-chew2010pandemics}{}%
+20. Chew, C. \& Eysenbach, G. Pandemics in the age of twitter: Content analysis of tweets during the 2009 h1n1 outbreak. \emph{PloS one} \textbf{5}, (2010).
+
+\leavevmode\hypertarget{ref-jarynowski2020attempt}{}%
+21. Jarynowski, A., Wójta-Kempa, M., Płatek, D. \& Czopek, K. Attempt to understand public health relevant social dimensions of covid-19 outbreak in poland. \emph{Available at SSRN 3570609} (2020).
+
+\leavevmode\hypertarget{ref-boyd2010use}{}%
+22. Boyd, T., Savel, T., Kesarinath, G., Lee, B. \& Stinn, J. The use of public health grid technology in the united states centers for disease control and prevention h1n1 pandemic response. in \emph{2010 ieee 24th international conference on advanced information networking and applications workshops} 974--978 (IEEE, 2010).
+
+\leavevmode\hypertarget{ref-galaz2009pandemic}{}%
+23. Galaz, V. Pandemic 2.0: Can information technology help save the planet? \emph{Environment: Science and Policy for Sustainable Development} \textbf{51}, 20--28 (2009).
+
 \leavevmode\hypertarget{ref-flaxman2020}{}%
-1. Seth Flaxman, A. G., Swapnil Mishra. Estimating the number of infections and the impact of non-pharmaceutical interventions on covid-19 in 11 european countries. \emph{Working Paper} (2020).
+24. Seth Flaxman, A. G., Swapnil Mishra. Estimating the number of infections and the impact of non-pharmaceutical interventions on covid-19 in 11 european countries. \emph{Working Paper} (2020).
 
-\leavevmode\hypertarget{ref-przeworski1999democracy}{}%
-2. Przeworski, A., Stokes, S. C. \& Manin, B. \emph{Democracy, accountability, and representation}. vol. 2 (Cambridge University Press, 1999).
+\leavevmode\hypertarget{ref-ferguson2020report}{}%
+25. Ferguson, N. \emph{et al.} Report 9: Impact of non-pharmaceutical interventions (npis) to reduce covid19 mortality and healthcare demand. (2020).
 
-\leavevmode\hypertarget{ref-gailmard2019preventing}{}%
-3. Gailmard, S. \& Patty, J. W. Preventing prevention. \emph{American Journal of Political Science} \textbf{63}, 342--352 (2019).
+\leavevmode\hypertarget{ref-goumenou2020covid}{}%
+26. Goumenou, M. \emph{et al.} COVID-19 in northern italy: An integrative overview of factors possibly influencing the sharp increase of the outbreak. \emph{Molecular Medicine Reports} (2020).
 
-\leavevmode\hypertarget{ref-kindleberger2011manias}{}%
-4. Kindleberger, C. P. \& Aliber, R. Z. \emph{Manias, panics and crashes: A history of financial crises}. (Palgrave Macmillan, 2011).
+\leavevmode\hypertarget{ref-singh2020age}{}%
+27. Singh, R. \& Adhikari, R. Age-structured impact of social distancing on the covid-19 epidemic in india. \emph{arXiv preprint arXiv:2003.12055} (2020).
 
-\leavevmode\hypertarget{ref-tierney2007margins}{}%
-5. Tierney, K. J. From the margins to the mainstream? Disaster research at the crossroads. \emph{Annu. Rev. Sociol.} \textbf{33}, 503--525 (2007).
+\leavevmode\hypertarget{ref-prem2020effect}{}%
+28. Prem, K. \emph{et al.} The effect of control strategies to reduce social mixing on outcomes of the covid-19 epidemic in wuhan, china: A modelling study. \emph{The Lancet Public Health} (2020).
 
-\leavevmode\hypertarget{ref-svolik2012politics}{}%
-6. Svolik, M. W. \emph{The politics of authoritarian rule}. (Cambridge University Press, 2012).
+\leavevmode\hypertarget{ref-chen2020covid}{}%
+29. Chen, S., Yang, J., Yang, W., Wang, C. \& Bärnighausen, T. COVID-19 control in china during mass population movements at new year. \emph{The Lancet} \textbf{395}, 764--766 (2020).
 
-\leavevmode\hypertarget{ref-kitschelt2007patrons}{}%
-7. Kitschelt, H., Wilkinson, S. I. \& others. \emph{Patrons, clients and policies: Patterns of democratic accountability and political competition}. (Cambridge University Press, 2007).
+\leavevmode\hypertarget{ref-koo2020interventions}{}%
+30. Koo, J. R. \emph{et al.} Interventions to mitigate early spread of sars-cov-2 in singapore: A modelling study. \emph{The Lancet Infectious Diseases} (2020).
 
-\leavevmode\hypertarget{ref-boin2016politics}{}%
-8. Boin, A., Stern, E., Sundelius, B. \& others. \emph{The politics of crisis management: Public leadership under pressure}. (Cambridge University Press, 2016).
+\leavevmode\hypertarget{ref-arriola2020}{}%
+31. Arriola, L. \& Grossman, A. Ethnic marginalization and (non)Compliance in public health emergencies. \emph{Journal of Politics}.
+
+\leavevmode\hypertarget{ref-yancy2020covid}{}%
+32. Yancy, C. W. COVID-19 and african americans. \emph{Jama} (2020).
+
+\leavevmode\hypertarget{ref-anwar2020covid}{}%
+33. Anwar, S., Nasrullah, M. \& Hosen, M. COVID-19 and bangladesh: Challenges and how to address them. Front. \emph{Public Health} \textbf{8}, 154 (2020).
+
+\leavevmode\hypertarget{ref-corburn2020slum}{}%
+34. Corburn, J. \emph{et al.} Slum health: Arresting covid-19 and improving well-being in urban informal settlements. \emph{Journal of Urban Health} 1--10 (2020).
+
+\leavevmode\hypertarget{ref-anderson2020will}{}%
+35. Anderson, R. M., Heesterbeek, H., Klinkenberg, D. \& Hollingsworth, T. D. How will country-based mitigation measures influence the course of the covid-19 epidemic? \emph{The Lancet} \textbf{395}, 931--934 (2020).
+
+\leavevmode\hypertarget{ref-van2020covid}{}%
+36. Dorn, A. van, Cooney, R. E. \& Sabin, M. L. COVID-19 exacerbating inequalities in the us. \emph{The Lancet} \textbf{395}, 1243--1244 (2020).
+
+\leavevmode\hypertarget{ref-cronert2020democracy}{}%
+37. Cronert, A. Democracy, state capacity, and covid-19 related school closures. (2020).
+
+\leavevmode\hypertarget{ref-allcott2020polarization}{}%
+38. Allcott, H. \emph{et al.} Polarization and public health: Partisan differences in social distancing during the coronavirus pandemic. \emph{NBER Working Paper} (2020).
+
+\leavevmode\hypertarget{ref-barrett1998emerging}{}%
+39. Barrett, R., Kuzawa, C. W., McDade, T. \& Armelagos, G. J. Emerging and re-emerging infectious diseases: The third epidemiologic transition. \emph{Annual review of anthropology} \textbf{27}, 247--271 (1998).
+
+\leavevmode\hypertarget{ref-miller2009signature}{}%
+40. Miller, M. A., Viboud, C., Balinska, M. \& Simonsen, L. The signature features of influenza pandemics---implications for policy. \emph{New England Journal of Medicine} \textbf{360}, 2595--2598 (2009).
 
 \leavevmode\hypertarget{ref-pierson2000increasing}{}%
-9. Pierson, P. Increasing returns, path dependence, and the study of politics. \emph{American political science review} \textbf{94}, 251--267 (2000).
+41. Pierson, P. Increasing returns, path dependence, and the study of politics. \emph{American political science review} \textbf{94}, 251--267 (2000).
+
+\leavevmode\hypertarget{ref-przeworski1999democracy}{}%
+42. Przeworski, A., Stokes, S. C. \& Manin, B. \emph{Democracy, accountability, and representation}. vol. 2 (Cambridge University Press, 1999).
+
+\leavevmode\hypertarget{ref-svolik2012politics}{}%
+43. Svolik, M. W. \emph{The politics of authoritarian rule}. (Cambridge University Press, 2012).
+
+\leavevmode\hypertarget{ref-kitschelt2007patrons}{}%
+44. Kitschelt, H., Wilkinson, S. I. \& others. \emph{Patrons, clients and policies: Patterns of democratic accountability and political competition}. (Cambridge University Press, 2007).
+
+\leavevmode\hypertarget{ref-gailmard2019preventing}{}%
+45. Gailmard, S. \& Patty, J. W. Preventing prevention. \emph{American Journal of Political Science} \textbf{63}, 342--352 (2019).
+
+\leavevmode\hypertarget{ref-meltzer1999economic}{}%
+46. Meltzer, M. I., Cox, N. J. \& Fukuda, K. The economic impact of pandemic influenza in the united states: Priorities for intervention. \emph{Emerging infectious diseases} \textbf{5}, 659 (1999).
 
 \leavevmode\hypertarget{ref-nunn2009importance}{}%
-10. Nunn, N. The importance of history for economic development. \emph{Annu. Rev. Econ.} \textbf{1}, 65--92 (2009).
+47. Nunn, N. The importance of history for economic development. \emph{Annu. Rev. Econ.} \textbf{1}, 65--92 (2009).
 
 \leavevmode\hypertarget{ref-kilian2009not}{}%
-11. Kilian, L. Not all oil price shocks are alike: Disentangling demand and supply shocks in the crude oil market. \emph{American Economic Review} \textbf{99}, 1053--69 (2009).
+48. Kilian, L. Not all oil price shocks are alike: Disentangling demand and supply shocks in the crude oil market. \emph{American Economic Review} \textbf{99}, 1053--69 (2009).
 
 \leavevmode\hypertarget{ref-noy2009macroeconomic}{}%
-12. Noy, I. The macroeconomic consequences of disasters. \emph{Journal of Development economics} \textbf{88}, 221--231 (2009).
+49. Noy, I. The macroeconomic consequences of disasters. \emph{Journal of Development economics} \textbf{88}, 221--231 (2009).
+
+\leavevmode\hypertarget{ref-correia1918pandemics}{}%
+50. Correia, S., Luck, S. \& Verner, E. Pandemics depress the economy, public health interventions do not: Evidence from the 1918 flu. \emph{Public Health Interventions Do Not: Evidence from the} (1918).
+
+\leavevmode\hypertarget{ref-kindleberger2011manias}{}%
+51. Kindleberger, C. P. \& Aliber, R. Z. \emph{Manias, panics and crashes: A history of financial crises}. (Palgrave Macmillan, 2011).
+
+\leavevmode\hypertarget{ref-peckham2013economies}{}%
+52. Peckham, R. Economies of contagion: Financial crisis and pandemic. \emph{Economy and Society} \textbf{42}, 226--248 (2013).
 
 \leavevmode\hypertarget{ref-dasgupta2002confronting}{}%
-13. Dasgupta, S., Laplante, B., Wang, H. \& Wheeler, D. Confronting the environmental kuznets curve. \emph{Journal of economic perspectives} \textbf{16}, 147--168 (2002).
+53. Dasgupta, S., Laplante, B., Wang, H. \& Wheeler, D. Confronting the environmental kuznets curve. \emph{Journal of economic perspectives} \textbf{16}, 147--168 (2002).
 
 \leavevmode\hypertarget{ref-folke2006resilience}{}%
-14. Folke, C. Resilience: The emergence of a perspective for social--ecological systems analyses. \emph{Global environmental change} \textbf{16}, 253--267 (2006).
+54. Folke, C. Resilience: The emergence of a perspective for social--ecological systems analyses. \emph{Global environmental change} \textbf{16}, 253--267 (2006).
 
 \leavevmode\hypertarget{ref-galea2003trends}{}%
-15. Galea, S. \emph{et al.} Trends of probable post-traumatic stress disorder in new york city after the september 11 terrorist attacks. \emph{American Journal of Epidemiology} \textbf{158}, 514--524 (2003).
+55. Galea, S. \emph{et al.} Trends of probable post-traumatic stress disorder in new york city after the september 11 terrorist attacks. \emph{American Journal of Epidemiology} \textbf{158}, 514--524 (2003).
 
 \leavevmode\hypertarget{ref-gifford2014environmental}{}%
-16. Gifford, R. Environmental psychology matters. \emph{Annual review of psychology} \textbf{65}, 541--579 (2014).
+56. Gifford, R. Environmental psychology matters. \emph{Annual review of psychology} \textbf{65}, 541--579 (2014).
+
+\leavevmode\hypertarget{ref-baekkeskov2014pandemic}{}%
+57. Baekkeskov, E. \& Rubin, O. Why pandemic response is unique: Powerful experts and hands-off political leaders. \emph{Disaster Prevention and Management} (2014).
+
+\leavevmode\hypertarget{ref-boin2016politics}{}%
+58. Boin, A., Stern, E., Sundelius, B. \& others. \emph{The politics of crisis management: Public leadership under pressure}. (Cambridge University Press, 2016).
+
+\leavevmode\hypertarget{ref-tierney2007margins}{}%
+59. Tierney, K. J. From the margins to the mainstream? Disaster research at the crossroads. \emph{Annu. Rev. Sociol.} \textbf{33}, 503--525 (2007).
 
 \leavevmode\hypertarget{ref-blaikie2014risk}{}%
-17. Blaikie, P., Cannon, T., Davis, I. \& Wisner, B. \emph{At risk: Natural hazards, people's vulnerability and disasters}. (Routledge, 2014).
+60. Blaikie, P., Cannon, T., Davis, I. \& Wisner, B. \emph{At risk: Natural hazards, people's vulnerability and disasters}. (Routledge, 2014).
+
+\leavevmode\hypertarget{ref-burby2006hurricane}{}%
+61. Burby, R. J. Hurricane katrina and the paradoxes of government disaster policy: Bringing about wise governmental decisions for hazardous areas. \emph{The annals of the American academy of political and social science} \textbf{604}, 171--191 (2006).
+
+\leavevmode\hypertarget{ref-luhrmann2020}{}%
+62. Lührmann, A., Edgell, A. B. \& Maerz, S. F. Pandemic backsliding: Does covid-19 put democracy at risk? \emph{Varieties of Democracy Policy Brief} 1--4 (2020).
+
+\leavevmode\hypertarget{ref-coibion2020labor}{}%
+63. Coibion, O., Gorodnichenko, Y. \& Weber, M. \emph{Labor markets during the covid-19 crisis: A preliminary view}. (2020).
+
+\leavevmode\hypertarget{ref-atkeson2020will}{}%
+64. Atkeson, A. \emph{What will be the economic impact of covid-19 in the us? Rough estimates of disease scenarios}. (2020).
+
+\leavevmode\hypertarget{ref-zandifar2020iranian}{}%
+65. Zandifar, A. \& Badrfam, R. Iranian mental health during the covid-19 epidemic. \emph{Asian journal of psychiatry} \textbf{51}, 101990 (2020).
+
+\leavevmode\hypertarget{ref-qiu2020nationwide}{}%
+66. Qiu, J. \emph{et al.} A nationwide survey of psychological distress among chinese people in the covid-19 epidemic: Implications and policy recommendations. \emph{General psychiatry} \textbf{33}, (2020).
 
 \leavevmode\hypertarget{ref-longabaugh2012}{}%
-18. Longabaugh, W. J. Combing the hairball with biofabric: A new approach for visualization of large networks. \emph{BMC bioinformatics} \textbf{13}, 275 (2012).
+67. Longabaugh, W. J. Combing the hairball with biofabric: A new approach for visualization of large networks. \emph{BMC bioinformatics} \textbf{13}, 275 (2012).
 
 \leavevmode\hypertarget{ref-kubinec2019ideal}{}%
-19. Kubinec, R. Generalized ideal point models for time-varying and missing-data inference. \emph{Open Science Foundation Preprints} (2019) doi:\href{https://doi.org/10.31219/osf.io/8j2bt}{10.31219/osf.io/8j2bt}.
+68. Kubinec, R. Generalized ideal point models for time-varying and missing-data inference. \emph{Open Science Foundation Preprints} (2019) doi:\href{https://doi.org/10.31219/osf.io/8j2bt}{10.31219/osf.io/8j2bt}.
 
 \leavevmode\hypertarget{ref-jackman2004}{}%
-20. Clinton, J., Jackman, S. \& Rivers, D. The statistical analysis of rollcall data. \emph{American Political Science Review} \textbf{98}, 355--370 (2004).
+69. Clinton, J., Jackman, S. \& Rivers, D. The statistical analysis of rollcall data. \emph{American Political Science Review} \textbf{98}, 355--370 (2004).
 
 \leavevmode\hypertarget{ref-gelman2005}{}%
-21. Bafumi, J., Gelman, A., Park, D. K. \& Kaplan, N. Practical issues in implementing and understanding bayesian ideal point estimation. \emph{Political Analysis} \textbf{13}, 171--187 (2005).
+70. Bafumi, J., Gelman, A., Park, D. K. \& Kaplan, N. Practical issues in implementing and understanding bayesian ideal point estimation. \emph{Political Analysis} \textbf{13}, 171--187 (2005).
 
 \leavevmode\hypertarget{ref-quinn2002}{}%
-22. Martin, A. D. \& Quinn, K. M. Dynamic ideal point estimation via markov chain monte carlo for the u.s. Supreme court, 1953-1999. \emph{Political Analysis} \textbf{10}, 134--153 (2002).
+71. Martin, A. D. \& Quinn, K. M. Dynamic ideal point estimation via markov chain monte carlo for the u.s. Supreme court, 1953-1999. \emph{Political Analysis} \textbf{10}, 134--153 (2002).
 
 \leavevmode\hypertarget{ref-barbera2015}{}%
-23. Barberá, P. Birds of the same feather tweet together: Bayesian ideal point estimation using twitter data. \emph{Political Analysis} \textbf{23}, 76--91 (2015).
+72. Barberá, P. Birds of the same feather tweet together: Bayesian ideal point estimation using twitter data. \emph{Political Analysis} \textbf{23}, 76--91 (2015).
 
 \leavevmode\hypertarget{ref-bonica2014}{}%
-24. Bonica, A. Mapping the ideological marketplace. \emph{American Journal of Political Science} \textbf{58}, 367--386 (2014).
+73. Bonica, A. Mapping the ideological marketplace. \emph{American Journal of Political Science} \textbf{58}, 367--386 (2014).
 
 \leavevmode\hypertarget{ref-takane1986}{}%
-25. Takane, Y. \& Leeuw, J. de. On the relationship between item response theory and factor analysis of discretized variables. \emph{Psychometrika} \textbf{52}, 393--408 (1986).
+74. Takane, Y. \& Leeuw, J. de. On the relationship between item response theory and factor analysis of discretized variables. \emph{Psychometrika} \textbf{52}, 393--408 (1986).
 
 \leavevmode\hypertarget{ref-reckase2009}{}%
-26. Reckase, M. D. \emph{Multidimensional item response theory}. (Springer, 2009).
+75. Reckase, M. D. \emph{Multidimensional item response theory}. (Springer, 2009).
 
 \leavevmode\hypertarget{ref-kubinec2019}{}%
-27. Kubinec, R. \emph{Politically-connected firms and the military-clientelist complex in north africa}. (2019).
+76. Kubinec, R. \emph{Politically-connected firms and the military-clientelist complex in north africa}. (2019).
 
 \leavevmode\hypertarget{ref-carpenter2017}{}%
-28. Carpenter, B. \emph{et al.} Stan: A probabilistic programming language. \emph{Journal of Statistical Software} \textbf{76}, (2017).
+77. Carpenter, B. \emph{et al.} Stan: A probabilistic programming language. \emph{Journal of Statistical Software} \textbf{76}, (2017).
 
 \leavevmode\hypertarget{ref-reunig2019}{}%
-29. Reunig, K., Kenwick, M. R. \& Fariss, C. J. Exploring the dynamics of latent variable models. \emph{Political Analysis} 503--517 (2019).
+78. Reunig, K., Kenwick, M. R. \& Fariss, C. J. Exploring the dynamics of latent variable models. \emph{Political Analysis} 503--517 (2019).
 
 \leavevmode\hypertarget{ref-benoitetal2016}{}%
-30. Benoit, K., Conway, D., Lauderdale, B. E., Laver, M. \& Mikhaylov, S. Crowd-sourced text analysis: Reproduceable and agile production of political data. \emph{American Political Science Review} \textbf{110}, 278--295 (2016).
+79. Benoit, K., Conway, D., Lauderdale, B. E., Laver, M. \& Mikhaylov, S. Crowd-sourced text analysis: Reproduceable and agile production of political data. \emph{American Political Science Review} \textbf{110}, 278--295 (2016).
 
 \leavevmode\hypertarget{ref-sumneretal2019}{}%
-31. Sumner, J. L., Farris, E. M. \& Holman, M. R. Crowdsourcing reliable local data. \emph{Political Analysis} \textbf{28}, 244--262 (2019).
+80. Sumner, J. L., Farris, E. M. \& Holman, M. R. Crowdsourcing reliable local data. \emph{Political Analysis} \textbf{28}, 244--262 (2019).
 
 \leavevmode\hypertarget{ref-marquardtetal2017}{}%
-32. Marquardt, K. L. \emph{et al.} \emph{Experts, coders, and crowds: An analysis of substitutability}. \url{http://dx.doi.org/10.2139/ssrn.3046462} (2017).
+81. Marquardt, K. L. \emph{et al.} \emph{Experts, coders, and crowds: An analysis of substitutability}. \url{http://dx.doi.org/10.2139/ssrn.3046462} (2017).
 
 \leavevmode\hypertarget{ref-Urlacher2017}{}%
-33. Urlacher, B. R. Opportunities and obstacles in distributed or crowdsourced coding. \emph{Qualitative \& Multi-Method Research} \textbf{15}, 15--21 (2017).
+82. Urlacher, B. R. Opportunities and obstacles in distributed or crowdsourced coding. \emph{Qualitative \& Multi-Method Research} \textbf{15}, 15--21 (2017).
 
 \leavevmode\hypertarget{ref-Horn2019}{}%
-34. Horn, A. Can the online crowd match real expert judgments? How task complexity and coder location affect the validity of crowd-coded data. \emph{European Journal of Political Research} \textbf{58}, 236--247 (2019).
+83. Horn, A. Can the online crowd match real expert judgments? How task complexity and coder location affect the validity of crowd-coded data. \emph{European Journal of Political Research} \textbf{58}, 236--247 (2019).
 
 \leavevmode\hypertarget{ref-buthe2020}{}%
-35. Büthe, T. \& Bradford, A. "The domestic politics of u.s. Antitrust: Political sources of u.s. Antitrust law and enforcement, 1970-2015". (2020).
+84. Büthe, T. \& Bradford, A. "The domestic politics of u.s. Antitrust: Political sources of u.s. Antitrust law and enforcement, 1970-2015". (2020).
 
 \leavevmode\hypertarget{ref-Sheng2008}{}%
-36. Sheng, V. S., Provost, F. \& Ipeirotis, P. G. Get another label? Improving data quality and data mining using multiple, noisy labelers. 614--622 (2008).
+85. Sheng, V. S., Provost, F. \& Ipeirotis, P. G. Get another label? Improving data quality and data mining using multiple, noisy labelers. 614--622 (2008).
 
 \leavevmode\hypertarget{ref-MTurk2011}{}%
-37. Amazon.com, I. \emph{Amazon mechanical turk requester best practices guide}. \url{https://mturkpublic.s3.amazonaws.com/docs/MTURK_BP.pdf} (2011).
+86. Amazon.com, I. \emph{Amazon mechanical turk requester best practices guide}. \url{https://mturkpublic.s3.amazonaws.com/docs/MTURK_BP.pdf} (2011).
 
 \leavevmode\hypertarget{ref-Raykar2009}{}%
-38. Raykar, V. C. \emph{et al.} Supervised learning from multiple experts: Whom to trust when everyone lies a bit. 889--896 (2009).
+87. Raykar, V. C. \emph{et al.} Supervised learning from multiple experts: Whom to trust when everyone lies a bit. 889--896 (2009).
 
 \leavevmode\hypertarget{ref-Raykar2010}{}%
-39. Raykar, V. C. \emph{et al.} Learning from crowds. \emph{Journal of Machine Learning Research} \textbf{11}, 1297--1322 (2010).
-\end{cslreferences}
+88. Raykar, V. C. \emph{et al.} Learning from crowds. \emph{Journal of Machine Learning Research} \textbf{11}, 1297--1322 (2010).
+
 
 \end{document}

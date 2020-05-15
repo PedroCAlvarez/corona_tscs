@@ -340,8 +340,6 @@ Figure \@ref(fig:plotindex) shows the estimated index scores for the `r length(u
 Of course, a caveat with the index is that we may be missing some possible policy measures that have occurred due to the difficulty in finding them in published sources. However, there is still clear differentiation within the index in terms of when policies were imposed, with some countries starting to impose policies much earlier than others. Furthermore, there is a clear break about March 1st when countries began to impose more stringent policies across the world.
 
 
-                  caption=str_wrap("",width=110)
-
 ```{r plotindex,fig.cap="CoronaNet Time-Varying Index of National Policy Activity of Measures Opposing COVID-19 Pandemic. Estimates are derived from Stan, a Markov Chain Monte Carlo sampler. Median posterior estimates are shown. Plot A shows the full distribution of countries, while plot B shows each month separately with the top 3 countries for that month in terms of increases in activity scores from start of the month to the end of the month."}
 
 # severity_fit <- readRDS("../data/activity_fit_rw.rds")
@@ -440,7 +438,7 @@ overall <- to_plot  %>%
   mutate(all_rank=rev(rank(med_est))) %>% 
   ungroup %>% 
     mutate(last_rank = ifelse(date_announced==max(date_announced),`Country Rank`,NA),
-         lab_country = ifelse(last_rank %in% c(1,4,10,14,64,81,115,180,191),as.character(country),
+         lab_country = ifelse(last_rank %in% c(1,4,14,68,92,125,181,191),as.character(country),
                               NA)) %>% 
   ungroup %>% 
   ggplot(aes(y=med_est,x=date_announced)) +

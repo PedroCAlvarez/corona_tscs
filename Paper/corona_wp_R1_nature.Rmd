@@ -1,5 +1,5 @@
 ---
-title: "CoronaNet COVID-19 Government Response Event Database"
+title: "A Worldwide COVID-19 Government Response Dataset"
 header-includes:
    - \usepackage{lineno}
    - \linenumbers
@@ -21,7 +21,7 @@ institute:
   - tum: Hochschule für Politik at the Technical University of Munich (TUM) and the TUM School of Governance, Munich, Germany
   - nyuad: Social Science Division, New York University Abu Dhabi, Abu Dhabi, United Arab Emirates
   - yale: Department of Political Science, Yale University, New Haven, United States
-date: "April 24th, 2020"
+date: "May 15th, 2020"
 toc: false
 bibliography: BibTexDatabase.bib
 #always_allow_html: yes
@@ -120,7 +120,7 @@ Meanwhile, given the exogenous timing of the initial outbreak in Wuhan, China, g
 <!--
 ^[In the 1918 influenza pandemic for example, different cities in the United States implemented a variety of different policies to curb the epidemic [@hatchett2007public]. For a general review how societies and states have responded to pandemics in the modern era, see @shah2016pandemic.  For a general review of how ancient states and socieites have responded to pandemics and epidemics, see @porter2005health. Note that early historical guidelines for responding to epidemics can also be found in a number of early texts, e.g. the Bible contains a number of references to the use of quarantine to address the problem of leprosy including Leviticus 13:46 "As long as they have the disease they remain unclean. They must live alone; they must live outside the camp."] 
 -->
-We present a dataset which does not only support real-time research on condemnment strategies or social, economic, and political consequences of COVID-19. The data will moreover allow to learn from this pandemic in future crises. Given its dyadic structure (e.g. target countries of border restrictions), the dataset does further enable spatial analyses to identify (inter-)related reactions between and within countries or identify conflictious andcooperative patterns in global crisis governance.
+The policy choices of governments often depend on the policy choices of other governments. The structure of the data we present in this paper allows researchers and policy-makers not only to examine monadic policy information---i.e., policies targeted to the same political unit that enacted it---but also directed, dyadic policy information---i.e., policies targeted to a political unit that is different from the unit that enacted it. These dyads capture dynamics of foreign policies such as when country A implements a policy that affects citizens of country B; and, also, dynamics within countries such as when central governments enact policies targeted to subnational political entities. Given its dyadic structure, the dataset further enables critical analyses on the links and interdependence between and within countries, including patterns of policy learning and diffusion across governments, as well as identifying cooperative and conflictive patterns in global crisis governance.
 
 In what follows, we provide a description of the data, as well as an application of the data in which we model policy activity of countries over time. Using a Bayesian dynamic item-response theory model, we produce a statistically valid index that summarizes countries in terms of their response to the pandemic, and further shows how quickly policy responses have changed over time. We document clear evidence of rapid policy diffusion of harsh measures opposing the virus, indicating some of the most extensive evidence of this type of diffusion ever documented. In the methodology section, we provide a thorough discussion of the procedures used to collate the data and to manage the more than 260 research assistants coding this data around the world in real time.
 

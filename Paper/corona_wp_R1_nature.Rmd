@@ -29,7 +29,7 @@ output:
   #bookdown::word_document2
   bookdown::pdf_document2:
     keep_tex: true
-    #latex_engine: xelatex
+    latex_engine: xelatex
     includes:
       in_header:
           preamble.tex
@@ -64,13 +64,12 @@ library(knitr)
 library(readxl)
 require(gghighlight)
 require(patchwork)
-
-
 library(devtools)
 library(igraph)
 library(remotes)
 #remotes::install_github("wjrl/RBioFabric")
 library(RBioFabric)
+'%!in%' <- function(x,y)!('%in%'(x,y))
 
 # let's load some data!
 # run RCode/cleanData/cleanQualtrics_short.R
@@ -79,7 +78,8 @@ clean_data <- read.csv("../data/CoronaNet/coronanet_release.csv", stringsAsFacto
    mutate(date_announced=as.Date(date_announced, '%Y-%m-%d'),
           date_start=as.Date(date_start, '%Y-%m-%d')) %>% 
   # filter(date_announced<(today()-days(5)),!is.na(country),is.na(init_other),is.na(target_other) | target_other=="")
-  filter(!is.na(country),is.na(target_other)| target_other=="")
+  filter(!is.na(country),is.na(target_other)| target_other=="")%>%
+  filter(type %!in% c('Hygiene', "Anti-Disinformation Measures", "Quarantine/Lockdown", "Lockdown" ))
  
 # run /RCode/slack/slackAnalytics.R"
 
@@ -107,8 +107,8 @@ With the help of a team of over 260 research assistants in 18 time zones, we are
 + The timing of the policy action (e.g. date announced, date implemented)
 
 <!-- The rapid and devastating spread of the SARS-CoV-2 virus has put in stark relief the previously invisible connections among different countries and people. Our dataset illuminates a countervailing kind of network --- it documents not only what actions governments have taken against COVID-19, but how these actions have targeted other geographical regions and the people and resources within them over time. The data, which is publicly available, will allow us to understand among other things, how the effectiveness of different government policies may vary over time or depending on policy actions taken by other governments.  -->
-  
-Though government responses to the COVID-19 pandemic have inaugurated unprecedented changes in how billions of people live their lives, they draw on the lessons learned from the endless series of pandemics and epidemics that came before.  Pandemics and epidemics have consistently and dramatically changed the course of human history [@behbehani1983smallpox;@@duncan1996impact;@crosby2003columbian;@ziegler2013black;@jannetta2014epidemics] and governments have continued to implement a variety of policies in response.[@hatchett2007public;@shah2016pandemic;@porter2005health] Over time, the collection of reliable data has helped advance collective understanding of which policies are effective in curbing the effects of a given pandemic.[@snow1854cholera;@paneth2004assessing] This is no trivial task given that a policy that is effective in one context may be ineffective in another due to a whole host of potentially conditioning factors, including the pathogenesis of the particular disease [@taubenberger20061918;@kilbourne2006influenza], the characteristics of the underlying population [@farmer1996social;@van2020using;@bootsma2007effect;@hunter2007changing], and the available medical[@bandayrel2013information;@abelin2011lessons] and communication [@chew2010pandemics;@jarynowski2020attempt;@boyd2010use;@galaz2009pandemic] technology at the time.
+
+Though government responses to the COVID-19 pandemic have inaugurated unprecedented changes in how billions of people live their lives, they draw on the lessons learned from the endless series of pandemics and epidemics that came before. Indeed, the earliest written sources document how ancient Mesopotamian responded to the constant threat of epidemic by, on the one hand drawing on spiritual practices and on the other hand, isolating people showing the first symptoms of a disease from others. [@porter2005health, pp. 11-13;@farber2006health;@scott2017against, pp. 98] As time has marched forward, pandemics and epidemics have consistently and dramatically changed the course of human history [@behbehani1983smallpox;@@duncan1996impact;@crosby2003columbian;@ziegler2013black;@jannetta2014epidemics] and governments have continued to implement a variety of policies in response.[@hatchett2007public;@shah2016pandemic;@porter2005health] Over time, the collection of reliable data has helped advance collective understanding of which policies are effective in curbing the effects of a given pandemic.[@snow1854cholera;@paneth2004assessing] This is no trivial task given that a policy that is effective in one context may be ineffective in another due to a whole host of potentially conditioning factors, including the pathogenesis of the particular disease [@taubenberger20061918;@kilbourne2006influenza], the characteristics of the underlying population [@farmer1996social;@van2020using;@bootsma2007effect;@hunter2007changing], and the available medical[@bandayrel2013information;@abelin2011lessons] and communication [@chew2010pandemics;@jarynowski2020attempt;@boyd2010use;@galaz2009pandemic] technology at the time.
 
 
 We believe that the data presented in this paper will be similarly invaluable for helping policy makers and researchers assess how effective different policies are in addressing the spread and health outcomes of COVID-19 [@flaxman2020]. While available research is necessarily preliminary, it suggests that which policies governments have implemented in response to COVID-19 [@ferguson2020report;@goumenou2020covid,@prem2020effect;@singh2020age], when they decided to implement them [@chen2020covid;@koo2020interventions], who they were targeted toward [@arriola2020;@yancy2020covid] and what state capacity they possessed to do so [@anwar2020covid;@corburn2020slum] have all significantly influenced how the virus has affected health outcomes both within and across different country contexts [@anderson2020will;@van2020covid], and which is readily captured by our dataset. Equally important is understanding why countries adopt different policies, with early analyses suggesting that institutional and political factors, e.g. the authoritarian or democratic nature of a country's institutions [@cronert2020democracy] or its level of political partisanship [@allcott2020polarization], play an important role. These findings will not only improve the global response to the current crisis, but can also build an influential foundation of knowledge for responding to future outbreaks  [@barrett1998emerging;@miller2009signature].
@@ -141,21 +141,27 @@ Meanwhile, our dataset also shows that virtually all countries in the world are 
 
 ```{r desctab}
 
-clean_data %>% 
-  group_by(type) %>% 
-  dplyr:::summarize(`Total Number of Policies`=n(),
-            `Number of Countries`=length(unique(country)),
-              `Average Number of Targeted Countries`=ifelse(any(grepl('All countries', target_country)),
-                                                  c(length(unique(unlist(str_split(target_country, ',')))) -1, 202*length(which(grepl('All countries', target_country)))),
-                                                  length(unique(unlist(str_split(target_country, ',')))) ) %>% mean,
-                `% With Mandatory Enforcement`=round(mean(grepl(x=compliance,pattern="Mandatory")*100,na.rm=T),0)) %>% 
-mutate( type=recode(type,
-          `Other Policy Not Listed Above`="Other",
-          `New Task Force or Bureau`="New Task Force")) %>% 
-  select(Type="type",everything()) %>% 
-  filter(!is.na(Type)) %>% 
- arrange(desc(`Total Number of Policies`))  %>% 
 
+clean_data %>% 
+  group_by(type, country) %>% 
+  dplyr:::summarize(numPolicies=n(),
+                    numCountries=length(unique(country)),
+                    target_country = ifelse(any(grepl('All countries', target_country)),
+                                            205, 1+ length(unique(unlist(str_split(target_country[-which(is.na(target_country))], ','))))),
+                    percEnf =mean(grepl(x=compliance,pattern="Mandatory")*100,na.rm=T)) %>%
+  ungroup() %>%
+  mutate( type=recode(type,
+                      `Other Policy Not Listed Above`="Other",
+                      `Quarantine` = "Quarantine/Lockdown",
+                      #`New Task Force, Bureau or Administrative Configuration`="New Task Force"
+                      ))%>% 
+  select(Type="type",everything()) %>% 
+  group_by(Type) %>%
+  dplyr:::summarize(`Total Number of Policies` = sum(numPolicies),
+                    `Number of Countries` =  sum(numCountries),
+    `Average Number of Targeted Countries`= round(mean(target_country)),
+    `% With Mandatory Enforcement` = round(mean(percEnf))) %>%
+  arrange(desc(`Total Number of Policies`))  %>% 
   ungroup() %>%
   knitr::kable("latex",booktabs=T,
                caption="Descriptive Information about the CoronaNet Government Response Dataset") %>% 
@@ -187,7 +193,7 @@ clean_data %>%
                      `Internal Border Restrictions`="Internal\nBorder Restrictions",
                      `External Border Restrictions`="External\nBorder Restrictions",
                      `Public Awareness Campaigns`="Public\nAwareness Campaigns",
-                     `New Task Force or Bureau`="New Task Force")) %>% 
+                     `New Task Force, Bureau or Administrative Configuration`="New Task\nForce, Bureau or\nAdministrative Configuration`")) %>% 
   ggplot(aes(y=Policies,x=date_announced)) +
   geom_area() +
   theme_minimal() +
@@ -215,12 +221,12 @@ clean_data$country_id = cid$country_id[match(clean_data$country, cid$country_nam
 clean_data$target_country_id = cid$country_id[match(clean_data$target_country, cid$country_name)]
 
 # user function for plotting biofabric plots by region, policy type, date, travel mechanism and travel direction
-'%!in%' <- function(x,y)!('%in%'(x,y))
+
 plotBioGraph = function(regionName, 
                         policyType, 
                         dateStart, 
                         allDum  = FALSE, 
-                        travelMech = c('Flights' ,'All kinds of transport (all below except visa restrictions)'),
+                        travelMech = c('Flights' ,'All kinds of transport'),
                         travelDir = c("Inbound", "Inbound/Outbound")){
   
   # subset data
@@ -249,40 +255,15 @@ plotBioGraph = function(regionName,
   # Italian ban only for Sardenia
   sub_data = sub_data %>% filter(policy_id %!in% c(4539256))
   
-  
   # Portugal ban only for Maideria
    sub_data = sub_data %>% filter(policy_id %!in% c(6369772))
   ## FIX THE BELOW LATER IN QUALTRICS
   
-  # this is not a travel ban for people entering Italy, but for leaving Italy
-  sub_data = sub_data %>% filter(policy_id %!in% c(3071523 ))
-  
   # this is not a travel ban for people entering Italy,but a health declaration form
   sub_data = sub_data %>% filter(policy_id %!in% c(1727181))
-  
-  # Micronesia, not a ban on all countries, but unsepcificed countries that have coronacases
-  sub_data = sub_data %>% filter(policy_id %!in% c(8819062,3625348, 4465391 ))
-  
-  # Colombia: this is quarantine upon arrival, not external border restriction
-  sub_data = sub_data %>% filter(policy_id %!in% c(1293754 ))
-  
-  # Bahrain: these are recommendations, not mandatory bans
-  sub_data = sub_data %>% filter(policy_id %!in% c(5709516, 9327917 ))
-  
+
   # South Sudan, not a ban on all countries, but on unsepcified countries affected by covid
   sub_data = sub_data %>% filter(policy_id %!in% c(5302981))
-  
-  # Initiating country is Slovenia, not Iran
-  sub_data = sub_data %>% filter(policy_id %!in% c(3031369))
-  
-  # Germany: target country is not Germany but 'All countries'
-  sub_data = sub_data %>% filter(policy_id %!in% c(1592443,3788036, 5258786 ,1592443,3788036,5258786 ))
-  
-  #Azerbaijan target who what should be 'other' for bsuiness trips/public employees
-  sub_data = sub_data %>% filter(policy_id %!in% c( 2632978))
-  
-  #Tunisia target who what should be 'other' for students
-  sub_data = sub_data %>% filter(policy_id %!in% c( 7066331))
   
   # add data for italy's ban of inbound flights from Taiwan, Hong Kong and Macau
   # currently not in the data but we should add these entries

@@ -38,7 +38,10 @@ export$correct_record_match = ifelse(
 export <- group_by(export, record_id) %>% mutate(
   policy_id=case_when(entry_type=="update" & !is.na(entry_type_3_TEXT)~entry_type_3_TEXT,
                       entry_type=="correction" & !is.na(entry_type_2_TEXT)~entry_type_2_TEXT,
-                      TRUE~record_id))
+                      TRUE~record_id)) %>% 
+  ungroup %>% 
+  select(-record_id) %>% 
+  select(record_id="ResponseId",everything())
 
 miss_vars <- names(export)[sapply(export, function(c) any(is.na(c)))]
 
@@ -122,7 +125,6 @@ export <- left_join(export,country_regions_long,by="index_prov") %>%
          init_prov="init_2prov")
 
 export <- select(export,ra_name,
-         ResponseId,
          recorded_date="RecordedDate",
          record_id,policy_id,entry_type,event_description,country="init_country",
          date_announced,
@@ -306,10 +308,10 @@ export %>%
   mutate(record_date_day=lubridate::as_date(recorded_date)) %>% 
   select(-record_date_day) %>% 
   ungroup %>% 
-  mutate(link_correct=paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",ResponseId,
-                            "&Q_R_DEL=1&record_id=",record_id,"&link_type=C"),
-         link_update=ifelse(entry_type=="new_entry",paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",ResponseId,
-                                                           "&record_id=",record_id,"&link_type=U"),"")) %>% 
+  mutate(link_correct=paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",record_id,
+                            "&Q_R_DEL=1&record_id=",policy_id,"&link_type=C"),
+         link_update=ifelse(entry_type=="new_entry",paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",record_id,
+                                                           "&record_id=",policy_id,"&link_type=U"),"")) %>% 
   select(link_correct,link_update,everything()) %>% 
   arrange(country,policy_id,date_announced) %>% 
   sheets_write(ss=current_sheet,sheet="Sheet1")
@@ -320,12 +322,30 @@ export %>%
   mutate(record_date_day=lubridate::as_date(recorded_date)) %>% 
   ungroup %>% 
   select(-record_date_day) %>% 
-  mutate(link_correct=paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",ResponseId,
-                             "&Q_R_DEL=1&record_id=",record_id,"&link_type=C"),
-         link_update=ifelse(entry_type=="new_entry",paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",ResponseId,
-                            "&record_id=",record_id,"&link_type=U"),"")) %>% 
+  mutate(link_correct=paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",record_id,
+                             "&Q_R_DEL=1&record_id=",policy_id,"&link_type=C"),
+         link_update=ifelse(entry_type=="new_entry",paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",record_id,
+                            "&record_id=",policy_id,"&link_type=U"),"")) %>% 
+  select(link_correct,link_update,everything()) %>% 
+  arrange(country,date_announced) %>% 
+  write_csv("data/CoronaNet/RA/ra_data_pull_purified.csv")
+
+# upload to postgres
+
+con <- dbConnect("PostgreSQL",user="tariff",password="6235$$Wa",port=5432,
+                 dbname="master",
+                 host="niehaususer.ccecwurg6k9l.us-east-2.rds.amazonaws.com")
+
+export %>% 
+  mutate(record_date_day=lubridate::as_date(recorded_date)) %>% 
+  ungroup %>% 
+  select(-record_date_day) %>% 
+  mutate(link_correct=paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",record_id,
+                             "&Q_R_DEL=1&record_id=",policy_id,"&link_type=C"),
+         link_update=ifelse(entry_type=="new_entry",paste0("https://tummgmt.eu.qualtrics.com/jfe/form/SV_bf6YMWbTpYJAW4l?Q_R=",record_id,
+                                                           "&record_id=",policy_id,"&link_type=U"),"")) %>% 
   select(link_correct,link_update,everything()) %>% 
   arrange(country,policy_id,date_announced) %>% 
-  write_csv("data/CoronaNet/RA/ra_data_pull_purified.csv")
+  dbWriteTable(con,"cordata",value=.,append=F,overwrite=T)
 
 

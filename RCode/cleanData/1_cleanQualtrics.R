@@ -53,9 +53,6 @@ library(readr)
 library(qualtRics)
 library(stringr)
 
-# whether to make a row for each policy 
-
-long <- F
 
 '%!in%' <- function(x,y)!('%in%'(x,y))
 

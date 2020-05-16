@@ -5,7 +5,7 @@ header-includes:
    - \linenumbers
 csl: nature.csl
 author: 
-  - Cindy Cheng: 
+  -  Cindy Cheng: 
       email: cindy.cheng@hfp.tum.de
       institute: tum
       correspondence: true
@@ -118,7 +118,7 @@ Meanwhile, given the exogenous timing of the initial outbreak in Wuhan, China, g
 <!--
 ^[In the 1918 influenza pandemic for example, different cities in the United States implemented a variety of different policies to curb the epidemic [@hatchett2007public]. For a general review how societies and states have responded to pandemics in the modern era, see @shah2016pandemic.  For a general review of how ancient states and socieites have responded to pandemics and epidemics, see @porter2005health. Note that early historical guidelines for responding to epidemics can also be found in a number of early texts, e.g. the Bible contains a number of references to the use of quarantine to address the problem of leprosy including Leviticus 13:46 "As long as they have the disease they remain unclean. They must live alone; they must live outside the camp."] 
 -->
-Detailed documentation of such policies is all the more important given that policy choices made by one government often depend on the policy choices of other governments. The structure of the data we present in this paper allows researchers and policy-makers not only to examine monadic policy information---i.e., policies targeted to the same political unit that enacted it---but also directed, dyadic policy information---i.e., policies targeted to a political unit that is different from the unit that enacted it. The dyadic data is not limited to only capturing foreign policy dynamics, such as when country A implements a policy that affects citizens of country B, but can also document dynamics within countries, such as when central governments enact policies targeted to subnational political entities. Given its dyadic structure, the dataset further enables critical analyses of the links and interdependencies between and within countries, including patterns of policy learning and diffusion across governments, as well as of cooperative and conflictual relationships in global crisis governance.
+Detailed documentation of such policies is all the more important given that policy choices made by one government often depend on the policy choices of other governments. The structure of the data we present in this paper allows researchers and policy-makers not only to examine monadic policy information---i.e., policies targeted to the same political unit that enacted it---but also directed, dyadic policy information---i.e., policies targeted to a political unit that is different from the unit that enacted it. The dyadic data is not limited to only capturing foreign policy dynamics, such as when country A implements a policy that affects citizens of country B, but can also document dynamics within countries, such as when central governments enact policies targeted to sub-national political entities. Given its dyadic structure, the dataset further enables critical analyses of the links and interdependencies between and within countries, including patterns of policy learning and diffusion across governments, as well as of cooperative and conflictual relationships in global crisis governance.
 
 In what follows, we provide a description of the data, as well as an application of the data in which we model policy activity of countries over time. Using a Bayesian dynamic item-response theory model, we produce a statistically valid index that categorizes countries in terms of their responses to the pandemic, and further shows how quickly policy responses have changed over time. We document clear evidence of rapid policy diffusion of harsh measures in response to the virus, indicating some of the most extensive evidence of this type of diffusion ever documented. In the methodology section, we provide a thorough discussion of the methodology used to create this index, to collate the dataset and to manage the more than 260 research assistants coding this data around the world in real time.
 
@@ -331,7 +331,7 @@ knitr::include_graphics("Figure2.jpg")
 
 
 
-# Government Policy Activity Index {-}
+## Government Policy Activity Index {-}
 
 In this section, we briefly present our new index for tracking the relative government activity with regards to policies targeting COVID-19 across countries and over time. The model is a version of item-response theory known as ideal point modeling which incorporates over-time trends [@kubinec2019ideal;@jackman2004;@gelman2005;@quinn2002;@barbera2015;@bonica2014], permitting inference on how a latent construct, in this case total policy activity, responds to changes in the pandemic. To fit the model, the different policy types shown in Table 1, as well as sub-policies within them, were coded in terms of ordinal values, with lower values for sub-national targets of policies and higher values for policies applying to the entire country, or in the case of external border restrictions, to one or more external countries. For instance, internal country policies can take on three possible values: no policy, sub-national policy, or policy covering the whole country. Meanwhile external border restrictions can take on four possible values: no policy, policy targeting one other country, policy targeting multiple countries, and policy targeting all countries in the world (i.e., border closure).  
 
@@ -840,7 +840,7 @@ In what follows, we describe in greater detail how RAs document the policies tha
 
 ### Data Collection Software Instrument {-}
 
-We designed a Qualtrics survey with survey questionsto systematize and streamline the documentation of a given government policy over a wide range of dimensions. With this tool, RAs can easily and efficiently document information about different policy actions by answering the relevant questions posed in the survey (please see Büthe, Minhas and Lieu (unpublished manuscript) for a previous example of the use of a survey instrument for data collection). For example, instead of entering the country that initiated a policy action into a spreadsheet, RAs answer the following question in the survey: "From what country does this policy originate?" and choose from the available options given in the survey.
+We designed a Qualtrics survey with survey questions to systematize and streamline the documentation of a given government policy over a wide range of dimensions. With this tool, RAs can easily and efficiently document information about different policy actions by answering the relevant questions posed in the survey (Büthe, Minhas and Lieu, unpublished manuscript). For example, instead of entering the country that initiated a policy action into a spreadsheet, RAs answer the following question in the survey: "From what country does this policy originate?" and choose from the available options given in the survey.
 
 By using a survey instrument to collect data, we are able to systematize the collection of very fine-grained data while minimizing coding errors common to tools like shared spreadsheets. The value of this approach of course, depends on the comprehensiveness of the questions posed in the survey, especially in terms of the universe of policy actions that countries have implemented against COVID-19. For example, if the survey only allowed RAs to select 'quarantines' as a government policy, it would not capture any data on 'external border restrictions', which would seriously reduce the value of the resulting data. 
 
@@ -950,6 +950,8 @@ Interested readers may also find our code for collecting the data and maintainin
 \newpage
 # References{-}
 
+
+\newpage
 ## Acknowledgements {-}
 
 We deeply thank the very large number of research assistants who coded this data. Their affiliations and vita are listed in Appendix C in the supplementary materials.  Our research assistants include:

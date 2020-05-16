@@ -1,5 +1,5 @@
 ---
-title: "Supplementary Materials for 'CoronaNet COVID-19 Government Response Event Dataset'"
+title: "Supplementary Information for 'CoronaNet COVID-19 Government Response Event Dataset'"
 header-includes:
    - \usepackage{lineno}
    - \linenumbers

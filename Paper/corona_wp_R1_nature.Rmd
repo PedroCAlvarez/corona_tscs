@@ -448,7 +448,7 @@ overall <- to_plot  %>%
   mutate(all_rank=rev(rank(med_est))) %>% 
   ungroup %>% 
     mutate(last_rank = ifelse(date_announced==max(date_announced),`Country Rank`,NA),
-         lab_country = ifelse(last_rank %in% c(1,4,14,68,92,125,181,191),as.character(country),
+         lab_country = ifelse(last_rank %in% c(4,14,68,92,125,181,191),as.character(country),
                               NA)) %>% 
   ungroup %>% 
   ggplot(aes(y=med_est,x=date_announced)) +

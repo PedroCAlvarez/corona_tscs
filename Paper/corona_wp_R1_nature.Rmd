@@ -846,7 +846,7 @@ By using a survey instrument to collect data, we are able to systematize the col
 
 As such, to ensure the comprehensiveness of the data, before designing the survey, we collected in depth, over-time data on policy actions taken by one country since the beginning of the outbreak, Taiwan, as well as cross-national data on travel bans implemented by most countries for a total of 245 events. The specific data source we cross referenced for this effort was the March 20, 2020 version of a New York Times article on travel restrictions across the globe [@salcedo2020]. 
 
-We chose to focus on Taiwan on because of its relative success, as of March 28, 2020, in limiting the negative health consequences of COVID-19 within its borders[@beech2020]. As such, it seemed likely at the time that other countries would choose to emulate some of the policy measures that Taiwan had implemented, which increases the comprehensiveness of the questions we ask in our survey. Indeed at the time of writing, it would appear that some countries have indeed sought to emulate Taiwan's response[@ @aspinwall2020]. 
+We chose to focus on Taiwan on because of its relative success, as of March 28, 2020, in limiting the negative health consequences of COVID-19 within its borders[@beech2020]. As such, it seemed likely at the time that other countries would choose to emulate some of the policy measures that Taiwan had implemented, which increases the comprehensiveness of the questions we ask in our survey. Indeed at the time of writing, it would appear that some countries have indeed sought to emulate Taiwan's response[@aspinwall2020]. 
 
 Meanwhile, by also investigating variation in how different countries around the world have implemented travel restrictions, we have also helped ensure that our survey is able to comprehensively document variation in how an important and commonly used policy tool is applied, e.g., restrictions on different methods of travel (e.g. flights, cruises), restrictions across borders and within borders, restrictions targeted toward people of different statuses (e.g. citizens, travelers).
 
@@ -948,7 +948,11 @@ For the most current, up to date version of the dataset, please visit http://cor
 Interested readers may also find our code for collecting the data and maintaining the database at our Github page: https://github.com/saudiwin/corona_tscs.  
 
 \newpage
+
+
 # References{-}
+<div id="refs"></div>
+
 
 
 \newpage

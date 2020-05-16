@@ -26,21 +26,19 @@ toc: false
 bibliography: BibTexDatabase.bib
 always_allow_html: yes
 output: 
-  bookdown::word_document2
-  #bookdown::pdf_document2:
-    #keep_tex: true
-    #latex_engine: xelatex
-    # includes:
-    #   in_header:
-    #       preamble.tex
-    # pandoc_args:
-    #   - '--lua-filter=scholarly-metadata.lua'
-    #   - '--lua-filter=author-info-blocks.lua'
+  #bookdown::word_document2
+  bookdown::pdf_document2:
+    keep_tex: true
+    latex_engine: xelatex
+    includes:
+      in_header:
+          preamble.tex
+    pandoc_args:
+      - '--lua-filter=scholarly-metadata.lua'
+      - '--lua-filter=author-info-blocks.lua'
 urlcolor: blue
 mask: yes
 abstract: "Governments worldwide have implemented countless policies in response to the COVID-19 pandemic. We present an initial public release of a large hand-coded dataset of over 12,000 separate policy announcements in response to the pandemic across more than 190 countries. The dataset is updated daily, with a 5-day lag for validity checking. We document policies across numerous dimensions, including the type of policy; national vs. sub-national enforcement; the specific human group and geographic region targeted by the policy; and the time frame within which the policy is implemented. We further analyze the dataset using a Bayesian measurement model which shows the quick acceleration of the adoption of costly policies across countries beginning in mid-March and continuing to the present. We believe that the data will be invaluable for helping policy makers and researchers assess, among other aspects, how effective different policies are in addressing the spread and health outcomes of COVID-19."
-
-
 ---
 
 ```{r setup, include=FALSE}
@@ -139,7 +137,7 @@ Meanwhile, our dataset also shows that virtually all countries in the world are 
 
 
 
-```{r desctab}
+```{r desctab, results = 'hide'}
 
 
 clean_data %>% 
@@ -201,14 +199,20 @@ clean_data %>%
         strip.background = element_blank()) +
   xlab("") +
   facet_wrap(~type)
+ggsave("Figure1.jpg")
 
 ```
 
 
-We can also explore the extent to which other countries are affected by policies that can have a geographic target outside the policy initiator (e.g. 'external border restrictions', 'quarantine') across time. For example, in Figure \@ref(fig:biofe), we map a network of bans on inbound flights to European countries initiated by European countries^[In this paper, the following countries are defined as being in Europe: Albania, Andorra, Armenia, Austria, Belarus, Belgium, Bosnia and Herzegovina, Bulgaria, Croatia, Cyprus, Czech Republic, Denmark, Estonia, Finland, France, Georgia, Germany, Greece, Hungary, Iceland, Ireland, Italy, Kosovo, Latvia, Liechtenstein, Lithuania, Luxembourg, Macedonia, Malta, Moldova, Monaco, Montenegro, Netherlands, Norway, Poland, Portugal, Romania, San Marino, Serbia, Slovakia, Slovenia, Spain, Sweden, Switzerland, Ukraine, United Kingdom, and the Vatican.] as of March 15, 2020. In the plot, each horizontal line represents a potential geographical target of a flight ban. The vertical lines denote whether there was such a flight ban and the arrow of the vertical line indicates the direction in which the ban is applied.^[See @longabaugh2012 for more information on how to interpret this plot.] The figure shows that by March 15, 2020, the governments of Poland and San Marino had banned all flights into Poland and San Marino respectively while the government of Italy banned incoming flights from China, Hong Kong, Macau and Taiwan. Additionally, the governments of Greece and Romania both banned flights from Italy while the government of Albania banned incoming flights from Greece. According to our data, up until this point in time, no other European governments at the national level had banned inbound flights from other countries.^[However, at the provincial level, our dataset documents that the government of the autonomous region of Madeira, Portugal had banned flights from Denmark, Finland, France, Germany, Spain, and Switzerland while the government of Sardinia, Italy closed all airports by March 15, 2020.]
+We can also explore the extent to which other countries are affected by policies that can have a geographic target outside the policy initiator (e.g. 'external border restrictions', 'quarantine') across time. For example, in Figure \@ref(fig:biofe), we map a network of bans on inbo, we map a network of bans on inbound flights to European countries initiated by European countries^[In this paper, the following countries are defined as being in Europe: Albania, Andorra, Armenia, Austria, Belarus, Belgium, Bosnia and Herzegovina, Bulgaria, Croatia, Cyprus, Czech Republic, Denmark, Estonia, Finland, France, Georgia, Germany, Greece, Hungary, Iceland, Ireland, Italy, Kosovo, Latvia, Liechtenstein, Lithuania, Luxembourg, Macedonia, Malta, Moldova, Monaco, Montenegro, Netherlands, Norway, Poland, Portugal, Romania, San Marino, Serbia, Slovakia, Slovenia, Spain, Sweden, Switzerland, Ukraine, United Kingdom, and the Vatican.] as of March 15, 2020. In the plot, each horizontal line represents a potential geographical target of a flight ban. The vertical lines denote whether there was such a flight ban and the arrow of the vertical line indicates the direction in which the ban is applied.^[See @longabaugh2012 for more information on how to interpret this plot.] The figure shows that by March 15, 2020, the governments of Poland and San Marino had banned all flights into Poland and San Marino respectively while the government of Italy banned incoming flights from China, Hong Kong, Macau and Taiwan. Additionally, the governments of Greece and Romania both banned flights from Italy while the government of Albania banned incoming flights from Greece. According to our data, up until this point in time, no other European governments at the national level had banned inbound flights from other countries.^[However, at the provincial level, our dataset documents that the government of the autonomous region of Madeira, Portugal had banned flights from Denmark, Finland, France, Germany, Spain, and Switzerland while the government of Sardinia, Italy closed all airports by March 15, 2020.]
 
-![Network Map of Bans on Inbound Flights by European Countries as of March 15, 2020](corona_wp_R1_nature_files/figure-latex/biofe-1.jpg)
-<!--
+```{r biofe,fig.cap="Network Map of Bans on Inbound Flights by European Countries as of March 15, 2020"}
+
+knitr::include_graphics("Figure2.jpg")
+
+```
+
+
 <!-- ```{r, results='hide'} -->
 
 <!-- # add region variable -->
@@ -318,7 +322,7 @@ We can also explore the extent to which other countries are affected by policies
 
 <!-- plotBioGraph("Europe", "External Border Restrictions", "2020-03-15") -->
 <!-- ``` -->
---> 
+
 
 
 
@@ -461,7 +465,7 @@ overall <- to_plot  %>%
 overall + breakout +
   plot_annotation(tag_levels="A")
 
-ggsave("index.png")
+ggsave("Figure3.jpg")
 
 
 
@@ -476,7 +480,7 @@ We note that these are average values for the sample. Imposing these policies ma
 
 At the top of the index we see various business closure policies as the most difficult to implement, while school closures are the next most difficult. Closure of pre-schools, though, as opposed to other school types, appears to be relatively less costly for states to undertake, perhaps because pre-schools do not operate on a full-time basis. Internal border restrictions are considered more difficult to implement than external border restrictions, while relatively straightforward policies like public awareness campaigns, health monitoring and opening new task forces or bureaus are near the bottom of the index. Quarantines placing people in external facilities, such as hotels or government quarantine centers, are also estimated as being less costly than quarantine at home (stay-at-home orders).
 
-Given this distribution of discrimination parameters, we believe the index is a valid representation of the underlying process by which governments progressively impose more difficult policies. As states relax policies, we will further gain information about which policies appear to be more costly as we will be able to factor in the duration for which these policies were implemented. Consistent with our findings, we observe that the announced relaxation policies happening at the time of writing in European countries primarily center on businesses and school openings, suggesting that these policies are uniquely costly to keep in place compared to travel restrictions.^[See Doherty, Ben. "The exit strategy: how countries around the world are preparing for life after Covid-19." *The Guardian* 18 April 2020, https://www.theguardian.com/world/2020/apr/19/the-exit-strategy-how-countries-around-the-world-are-preparing-for-life-after-covid-19]
+Given this distribution of discrimination parameters, we believe the index is a valid representation of the underlying process by which governments progressively impose more difficult policies. As states relax policies, we will further gain information about which policies appear to be more costly as we will be able to factor in the duration for which these policies were implemented. Consistent with our findings, we observe that the announced relaxation policies happening at the time of writing in European countries primarily center on businesses and school openings, suggesting that these policies are uniquely costly to keep in place compared to travel restrictions [@doherty2020].
 
 
 
@@ -750,6 +754,8 @@ compare_plot <- merge_est %>%
 
 compare_plot
 
+ggsave("Figure4.jpg")
+
 ```
 
 
@@ -789,7 +795,7 @@ get_var %>%
   coord_flip() +
   xlab("") +
   ylab("Over-Time Variance of Latent Scale")
-
+ggsave("Figure5.jpg")
 
 ```
 
@@ -825,11 +831,11 @@ In what follows, we describe in greater detail how RAs document the policies tha
 
 ### Data Collection Software Instrument {-}
 
-We designed a Qualtrics survey with survey questions about different aspects of a government policy action to streamline the CoronaNet data collection effort. With this tool, RAs can easily and efficiently document different policy actions by answering the relevant questions posed in the survey.^[See @buthe2020 for an example of a similar use of Qualtrics in collecting data.] For example, instead of entering the country that initiated a policy action into a spreadsheet, RAs answer the following question in the survey: "From what country does this policy originate?" and choose from the available options given in the survey.
+We designed a Qualtrics survey with survey questions about different aspects of a government policy action to streamline the CoronaNet data collection effort. With this tool, RAs can easily and efficiently document different policy actions by answering the relevant questions posed in the survey. An example of a similar use of Qualtrics in collecting data was undertaken by Büthe, Minhas and Lieu (unpublished manuscript). For example, instead of entering the country that initiated a policy action into a spreadsheet, RAs answer the following question in the survey: "From what country does this policy originate?" and choose from the available options given in the survey.
 
 By using a survey instrument to collect data, we are able to systematize the collection of very fine-grained data while minimizing coding errors common to tools like shared spreadsheets. The value of this approach of course, depends on the comprehensiveness of the questions posed in the survey, especially in terms of the universe of policy actions that countries have implemented against COVID-19. For example, if the survey only allowed RAs to select 'quarantines' as a government policy, it would not capture any data on 'external border restrictions', which would seriously reduce the value of the resulting data. 
 
-As such, to ensure the comprehensiveness of the data, before designing the survey, we collected in depth, over-time data on policy actions taken by one country, Taiwan, since the beginning of the outbreak as well as cross-national data on travel bans implemented by most countries for a total of 245 events.^[The specific data source we cross referenced for this effort was the March 20, 2020 version of the following New York Times article: Salcedo, Andrea and Gina Cherelus, "Coronavirus Travel Restrictions, Across the Globe" *New York Times*, 20 March 2020, https://www.nytimes.com/article/coronavirus-travel-restrictions.html] We chose to focus on Taiwan on because of its relative success, as of March 28, 2020, in limiting the negative health consequences of COVID-19 within its borders.^[Beech, Hannah. "Tracking the Coronavirus: How Crowded Asian Cities Tackled an Epidemic." *New York Times* 18 March 2020, https://www.nytimes.com/2020/03/17/world/asia/coronavirus-singapore-hong-kong-taiwan.html] As such, it seems likely that other countries may choose to emulate some of the policy measures that Taiwan had implemented, which helps increase the comprehensiveness of the questions we ask in our survey. Meanwhile, by also investigating variation in how different countries around the world have implemented travel restrictions, we have also helped ensure that our survey is able to comprehensively document variation in how an important and commonly used policy tool is applied, e.g., restrictions on different methods of travel (e.g. flights, cruises), restrictions across borders and within borders, restrictions targeted toward people of different status (e.g. citizens, travelers).
+As such, to ensure the comprehensiveness of the data, before designing the survey, we collected in depth, over-time data on policy actions taken by one country, Taiwan, since the beginning of the outbreak as well as cross-national data on travel bans implemented by most countries for a total of 245 events. The specific data source we cross referenced for this effort was the March 20, 2020 version of the New York Times article on travel restrictions across the globe [@salcedo2020]. We chose to focus on Taiwan on because of its relative success, as of March 28, 2020, in limiting the negative health consequences of COVID-19 within its borders[@beech2020]. As such, it seems likely that other countries may choose to emulate some of the policy measures that Taiwan had implemented, which helps increase the comprehensiveness of the questions we ask in our survey. Meanwhile, by also investigating variation in how different countries around the world have implemented travel restrictions, we have also helped ensure that our survey is able to comprehensively document variation in how an important and commonly used policy tool is applied, e.g., restrictions on different methods of travel (e.g. flights, cruises), restrictions across borders and within borders, restrictions targeted toward people of different status (e.g. citizens, travelers).
 
 <!-- As a last step, the team also consulted the ACAPS COVID-19: Government Measures Dataset^[https://data.humdata.org/dataset/acaps-covid19-government-measures-dataset] to validate the comprehensiveness of the policy measures considered in the survey instrument.  -->
 
@@ -941,6 +947,43 @@ We also thank Tim Büthe, the Chair for International Relations, the Hochschule 
 ## Competing interests {-}
 
 The authors declare no competing interests.
+
+## Figure Legends {-}
+
+## Tables {-}
+
+```{r desctab2}
+
+
+clean_data %>% 
+  group_by(type, country) %>% 
+  dplyr:::summarize(numPolicies=n(),
+                    numCountries=length(unique(country)),
+                    target_country = ifelse(any(grepl('All countries', target_country)),
+                                            205, 1+ length(unique(unlist(str_split(target_country[-which(is.na(target_country))], ','))))),
+                    percEnf =mean(grepl(x=compliance,pattern="Mandatory")*100,na.rm=T)) %>%
+  ungroup() %>%
+  mutate( type=recode(type,
+                      `Other Policy Not Listed Above`="Other",
+                      `Quarantine` = "Quarantine/Lockdown",
+                      #`New Task Force, Bureau or Administrative Configuration`="New Task Force"
+                      ))%>% 
+  select(Type="type",everything()) %>% 
+  group_by(Type) %>%
+  dplyr:::summarize(`Total Number of Policies` = sum(numPolicies),
+                    `Number of Countries` =  sum(numCountries),
+    `Average Number of Targeted Countries`= round(mean(target_country)),
+    `% With Mandatory Enforcement` = round(mean(percEnf))) %>%
+  arrange(desc(`Total Number of Policies`))  %>% 
+  ungroup() %>%
+  knitr::kable("latex",booktabs=T,
+               caption="Descriptive Information about the CoronaNet Government Response Dataset") %>% 
+  kable_styling(latex_options = c("striped", "HOLD_position")) %>% 
+  column_spec(1,width="4cm") %>% 
+  column_spec(2:5,width="2.5cm")
+
+```
+
 
 ## Appendix A: Description of Dataset Fields {-}
 

@@ -42,6 +42,7 @@ require(extraDistr)
 require(patchwork)
 require(rstanarm) # for observed data modeling
 require(tidycensus)
+require(RcppRoll)
 
 set.seed(662817)
 
@@ -54,7 +55,7 @@ system2("git",args=c("-C ~/covid-19-data","pull"))
 
 # whether to run model (it will take a few hours) or load saved model from disk
 
-run_model <- F
+run_model <- T
 
 pan_model <- stan_model("corona_tscs_betab.stan")
 
@@ -158,7 +159,8 @@ nyt_data <- read_csv("~/covid-19-data/us-states.csv") %>%
   mutate(month_day=ymd(date)) %>% 
   group_by(state) %>% 
     arrange(state,date) %>% 
-  mutate(Difference=cases - dplyr::lag(cases),
+  mutate(cases=floor(c(cases[1:2],roll_mean(cases,n=3))),
+         Difference=cases - dplyr::lag(cases),
          Difference=coalesce(Difference,0,0)) %>% 
   left_join(merge_names,by="state")
 
@@ -166,13 +168,15 @@ tests <- read_csv("~/covid-tracking-data/data/states_daily_4pm_et.csv") %>%
   mutate(month_day=ymd(date)) %>% 
   arrange(state,month_day) %>% 
   group_by(state) %>% 
+  # first do 3-day moving average
+  mutate(total=floor(c(total[1:2],roll_mean(total,n=3)))) %>% 
   mutate(tests_diff=total-dplyr::lag(total),
          cases_diff=positive-dplyr::lag(positive),
          cases_diff=coalesce(cases_diff,positive),
          cases_diff=ifelse(cases_diff<0,0,cases_diff),
          tests_diff=coalesce(tests_diff,total),
          tests_diff=ifelse(tests_diff<0,0,tests_diff)) %>% 
-  select(month_day,tests="tests_diff",total,state.abb="state")
+  select(month_day,tests="tests_diff",total,state.abb="state",recovered)
 
 # merge cases and tests
 
@@ -235,11 +239,26 @@ combined <- group_by(combined,state) %>%
               "prop_foreign"), ~as.numeric(scale(.))) %>% 
   group_by(month_day) %>% 
   mutate(world_infect=sum(outbreak_time>1)) %>% 
-  ungroup
+  ungroup 
+  # # if any times that cumulative cases went down, take the average
+  # mutate(Difference=ifelse(Difference<0,(lag(Difference) + lead(Difference))/2,Difference),
+  #        tests=ifelse(tests<0,(lag(tests) + lead(tests))/2,tests))
 
-# need to fix an issue with Georgia for 4/12 (decrease in cumulative cases ???)
+# need to fix an issue with Georgia for 4/12 (decrease in cumulative cases ???) and Idaho
+# data anomalies
 
-combined <- mutate(combined,Difference=ifelse(state=="Georgia" & month_day==ymd("2020-04-12") & Difference<0,(Difference[state=="Georgia" & month_day==ymd("2020-04-11")] + Difference[state=="Georgia" & month_day==ymd("2020-04-13")])/2,Difference))
+# combined <- mutate(combined,Difference=ifelse(state=="Georgia" & month_day==ymd("2020-04-12") & Difference<0,(Difference[state=="Georgia" & month_day==ymd("2020-04-11")] + Difference[state=="Georgia" & month_day==ymd("2020-04-13")])/2,Difference),
+#                    Difference=ifelse(state=="Idaho" & month_day==ymd("2020-05-03") & Difference<0,(Difference[state=="Idaho" & month_day==ymd("2020-05-02")] + Difference[state=="Idaho" & month_day==ymd("2020-05-04")])/2,Difference))
+          # tests=case_when(state=="Vermont" & month_day==ymd("2020-05-11")~floor(tests[])
+          #          recovered=coalesce(recovered,0),
+          #          weekend=wday(month_day) %in% c(1,7)) 
+  # group_by(state) %>% 
+  # arrange(month_day) %>% 
+  # mutate(roll_case=roll_mean(Difference,n=3,fill=0),
+  #        roll_test=roll_mean(tests,n=3,fill=0),
+  #        Difference=ifelse(weekend,floor(roll_case),Difference),
+  #        tests=ifelse(weekend,floor(tests),tests)) %>% 
+  #filter(state!="Illinois")
 
 # create case dataset
 
@@ -309,14 +328,18 @@ init_vals <- function() {
   list(phi_raw=c(100,100),
        world_infect=0.5,
        finding=0.5,
-       alpha=c(-5,0,-5))
+       country_test_raw=rep(.5,real_data$num_country),
+       alpha=c(-1,-1,-1))
 }
 
 
 
 if(run_model) {
-  us_fit <- sampling(pan_model,data=real_data,chains=3,cores=3,iter=1500,warmup=1000,
-                   init=init_vals)
+  # loop over states
+      
+  us_fit <- sampling(pan_model,data=real_data,chains=4,cores=3,iter=800,warmup=500,init=init_vals)
+
+
   
   saveRDS(us_fit,"../data/us_fit.rds")
 } else {
@@ -602,8 +625,17 @@ case_count <- gather(cases_matrix,key="time_point",value="cases",-state) %>%
   arrange(state,time_point) %>% 
   mutate(cum_sum_cases=cumsum(cases)) 
 
+# merge in deaths/recovered
+
+case_count <- left_join(case_count,select(combined,deaths,recovered,month_day,state),
+                        c("time_point"="month_day","state")) %>% 
+  mutate(cum_sum_cases = cum_sum_cases - deaths - recovered,
+         cum_sum_cases = cum_sum_cases - coalesce(dplyr::lag(cum_sum_cases,n=14),0))
+
 us_case_count <- group_by(case_count,time_point) %>% 
-  summarize(all_cum_sum=sum(cum_sum_cases))
+  summarize(all_cum_sum=sum(cum_sum_cases),
+            all_rec=sum(recovered),
+            all_death=sum(deaths))
 
 all_est_state <- left_join(all_est_state,us_case_count,by="time_point")
 
@@ -613,8 +645,12 @@ calc_sum <- all_est_state %>%
   group_by(state_num,iter) %>% 
   arrange(state_num,time_point) %>% 
   mutate(cum_est=cumsum(estimate)) %>% 
-  group_by(time_point,iter,all_cum_sum) %>% 
-  summarize(us_total=sum(cum_est)) %>% 
+  group_by(time_point,iter,all_cum_sum,all_rec,all_death) %>% 
+  summarize(us_total=sum(cum_est) - unique(all_rec) - unique(all_death)) %>%
+  group_by(iter) %>% 
+  arrange(iter,time_point) %>% 
+  mutate(us_total=us_total - coalesce(dplyr::lag(us_total,n=14),0)) %>% 
+  #summarize(us_total=sum(cum_est)) %>% 
   group_by(time_point,all_cum_sum) %>% 
   summarize(med_est=quantile(us_total,.5),
             high_est=quantile(us_total,.95),
@@ -696,12 +732,30 @@ As described in the modeling section, the model does not provide estimates that 
 ```{r stateplot,fig.cap="Average Cumulative Count of Infected People by U.S. State as of April 20th",fig.height=5,echo=F}
 require(ggrepel)
 
+# need different figures for case-level deaths + recovered
+
+all_est_state <- as.data.frame(us_fit_scale,"num_infected_high") %>% 
+  mutate(iter=1:n()) %>% 
+  gather(key="variable",value="estimate",-iter) %>% 
+  group_by(variable) %>% 
+  mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
+         time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
+         time_point=ymd(min(combined$month_day)) + days(time_point-1))
+
+all_est_state <- left_join(all_est_state,tibble(state_num=1:nrow(cases_matrix),
+                                                state=cases_matrix$state,
+                                                state_pop=real_data$country_pop,
+                                    suppress_measures=real_data$suppress,by="state_num"))
+
+all_est_state <- left_join(all_est_state,case_count,by=c("state","time_point"))
+
 calc_sum_state <- all_est_state %>% 
   ungroup %>% 
   mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
   group_by(state,iter) %>% 
   arrange(state,time_point) %>% 
-  mutate(cum_est=cumsum(estimate)) %>% 
+  mutate(cum_est=cumsum(estimate) - recovered - deaths,
+         cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=14),0)) %>% 
   group_by(time_point,state,suppress_measures) %>% 
   summarize(med_est=quantile(cum_est,.5),
             high_est=quantile(cum_est,.95),

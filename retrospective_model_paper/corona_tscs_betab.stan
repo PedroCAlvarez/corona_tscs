@@ -99,9 +99,32 @@ model {
     // locations for cases and tests
     vector[num_country] mu_cases = inv_logit(alpha[3] + finding*num_infected_high[,t]);
     vector[num_country] mu_tests = inv_logit(alpha[1] + country_test_raw .* num_infected_high[,t]);
+    //vector[num_country] check_tests;
+    //vector[num_country] check_cases;
     
-    tests[,t] ~ beta_binomial(country_pop,mu_tests*phi[1],(1-mu_tests)*phi[1]);
-    cases[,t] ~ beta_binomial(tests[,t],mu_cases*phi[2],(1-mu_cases)*phi[2]);
+
+    tests[,t] ~ beta_binomial(country_pop,exp(log(mu_tests) + log(phi[1])),exp(log1m(mu_tests) + log(phi[1])));
+    cases[,t] ~ beta_binomial(tests[,t],exp(log(mu_cases)  + log(phi[2])),exp(log1m(mu_cases) + log(phi[2])));
+    // for(n in 1:num_country) {
+    //   check_tests[n] = beta_binomial_lpmf(tests[,t]|country_pop,exp(log(mu_tests) + log(phi[1])),exp(log1m(mu_tests) + log(phi[1])));
+    //   check_cases[n] = beta_binomial_lpmf(cases[,t]|tests[,t],exp(log(mu_cases)  + log(phi[2])),exp(log1m(mu_cases) + log(phi[2])));
+    //   
+    //   if(check_tests[n]==negative_infinity()) {
+    //     //print("Tests failed at time point ",t," and country ",n);
+    //   } else {
+    //     target += check_tests[n];
+    //   }
+    //   
+    //   if(check_cases[n]==negative_infinity()) {
+    //     //print("Cases failed at time point ",t," and country ",n);
+    //   } else {
+    //     target += check_cases[n];
+    //   }
+    //   
+    // }  
+    
+    
+    
   
   }
 

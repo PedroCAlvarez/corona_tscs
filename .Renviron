@@ -1,1 +1,1 @@
-PATH="/usr/local/Cellar/pandoc/2.9.2.1/bin/:${PATH}"
+PATH="C:\Rtools40\usr\bin;${PATH}

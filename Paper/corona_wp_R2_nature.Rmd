@@ -967,7 +967,7 @@ Abdelaziz Ibn Abdelouahab, Abhyudaya Tyagi, Adel Clemonds, Adriana Poppe, Advait
 &nbsp;
 &nbsp;
 
-We also thank Brandon Rose and Jataware for making the news database available to this project. We thank Tim Büthe, the Chair for International Relations, the Hochschule für Politik at the Technical University of Munich (TUM), as well as the TUM School of Governance, and the TUM School of Management for the many ways they have supported this project, including with funding. We further thank New York University Abu Dhabi for funding in support of this endeavor. Moreover, we appreciate the support by Slack Technologies and RStudio Inc. who provided access to their technical infrastructure.
+We also thank Brandon Rose and Jataware for making the news database available to this project. We thank Tim Büthe and Tobias Rommel, the Chair for International Relations, the Hochschule für Politik at the Technical University of Munich (TUM), as well as the TUM School of Governance, and the TUM School of Management for the many ways they have supported this project, including with funding. We further thank New York University Abu Dhabi for funding in support of this endeavor. Moreover, we appreciate the support by Slack Technologies and RStudio Inc. who provided access to their technical infrastructure.
 
 ## Competing interests {-}
 

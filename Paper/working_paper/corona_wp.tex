@@ -1,0 +1,1025 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\PassOptionsToPackage{usenames,dvipsnames}{color} % color is loaded by hyperref
+\hypersetup{unicode=true,
+            pdftitle={CoronaNet: A Dyadic Dataset of Government Responses to the COVID-19 Pandemic},
+            pdfauthor={Cindy Cheng1,; Joan Barceló2; Allison Spencer Hartnett3; Robert Kubinec2; Luca Messerschmidt1},
+            colorlinks=true,
+            linkcolor=Maroon,
+            citecolor=Blue,
+            urlcolor=blue,
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{longtable,booktabs}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\providecommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{CoronaNet: A Dyadic Dataset of Government Responses to the COVID-19 Pandemic}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Cindy Cheng\textsuperscript{1,*} \\ Joan Barceló\textsuperscript{2} \\ Allison Spencer Hartnett\textsuperscript{3} \\ Robert Kubinec\textsuperscript{2} \\ Luca Messerschmidt\textsuperscript{1}}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{April 24th, 2020}
+
+\linespread{1.6}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+
+\usepackage{lineno}
+\linenumbers
+
+\begin{document}
+\maketitle
+\begin{abstract}
+Governments everywhere have implemented a broad range of policies that have been highly influential in shaping the COVID-19 pandemic. We present an initial public release of a large hand-coded dataset of over 10,000 separate policy announcements made in response to the pandemic across more than 190 countries. The dataset will be updated daily, with a 5-day lag for validity checking. We currently document policies across numerous dimensions, including the type of policy implemented; national vs.~sub-national enforcement; the specific group targeted by the policy; and the time frame within which the policy is implemented. We further analyze the dataset using a Bayesian measurement model which shows the quick acceleration of high-cost policies across countries beginning in mid-March and continuing to the present. While some relatively low-cost policies like task forces and health monitoring began early, countries generally adopted harsher measures within a narrow time window, suggesting strong policy diffusion effects.\footnote{We thank the very large number of research assistants who coded this data. Their names and affiliations are listed in the appendix. We also thank the Chair of International Relations at the Hochschule für Politik at the Technical University of Munich (TUM) for their support of this project and the TUM School of Management for their help in providing access to Qualtrics. For the most current, up to date version of the dataset, please visit \url{http://coronanet-project.org} and also our Github page at \url{https://github.com/saudiwin/corona_tscs}. Interested readers may also find our code for collecting the data and maintaining the database at the aforementioned Github page. For more information on the exact variables collected, please see our publicly available \href{https://docs.google.com/document/d/1zvNMpwj0onFvUZ_gLl4RRjqS-clbHv3TIX6EOHofsME/edit?usp=sharing}{codebook here}.}
+\end{abstract}
+
+\textsuperscript{1} Hochschule für Politik at the Technical University of Munich (TUM) and the TUM School of Governance\\
+\textsuperscript{2} New York University Abu Dhabi\\
+\textsuperscript{3} Yale University
+
+\textsuperscript{*} Correspondence: \href{mailto:cindy.cheng@hfp.tum.de}{Cindy Cheng \textless{}\href{mailto:cindy.cheng@hfp.tum.de}{\nolinkurl{cindy.cheng@hfp.tum.de}}\textgreater{}}
+
+\newpage
+
+Governments all around the world have implemented an astonishing number and variety of policies in reaction to the COVID-19 pandemic in a very short time frame. However, policy makers and researchers have to date lacked access to the quality, up-to-date data they need for conducting rigorous analyses of whether, how, and to what degree these fast changing policies have worked in brunting the health, political and economic effects of the pandemic. To address this concern, in this paper, we present the CoronaNet COVID-19 Government Response Database which provides fine-grained, dyadic data on policy actions taken by governments across the world since the Chinese government reported the COVID-19 outbreak on December 31, 2019. At the time of writing, the dataset covers the policy actions of 196 countries\footnote{Note, we will include additional countries in future versions of the dataset.} up until 2020-05-08, for a total of 12762 events.
+
+With the help of a team of over 220 research assistants in 18 time zones, we are releasing the data on a daily basis. We are implementing a five-day lag between data collection and release to evaluate and validate ongoing coding efforts for random samples of the data to ensure the best possible quality given the considerable time constraints. More specifically, the CoronaNet database collects daily data on government policy actions taken against COVID-19 across the following dimensions:
+
+\begin{itemize}
+\tightlist
+\item
+  The type of government policy implemented (e.g.~quarantine, closure of schools {[}16 total{]})
+\item
+  The level of government initiating the action (e.g.~national, provincial)
+\item
+  The geographical target of the policy action, if applicable (e.g.~national, provincial, municipal)
+\item
+  The human or material target of the policy action, if applicable (e.g.~travelers, masks)
+\item
+  The directionality of the policy action, if applicable (e.g.~inbound, outbound, both)
+\item
+  The mechanism of travel that the policy action targets, if applicable (e.g.~flights, trains)
+\item
+  The compliance with the policy action (e.g.~mandatory, voluntary)
+\item
+  The enforcer of the policy action (e.g.~national government, military)
+\item
+  The timing of the policy action (e.g.~date announced, date implemented)
+\end{itemize}
+
+We believe that this data will not only help policy makers and researchers better understand which policies are more effective in addressing the spread and health outcomes of COVID-19 (Flaxman et al. 2020), it will also permit crucial inference on the effects COVID-19 has had on societies and economies. Indeed, anecdotal evidence suggests that the pandemic has already had substantial consequences for the nature of political institutions (Przeworski et al. 1999; Gailmard and Patty 2019), the stability of financial markets (Kindleberger and Aliber 2011) and the way of life of billions of people (Tierney 2007). Data on government reactions to the COVID-19 pandemic can help provide systematic evidence of these effects. Moreover, it can further help us better understand the determinants of these influential policies at both the structural (Svolik 2012; Kitschelt, Wilkinson, and others 2007) and interpersonal levels (Boin et al. 2016).
+
+Meanwhile, given the exogenous timing of the initial outbreak in Wuhan, China, government policies made in reaction to the COVID-19 pandemic constitute the single largest natural experiment in recent memory, allowing researchers to improve causal inference in any number of fields. Indeed, government reactions to the COVID-19 epidemic will have long-lasting implications on a wide-range of social phenomena, from the evolution of political institutions (Pierson 2000) to the progression of economic development (Nunn 2009; Kilian 2009; Noy 2009) to say nothing of its potential ramifications for environmental outcomes (Dasgupta et al. 2002; Folke 2006), mental health (Galea et al. 2003; Gifford 2014), or disaster preparedness (Blaikie et al. 2014). While scholars have always sought to understand how large-scale historical events have shaped contemporary phenomena, modern technological tools allow us to document such events more quickly and more precisely than ever before.
+
+In what follows, we provide a description of the data, as well as an application of the data in which we model policy activity of countries over time. Using a Bayesian dynamic item-response theory model, we produce a statistically valid index that summarizes countries in terms of their response to the pandemic, and further shows how quickly policy responses have changed over time. We document clear evidence of rapid policy diffusion of harsh measures opposing the virus, indicating some of the most extensive evidence of this type of diffusion ever documented. In the methodology section, we provide a thorough discussion of the procedures used to collate the data and to manage the more than 220 research assistants coding this data around the world in real time.
+
+\hypertarget{results}{%
+\section*{Results}\label{results}}
+\addcontentsline{toc}{section}{Results}
+
+In this section, we first present some descriptive statistics which illustrate how government policy toward COVID-19 has varied across key variables. We then briefly present our new index for tracking how active governments have been with regards to announcing policies targeting COVID-19 across countries and over time.
+
+\hypertarget{descriptive-statistics}{%
+\subsection*{Descriptive Statistics}\label{descriptive-statistics}}
+\addcontentsline{toc}{subsection}{Descriptive Statistics}
+
+Here we present some descriptive statistics for key variables available in the data. Table \ref{tab:desctab} shows the number of records for each policy type, the number of unique countries for each policy type as well as how many countries are targeted in total by each policy type. We note that these are cumulative totals for these different categories in the data, except for the number of targeted countries, which is an average number. Table \ref{tab:desctab} also provides information on the degree to which a given policy must be complied with.
+
+According to our data, the most common government policy implemented in reaction to COVID-19 is external border restrictions, i.e.~policies that seek to limit access to ports of entry or exit across different governmental jurisdictions. We find that 186 countries have made 1064 policy announcements about such restrictions since December 31, 2019. Meanwhile, the second policy that most countries, by our count 169, have implemented is `Closure of Schools', of which we document 1583 such policies. Governments have implemented `Restriction of Non-Essential Businesses' policies with the second highest frequency; we document that 135 countries have implemented 1855 such policies. However, we note that a strict comparison of policy types by this metric is not perfect, given that, for example, there may be a need for more individualized policies regarding external border restrictions (given the number of countries which a government can restrict travel access to) as opposed to closing schools. In the next subsection, we provide a more rigorous method of comparing policies while taking their depth into account.
+
+Meanwhile, our dataset also shows that virtually all countries in the world are a target of an external border restriction, quarantine measure, or health monitoring measure from another country. Moreover, a high percentage of policies documented in our dataset have mandatory enforcement.
+
+\begin{table}[H]
+
+\caption{\label{tab:desctab}Descriptive Information about the CoronaNet Government Response Dataset}
+\centering
+\begin{tabular}{>{\raggedright\arraybackslash}p{4cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}}
+\toprule
+Type & Total Number of Policies & Number of Countries & Average Number of Targeted Countries & \% With Mandatory Enforcement\\
+\midrule
+\rowcolor{gray!6}  Health Resources & 2342 & 148 & 156 & 58\\
+Restriction of Non-Essential Businesses & 1855 & 135 & 135 & 93\\
+\rowcolor{gray!6}  Closure of Schools & 1583 & 169 & 169 & 88\\
+Quarantine & 1102 & 161 & 206 & 88\\
+\rowcolor{gray!6}  External Border Restrictions & 1064 & 186 & 205 & 81\\
+\addlinespace
+Other & 819 & 132 & 148 & 58\\
+\rowcolor{gray!6}  Public Awareness Measures & 609 & 137 & 137 & 27\\
+Restrictions of Mass Gatherings & 575 & 159 & 160 & 87\\
+\rowcolor{gray!6}  Social Distancing & 518 & 127 & 127 & 71\\
+Restriction of Non-Essential Government Services & 373 & 99 & 99 & 87\\
+\addlinespace
+\rowcolor{gray!6}  New Task Force, Bureau or Administrative Configuration & 345 & 104 & 104 & 100\\
+Declaration of Emergency & 330 & 114 & 114 & 100\\
+\rowcolor{gray!6}  Health Monitoring & 318 & 110 & 203 & 71\\
+Internal Border Restrictions & 313 & 111 & 111 & 90\\
+\rowcolor{gray!6}  Health Testing & 283 & 98 & 120 & 64\\
+\addlinespace
+Curfew & 172 & 91 & 90 & 95\\
+\rowcolor{gray!6}  Hygiene & 133 & 41 & 41 & 77\\
+Anti-Disinformation Measures & 20 & 17 & 17 & 80\\
+\rowcolor{gray!6}  Lockdown & 6 & 5 & 5 & 83\\
+Quarantine/Lockdown & 2 & 2 & 1 & 100\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+In addition, we can look at the cumulative incidence of different types of policies in our data over time, as we show in Figure \ref{fig:overtime}. The figure shows that relatively easy to implement policies like external border restrictions, the forming of task forces, public awareness campaigns, and efforts to increase health resources came relatively earl in the course of the pandemic. More restrictive policies like curfews, closures of schools, restrictions of non-essential businesses and restrictions of mass gatherings arrived later.
+
+\begin{figure}
+\centering
+\includegraphics{corona_wp_files/figure-latex/overtime-1.pdf}
+\caption{\label{fig:overtime}Cumulative Incidence of Policy Event Types Over Time}
+\end{figure}
+
+We can also explore the extent to which other countries are affected by policies that can have a geographic target outside the policy initiator (e.g.~`external border restrictions', `quarantine') across time. For example, in Figure \ref{fig:biofe}, we map a network of bans on inbound flights to European countries initiated by European countries\footnote{In this paper, the following countries are defined as being in Europe: Albania, Andorra, Armenia, Austria, Belarus, Belgium, Bosnia and Herzegovina, Bulgaria, Croatia, Cyprus, Czech Republic, Denmark, Estonia, Finland, France, Georgia, Germany, Greece, Hungary, Iceland, Ireland, Italy, Kosovo, Latvia, Liechtenstein, Lithuania, Luxembourg, Macedonia, Malta, Moldova, Monaco, Montenegro, Netherlands, Norway, Poland, Portugal, Romania, San Marino, Serbia, Slovakia, Slovenia, Spain, Sweden, Switzerland, Ukraine, United Kingdom, and the Vatican.} as of March 15, 2020. In the plot, each horizontal line represents a potential geographical target of a flight ban. The vertical lines denote whether there was such a flight ban and the arrow of the vertical line indicates the direction in which the ban is applied.\footnote{See Longabaugh (2012) for more information on how to interpret this plot.} The figure shows that by March 15, 2020, the governments of Poland and San Marino had banned all flights into Poland and San Marino respectively while the government of Italy banned incoming flights from China, Hong Kong, Macau and Taiwan. Additionally, the governments of Greece and Romania both banned flights from Italy while the government of Albania banned incoming flights from Greece. According to our data, up until this point in time, no other European governments at the national level had banned inbound flights from other countries.\footnote{However, at the provincial level, our dataset documents that the government of the autonomous region of Madeira, Portugal had banned flights from Denmark, Finland, France, Germany, Spain, and Switzerland while the government of Sardinia, Italy closed all airports by March 15, 2020.}
+
+\begin{figure}
+\centering
+\includegraphics{corona_wp_files/figure-latex/biofe-1.pdf}
+\caption{\label{fig:biofe}Network Map of Bans on Inbound Flights by European Countries as of March 15, 2020}
+\end{figure}
+
+\hypertarget{government-policy-activity-index}{%
+\section*{Government Policy Activity Index}\label{government-policy-activity-index}}
+\addcontentsline{toc}{section}{Government Policy Activity Index}
+
+In this section, we briefly present our new index for tracking the relative government activity with regards to policies targeting COVID-19 across countries and over time. The model is a version of item-response theory known as ideal point modeling that incorporates over-time trends (Kubinec 2019; Clinton, Jackman, and Rivers 2004; Bafumi et al. 2005; Martin and Quinn 2002), permitting inference on how a latent construct, in this case total policy activity, responds to changes in the pandemic. To fit the model, the different policy types shown in Table \ref{tab:desctab} were coded in terms of ordinal values, with lower values for sub-national targets of policies and higher values for policies applying to the entire country, or in the case of external border restrictions, to one or more external countries. For instance, internal country policies can take on three possible values: no policy, sub-national policy, or policy covering the whole country. Meanwhile external border restrictions can take on four possible values: no policy, policy targeting one other country, policy targeting multiple countries, and policy targeting all countries in the world (i.e., border closure).
+
+We employed ideal point modeling because it can be given a latent utility interpretation (Clinton, Jackman, and Rivers 2004). The model assumes that countries are located in a latent space in which the distance between countries and policies represents the relative cost of imposing different policies. As countries become more willing to pay these costs, i.e.~their ideal points/policy activity score rises, they then subsequently implement more policies. This interpretation is similar to the traditional item-response theory approach for analyzing test questions in which students who answer more questions on a test are considered to have higher ``ability'' (Takane and Leeuw 1986; Reckase 2009). Following this logic, we are able to estimate latent country scores that represent the readiness of a country to impose a set number of policies. The cost of policies is estimated via discrimination parameters, which indicate how strongly policies discriminate between countries (in other words, are an indication of relative cost).
+
+The country-level policy activity score is further allowed to vary over time in a random-walk process with a country-specific variance parameter to incorporate heteroskedasticity (Martin and Quinn 2002). Incorporating over-time trends explicitly is very important for capturing the nuances of policy implementation over time. For example, countries that impose more restrictive policies at an earlier date will be rewarded with higher policy activity scores compared to those who impose such policies at a later date. Imposing a given policy when most countries have already imposed them will result in little if any change in the policy activity score.
+
+The advantage of employing a statistical model, rather than simply summing across policies, is that the index ends up as a weighted average, where the weights are derived from the probability that a certain policy is enforced. In other words, while many countries set up task forces, relatively few imposed curfews at an early stage. As a result, the model adjusts for these distinctions, producing a score that aggregates across the patterns in the data.
+
+Furthermore, because the model is stochastic, it is robust to some of the coding errors of the kind that often occur in these types of datasets. As we discuss in our validation section, while we are continuing to validate the data on a daily basis, the massive speed and scope of data collection means that we cannot identify all issues with the data in real time. However, the measurement model employed only requires us to assume that on average the policy codings are correct, not that they are correct for each instance. Coding error, such as incorrectly selecting a policy type, will propagate through the model as higher uncertainty intervals, but will not affect average posterior estimates. As our data quality improves, and we are able to collect more data over time, the model will produce more variegated estimates with smaller uncertainty intervals.
+
+Figure \ref{fig:plotindex} shows the estimated index scores for the 196 countries in our dataset at present, and suggests strong evidence of policy diffusion effects. While information about COVID-19 existed at least as early as January, we do not see large-scale changes occurring in activity scores until March. Furthermore, the trajectories are highly non-linear, with a large number of countries quickly transitioning from relatively low to relatively high scores. This tandem movement is a strong indication of policy diffusion as countries adopted similar policies across time and space as opposed to a more linear learning process.
+
+Of course, a caveat with the index is that we may be missing some possible policy measures that have occurred due to the difficulty in finding them in published sources. However, there is still clear differentiation within the index in terms of when policies were imposed, with some countries starting to impose policies much earlier than others. Furthermore, there is a clear break about March 1st when countries began to impose more stringent policies across the world.
+
+\begin{figure}
+\centering
+\includegraphics{corona_wp_files/figure-latex/plotindex-1.pdf}
+\caption{\label{fig:plotindex}CoronaNet Time-Varying Index of National Policy Activity of Measures Opposing COVID-19 Pandemic}
+\end{figure}
+
+Table \ref{tab:rankcount} shows the discrimination parameters from the underlying Bayesian model for each policy type. These parameters suggest which policies governments find relatively difficult or costly to implement, and for that reason tend to separate more active from less active states in terms of response to COVID-19. Two of these policies (Closure of Restaurants and Quarantine at Home) were given fixed values in order to identify the direction and rotation of the latent scale, and so their discrimination parameters are not informative. However, the rest of the parameters were allowed to float, which provides inference as to which policies appear to be the most difficult/costly to implement.
+
+We note that these are average values for the sample. Imposing these policies may be less costly for certain countries or for countries that share certain characteristics, such as smaller numbers of enrolled students or relatively healthy economies. However, it is important to note that we can see these patterns on a world-wide scale.
+
+Surprisingly, at the top of the index we see school closure as the most difficult/costly policy to implement. Closure of pre-schools, though, as opposed to other school types, appears to be relatively less costly for states to undertake, perhaps because pre-schools do not operate on a full-time basis. Generally speaking, the next most difficult policies are various business closure policies and mandatory social distancing policies. Internal border restrictions are considered more difficult to implement than external border restrictions, while relatively straightforward policies like public awareness campaigns, health monitoring and opening new task forces or bureaus are near the bottom of the index.
+
+Given this distribution of discrimination parameters, we believe the index is a valid representation of the underlying process by which governments progressively impose more difficult policies. As states relax policies, we will further gain information about which policies appear to be more costly as we will be able to factor in the duration for which these policies were implemented. Consistent with our findings, we observe that the announced relaxation policies happening at the time of writing in European countries primarily center on businesses and school openings, suggesting that these policies are uniquely costly to keep in place compared to travel restrictions.\footnote{See Doherty, Ben. ``The exit strategy: how countries around the world are preparing for life after Covid-19.'' \emph{The Guardian} 18 April 2020, \url{https://www.theguardian.com/world/2020/apr/19/the-exit-strategy-how-countries-around-the-world-are-preparing-for-life-after-covid-19}}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{4cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.5cm}>{}p{2.5cm}}
+\caption{\label{tab:rankcount}Discrimination of Item Parameters (Policies) in Policy Activity Index}\\
+\toprule
+Policy & 5\% Low Estimate & Median Estimate & 95\% High Estimate\\
+\midrule
+\rowcolor{gray!6}  Closure of Shopping Malls & 1.5 & 1.7 & 2.0\\
+Restriction of Non-Essential Businesses\_type\_commerce & 1.5 & 1.7 & 1.9\\
+\rowcolor{gray!6}  Closure of Retail Stores & 1.3 & 1.5 & 1.8\\
+Closure of Personal Grooming & 1.2 & 1.4 & 1.6\\
+\rowcolor{gray!6}  Primary School Closure & 1.1 & 1.3 & 1.4\\
+\addlinespace
+High School Closure & 1.1 & 1.2 & 1.4\\
+\rowcolor{gray!6}  Higher Ed Closure & 1.0 & 1.1 & 1.2\\
+Restriction of Non-Essential Businesses\_ & 0.9 & 1.1 & 1.2\\
+\rowcolor{gray!6}  Sanitizer Policies & 0.9 & 1.0 & 1.2\\
+Closure of Restaurants & 1.0 & 1.0 & 1.0\\
+\addlinespace
+\rowcolor{gray!6}  Quarantine At Home & 1.0 & 1.0 & 1.0\\
+Pre-school Closure & 0.9 & 1.0 & 1.1\\
+\rowcolor{gray!6}  Health Resources\_volunteers & 0.8 & 0.9 & 1.1\\
+Health Staff & 0.8 & 0.9 & 1.0\\
+\rowcolor{gray!6}  Restrictions of Mass Gatherings\_ & 0.8 & 0.9 & 1.0\\
+\addlinespace
+Test Production & 0.7 & 0.8 & 1.0\\
+\rowcolor{gray!6}  Health Resources\_Doctors & 0.7 & 0.8 & 1.0\\
+Health Resources\_Nurses & 0.7 & 0.8 & 1.0\\
+\rowcolor{gray!6}  Internal Border Restrictions\_ & 0.7 & 0.8 & 0.9\\
+Limited Quarantine & 0.6 & 0.8 & 1.0\\
+\addlinespace
+\rowcolor{gray!6}  Health Resources\_ & 0.7 & 0.8 & 0.9\\
+Social Distancing\_ & 0.7 & 0.8 & 0.9\\
+\rowcolor{gray!6}  Health Resources\_Unspecified Health Infrastructure & 0.6 & 0.8 & 0.9\\
+Other Health Resources & 0.6 & 0.8 & 0.9\\
+\rowcolor{gray!6}  Health Resources\_ventilators & 0.6 & 0.8 & 0.9\\
+\addlinespace
+Masks Policies & 0.6 & 0.7 & 0.9\\
+\rowcolor{gray!6}  Restriction of Non-Essential Government Services\_ & 0.6 & 0.7 & 0.8\\
+Health Resources\_other\_facilities & 0.5 & 0.7 & 0.8\\
+\rowcolor{gray!6}  Health Resources\_Personal Protective Equipment & 0.5 & 0.6 & 0.8\\
+External Border Restrictions\_ & 0.6 & 0.6 & 0.7\\
+\addlinespace
+\rowcolor{gray!6}  Health Resources\_Hospitals & 0.5 & 0.6 & 0.7\\
+Quarantine/Lockdown\_Other Quarantine & 0.5 & 0.6 & 0.7\\
+\rowcolor{gray!6}  Quarantine/Lockdown\_hotel\_quar & 0.5 & 0.6 & 0.7\\
+Curfew\_ & 0.5 & 0.5 & 0.6\\
+\rowcolor{gray!6}  Health Resources\_health\_research & 0.4 & 0.5 & 0.7\\
+\addlinespace
+Declaration of Emergency\_ & 0.4 & 0.5 & 0.6\\
+\rowcolor{gray!6}  Temporary Medical Units & 0.3 & 0.5 & 0.6\\
+Quarantine/Lockdown\_ & 0.3 & 0.4 & 0.6\\
+\rowcolor{gray!6}  Health Resources\_quar\_facility & 0.3 & 0.4 & 0.5\\
+Health Resources\_public\_tests & 0.3 & 0.4 & 0.5\\
+\addlinespace
+\rowcolor{gray!6}  Quarantine in Govt. Facility & 0.3 & 0.4 & 0.5\\
+External Border Restrictions\_health\_cert & 0.3 & 0.4 & 0.5\\
+\rowcolor{gray!6}  Health Monitoring\_ & 0.3 & 0.4 & 0.4\\
+Public Awareness Measures\_ & 0.3 & 0.3 & 0.4\\
+\rowcolor{gray!6}  External Border Restrictions\_Visa restrictions (e.g. suspend issuance of visa) & 0.3 & 0.3 & 0.4\\
+\addlinespace
+Health Testing\_ & 0.3 & 0.3 & 0.4\\
+\rowcolor{gray!6}  New Task Force, Bureau or Administrative Configuration\_ & 0.2 & 0.3 & 0.4\\
+External Border Restrictions\_Other External Border Restriction & 0.0 & 0.2 & 0.5\\
+\rowcolor{gray!6}  Border Health Screenings & 0.2 & 0.2 & 0.3\\
+External Border Restrictions\_travel\_hist & 0.1 & 0.1 & 0.2\\
+\bottomrule
+\end{longtable}
+
+\hypertarget{methods}{%
+\section*{Methods}\label{methods}}
+\addcontentsline{toc}{section}{Methods}
+
+In this section, we first describe the variables that our dataset is able to provide as well as how they are organized. We then provide detail on the methodology we employed to collect the data.
+
+\hypertarget{data-schema}{%
+\subsection*{Data Schema}\label{data-schema}}
+\addcontentsline{toc}{subsection}{Data Schema}
+
+Each policy records at the minimum, the following monadic information: the policy type, the name of the country from which a policy originates,\footnote{If the policy originates from a province or state, that information is also documented. Future versions of the dataset will also include information on whether a policy was initiated from a city or municipality or another level of government.} the degree to which a policy must be complied with, the entity enforcing the policy, and the date a policy is announced, implemented and ends.\footnote{Note that sometimes policies are announced without a pre-determined end date. In those cases, this field is left blank.} When a policy is dyadic in nature, the database further documents information about the geographic target of the policy, the human or material target of a policy, the directional flow of the policy, and the mechanism of travel. Where applicable, all of the information documented above is also provided qualitatively via a textual policy description. Additional meta-data that is available for all policies include when the record entered into the database and a link for the information source for the policy. See the appendix for a list of currently available fields in the data, along with a list of external data variables such as country-level covariates that are added in to daily releases, including COVID-19 tests and cases.
+
+There is a unique record ID for each unique policy announcement, which we code at the policy sub category type.\footnote{That is, some policy types are further categorized into sub-categories. E.g. `Quarantine/Lockdown' can be further classified into one or more of the following sub categories: `Self-Quarantine', `Government Quarantine', `Quarantine outside the home or government facility', `Quarantine only applies to people of certain ages' and `Other'.} Of the 12762 such events in the dataset, we have identified 10955 unique events. That is, some events in the database are updates or changes to existing policies. We link such events over time using a unique ID, which we term the policy ID as opposed to the record ID. An event counts as an update if it deals with a change in either the:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Time duration or\footnote{E.g. A country lengthens its quarantine to 28 days from 14 days.}
+\item
+  Strength of an existing policy in terms of either:
+
+  \begin{enumerate}
+  \def\labelenumii{\alph{enumii}.}
+  \tightlist
+  \item
+    the nature of the policy\footnote{E.g. People can no longer leave their houses to go to work whereas before they could}
+  \item
+    compliance rules for the policy\footnote{E.g. The quarantine used to be voluntary but now its mandatory}
+  \item
+    who the policy applies towards\footnote{E.g. The quarantine used to apply to people of all ages and now it only applies to the elderly.}
+  \end{enumerate}
+\end{enumerate}
+
+A policy counts as a new entry and not an update if it deals with a change in any other dimension, e.g.~policy type, targeted country.
+
+\hypertarget{data-collection-methodology}{%
+\subsection*{Data Collection Methodology}\label{data-collection-methodology}}
+\addcontentsline{toc}{subsection}{Data Collection Methodology}
+
+As researchers learn more about the various health, economic, and social effects of the COVID-19 pandemic, it is crucial that they have access to data that is reliable, valid, and timely (to the greatest extent possible). We have adopted a data collection methodology that we believe optimizes over all three of these constraints.
+
+To collect the data, we recruited more than 220 research assistants (RAs) from colleges and universities around the world, representing 18 out of the 24 time zones.\footnote{For more information on the individual RAs, please visit \url{http://coronanet-project.org/}} Large social scientific datasets typically rely on experts, coders, or crowd-sourcing to input data. The literature has shown that common coding tasks can be completed via crowd-sourcing (Benoit et al. 2016; Sumner, Farris, and Holman 2019), but that there are also limitations to the wisdom of crowds when specific contextual or subject knowledge is required (Marquardt et al. 2017). To address these trade offs, we decided to train current students to code our entries, leveraging the benefits of wide-spread recruitment and a diverse pool of country-specific knowledge from across the globe. Data collection started on March 28, 2020 and has proceeded rapidly, reaching 12762 records as of the date of this article. Each RA is responsible for tracking government policy actions for at least one country. RAs were allocated depending on their background, language skills and expressed interest in certain countries (Horn 2019).\footnote{Note depending on the level of policy coordination at the national level, certain countries were assigned multiple RAs, e.g.~the United States, Germany, or France.}
+
+We have also partnered with the machine learning company Jataware to automate the collection of more than 200,000 news articles from around the world related to COVID-19.\footnote{We thank Brandon Rose and Jataware for making the news database available to this project.} Jataware employs a natural language processing (NLP) classifier using Bidirectional Encoder Representations from Transformers (BERT) to detect whether a given article is indicative of a governmental policy intervention related to COVID-19. They then apply a secondary NLP classifier to categorize the type of policy intervention (e.g.~``declaration of emergency'', ``quarantine'', ``travel restrictions'', etc.). Next, Jataware extracts the geospatial and temporal extent of the policy intervention (e.g.~``Washington DC'' and ``March 15, 2020'') whenever possible. The resulting list of news sources is then provided to our RAs for manual coding and further data validation.
+
+In what follows, we describe in greater detail how RAs document the policies that they identify using our data collection software instrument, and our post data-collection validation procedure. Please refer to the appendix for more information on our procedure for on-boarding and training RAs and our system for communicating with and organizing RAs.
+
+\hypertarget{data-collection-software-instrument}{%
+\subsubsection*{Data Collection Software Instrument}\label{data-collection-software-instrument}}
+\addcontentsline{toc}{subsubsection}{Data Collection Software Instrument}
+
+We designed a Qualtrics survey with survey questions about different aspects of a government policy action to streamline the CoronaNet data collection effort. With this tool, RAs can easily and efficiently document different policy actions by answering the relevant questions posed in the survey.\footnote{See ({\textbf{???}}) for an example of a similar use of Qualtrics in collecting data.} For example, instead of entering the country that initiated a policy action into a spreadsheet, RAs answer the following question in the survey: ``From what country does this policy originate from?'' and choose from the available options given in the survey.
+
+By using a survey instrument to collect data, we are able to systematize the collection of very fine-grained data while avoiding coding errors common to tools like shared spreadsheets. The value of this approach of course, depends on the comprehensiveness of the questions posed in the survey, especially in terms of the universe of policy actions that countries have implemented against COVID-19. For example, if the survey only allowed RAs to select `quarantines' as a government policy, it would not capture any data on `external border restrictions', which would seriously reduce the value of the resulting data.
+
+As such, to ensure the comprehensiveness of the data, before designing the survey, we collected in depth, over-time data on policy actions taken by one country, Taiwan, since the beginning of the outbreak as well as cross-national data on travel bans implemented by most countries for a total of 245 events.\footnote{The specific data source we cross referenced for this effort was the March 20, 2020 version of the following New York Times article: Salcedo, Andrea and Gina Cherelus, ``Coronavirus Travel Restrictions, Across the Globe'' \emph{New York Times}, 20 March 2020, \url{https://www.nytimes.com/article/coronavirus-travel-restrictions.html}} We chose to focus on Taiwan on because of its relative success, as of March 28, 2020, in limiting the negative health consequences of COVID-19 within its borders.\footnote{Beech, Hannah. ``Tracking the Coronavirus: How Crowded Asian Cities Tackled an Epidemic.'' \emph{New York Times} 18 March 2020, \url{https://www.nytimes.com/2020/03/17/world/asia/coronavirus-singapore-hong-kong-taiwan.html}} As such, it seems likely that other countries may choose to emulate some of the policy measures that Taiwan had implemented, which helps increase the comprehensiveness of the questions we ask in our survey. Meanwhile, by also investigating variation in how different countries around the world have implemented travel restrictions, we have also helped ensure that our survey is able to comprehensively document variation in how an important and commonly used policy tool is applied, e.g.~restrictions of different methods of travel (e.g.~flights, cruises), restrictions across borders and within borders, restrictions targeted toward people of different status (e.g.~citizens, travelers).
+
+There are many additional benefits of using a survey instrument for data collection, especially in terms of ensuring the reliability and validity of the resulting the data:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \emph{Preventing unforced measurement error.} RAs are prevented from entering data into incorrect fields or unknowingly overwriting existing data---as would be possible with manual data entry into a spreadsheet---because RAs can only document one policy action at a time in a given iteration of a survey and do not have access to the full spreadsheet when they are entering in the data.
+\item
+  \emph{Standardizing responses.} We are able to ensure that RAs can only choose among standardized responses to the survey questions, which increases the reliability of the data and also reduces the likelihood of measurement error. For example, when RAs choose different dates that we would like them to document (e.g., the date a policy was announced) they are forced to choose from a calendar embedded into the survey which systematizes the day, month and year format that the date is recorded in.
+\item
+  \emph{Minimizing measurement error.} A survey instrument allows coding different conditional logics for when certain survey questions are posed. This technique obviates the occurrence of logical fallacies in our data. For example, we are able to avoid situations where an RA might accidentally code the United States as having closed all schools in another country.
+\item
+  \emph{Reduction of missing data.} We are able to reduce the amount of missing data in the dataset by using the forced response option in Qualtrics. Where there is truly missing data, there is a text entry at the end of the survey where RAs can describe what difficulties they encountered in collecting information for a particular policy event.
+\item
+  \emph{Reliability of the responses.} We increase the reliability of the documentation for each policy by embedding descriptions of different possible responses within the survey. For example, in the survey question where RAs are asked to identify the policy type (\texttt{type} variable, see appendix and/or Codebook), the survey question includes pop-up buttons which allow RAs to easily access descriptions and examples of each possible policy type. Such pop-up buttons were also made available for the survey questions which code for the people or materials a policy was targeted at (\texttt{target\_who\_what}) and whether the policy was inbound, outbound or both (\texttt{target\_direction}). Embedding such information in the dataset both clarifies the distinction between different answer choices and increases the efficiency of the policy documentation process (as RAs are not obliged to refer back and forth from the survey to the codebook).
+\item
+  \emph{Linking observations.} The use of a survey instrument allows us to easily link policy events together over time should there be updates to existing policies. Once coded, each policy is given a unique Record ID, which RAs can easily look up, reference and link to if they need to update a particular policy.
+\end{enumerate}
+
+\hypertarget{post-data-collection-validation-checks}{%
+\subsubsection*{Post-Data Collection Validation Checks}\label{post-data-collection-validation-checks}}
+\addcontentsline{toc}{subsubsection}{Post-Data Collection Validation Checks}
+
+We further implement the following processes to validate the quality of the dataset:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Cleaning. Before validation, we use a team of RAs to check the raw data for logical inconsistencies and typographical errors.
+\item
+  Multiple Coding for Validation. Others have shown that the random allocation of tasks and the validation of labels by more than one coder are among the best ways to improve the quality of a dataset (Sheng, Provost, and Ipeirotis 2008; Amazon.com 2011). We randomly sample 10\% of the dataset using the source of the data (e.g.~newspaper article, government press release) as our unit of randomization. We use the source as our unit of randomization because one source may detail many different policy types. We then provide this source to a fully independent RA and ask her to code for the government policy contained in the sampled source in a separate, but identical, survey instrument. If the source is in a language the RA cannot read, then a new source is drawn. The RA then codes all policies in the given source. This practice is repeated a third time by a third independent coder. Given the fact that each source in the sample is coded three times, we can assess the reliability of our measures and report the reliability score of each coder.
+\item
+  Evaluation and Reconciliation. We then check for discrepancies between the originally coded data and the second and third coding of the data through two primary methods. First, we use majority-voting to establish a consensus for policy labels. Using the majority label as an estimate of the ``hidden true label'' is a common method to address classification problems (Raykar et al. 2009). One issue with this approach is that it assumes that all coders are equally competent (Raykar et al. 2010). This criticism is generally levied at data creation with crowd-sourced laborers. We mitigate this problem by training our RAs in the data collection process and prioritizing RA country-knowledge and language skills, and therefore ensuring a more equal baseline for RA quality. We provide RA ID codes that will allow users to evaluate coder accuracy.
+\end{enumerate}
+
+If the majority achieves consensus, then we consider the entry valid. If a discrepancy exists, a fourth RA or PI evaluates between the three entries to determine whether one, some, a combination of all three is most accurate. Reconciled policies are then entered into the dataset as a correction for full transparency. If an RA was found to have made a coding mistake, then we sample six of their previous entries: 3 entries which correspond to the type of mistake made\footnote{e.g.~if the RA incorrectly codes an `External Border Restriction' as a `Quarantine', we sample 3 entries where the RA has coded a policy as being about a `Quarantine.'} and randomly sample 3 more entries to ascertain whether the mistake was systematic or not. If systematic errors are found, entries coded by that individual will be entirely recoded by a new RA.
+
+\hypertarget{conclusion}{%
+\section*{Conclusion}\label{conclusion}}
+\addcontentsline{toc}{section}{Conclusion}
+
+As policymakers, researchers and the broader public debate and compare how to succeed against the novel threats posed by COVID-19, they need real-time, traceable data on government policies in order to understand which of these policies are effective, and under what conditions. This requires specific knowledge of the variation in such policies and the extent of their implementation across countries and time. The goal of the dataset and policy action index presented here is to provide this information.
+
+We have tried to match our data collection efforts to keep up with the exponential speed with which COVID-19 has already upended global public health and the international economy while also maintaining high levels of quality. However, we will inevitably be refining, revising and updating our data to reflect new knowledge and trends as the pandemic unfolds. The data that we present in this first version of the dataset represents only the initial release of the data, and we will continue to validate and release data so long as governments continue to develop policies in response to COVID-19.
+
+In future work, we intend to analyze the policy combinations that are best able to stymie the epidemic so as to contribute to the social science research community and provide urgently needed knowledge for policymakers and the wider global community.
+
+\newpage
+
+\hypertarget{data-availability}{%
+\subsection*{Data Availability}\label{data-availability}}
+\addcontentsline{toc}{subsection}{Data Availability}
+
+For the most current, up to date version of the dataset, please visit \url{http://coronanet-project.org} or our Github page at \url{https://github.com/saudiwin/corona_tscs}.
+
+\hypertarget{code-availability}{%
+\subsection*{Code Availability}\label{code-availability}}
+\addcontentsline{toc}{subsection}{Code Availability}
+
+Interested readers may also find our code for collecting the data and maintaining the database at our Github page: \url{https://github.com/saudiwin/corona_tscs}.
+
+\hypertarget{appendix-a-description-of-dataset-fields}{%
+\subsection*{Appendix A: Description of Dataset Fields}\label{appendix-a-description-of-dataset-fields}}
+\addcontentsline{toc}{subsection}{Appendix A: Description of Dataset Fields}
+
+The format of the data is in country-day-\texttt{record\_id} format. Some \texttt{record\_id} values have letters appended to indicate that the general policy category \texttt{type} also has a value for \texttt{type\_sub\_cat}, which contains more detail about the policy, such as whether health resources refers to masks, ventilators, or hospitals. Some entries are marked as \texttt{new\_entry} in the \texttt{entry\_type} field for when a policy of that type was first implemented in the country. Later updates to those policies are marked as updates in \texttt{entry\_type}. To see how policies are connected, look at the \texttt{policy\_id} field for all policies from the first entry through updates for a given country/province/city. If an entry was corrected after initial data collection, it will read corrected in the \texttt{entry\_type} field (the original incorrect data has already been replaced with the corrected data).
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{\texttt{coronanet\_release.csv}} This file contains variables from the CoronaNet government response project, representing national and sub-national policy event data from more than 190 countries since December 31st, 2019. The data include source links, descriptions, targets (i.e.~other countries), the type and level of enforcement, and a comprehensive set of policy types. For more detail on this data, you can see our \href{https://docs.google.com/document/d/1zvNMpwj0onFvUZ_gLl4RRjqS-clbHv3TIX6EOHofsME}{codebook here}.
+\item
+  \textbf{\texttt{coronanet\_release\_allvars.csv}} This file contains the government response information from \texttt{coronanet\_release.csv} along with the following datasets:
+
+  \begin{enumerate}
+  \def\labelenumii{\alph{enumii}.}
+  \tightlist
+  \item
+    Tests from the CoronaNet testing database (See \url{http://coronanet-project.org} for more info);
+  \item
+    Cases/deaths/recovered from the \href{https://github.com/CSSEGISandData/COVID-19}{JHU data repository};
+  \item
+    Country-level covariates including GDP, V-DEM democracy scores, human rights indices, power-sharing indices, and press freedom indices from the \href{https://niehaus.princeton.edu/news/world-economics-and-politics-dataverse}{Niehaus World Economics and Politics Dataverse}
+  \end{enumerate}
+\end{enumerate}
+
+\hypertarget{coronanet_release.csv-field-dictionary}{%
+\subsection*{\texorpdfstring{\texttt{coronanet\_release.csv} Field Dictionary}{coronanet\_release.csv Field Dictionary}}\label{coronanet_release.csv-field-dictionary}}
+\addcontentsline{toc}{subsection}{\texttt{coronanet\_release.csv} Field Dictionary}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \texttt{record\_id} Unique identifier for each unique policy record
+\item
+  \texttt{policy\_id} Identifier linking new policies with subsequent updates to policies
+\item
+  \texttt{recorded\_date} When the record was entered into our data
+\item
+  \texttt{date\_announced} When the policy is announced
+\item
+  \texttt{date\_start} When the policy goes into effect
+\item
+  \texttt{date\_end} When the policy ends (if it has an explicit end date)
+\item
+  \texttt{entry\_type} Whether the record is new, meaning no restriction had been in place before, or an update (restriction was in place but changed). Corrections are corrections to previous entries.
+\item
+  \texttt{event\_description} A short description of the policy change
+\item
+  \texttt{type} The category of the policy
+\item
+  \texttt{type\_sub\_cat} The sub-category of the policy (if one exists)
+\item
+  \texttt{type\_text} Any additional information about the policy type (such as the number of ventilators/days of quarantine/etc.)
+\item
+  \texttt{country} The country initiating the policy
+\item
+  \texttt{init\_country\_level} Whether the policy came from the national level or a sub-national unit
+\item
+  \texttt{province} Name of sub-national unit
+\item
+  \texttt{target\_country} Which foreign country a policy is targeted at (i.e.~travel policies)
+\item
+  \texttt{target\_geog\_level} Whether the target of the policy is a country as a whole or a sub-national unit of that country
+\item
+  \texttt{target\_region} The name of a regional grouping (like ASEAN) that is a target of the policy (if any)
+\item
+  \texttt{target\_province} The name of a province targeted by the policy (if any)
+\item
+  \texttt{target\_city} The name of a city targeted by the policy (if any)
+\item
+  \texttt{target\_other} Any geographical entity that does not fit into the targeted categories mentioned above
+\item
+  \texttt{target\_who\_what} Who the policy is targeted at
+\item
+  \texttt{target\_direction} Whether a travel-related policy affects people coming in (Inbound) or leaving (Outbound)
+\item
+  \texttt{travel\_mechanism} If a travel policy, what kind of transportation it affects
+\item
+  \texttt{compliance} Whether the policy is voluntary or mandatory
+\item
+  \texttt{enforcer} What unit in the country is responsible for enforcement
+\item
+  \texttt{link} A link to at least one source for the policy
+\item
+  \texttt{ISO\_A3} 3-digit ISO country codes
+\item
+  \texttt{ISO\_A2} 2-digit ISO country codes
+\end{enumerate}
+
+\hypertarget{coronanet_release_allvars.csv-field-dictionary}{%
+\subsection*{\texorpdfstring{\texttt{coronanet\_release\_allvars.csv} Field Dictionary}{coronanet\_release\_allvars.csv Field Dictionary}}\label{coronanet_release_allvars.csv-field-dictionary}}
+\addcontentsline{toc}{subsection}{\texttt{coronanet\_release\_allvars.csv} Field Dictionary}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  All of the fields listed above, plus
+\item
+  \texttt{tests\_daily\_or\_total} Whether a country reports the daily count of tests a cumulative total
+\item
+  \texttt{tests\_raw} The number of reported tests collected from host country websites or media reports
+\item
+  \texttt{deaths} The number of COVID-19 deaths, aggregated to the country-day level (JHU CSSE data)
+\item
+  \texttt{confirmed\_cases} The number of confirmed cases of COVID-19, aggregated to the country-day level (JHU CSSE data)
+\item
+  \texttt{recovered} The number of recoveries from COVID-19, aggregated to the country-day level (JHU CSSE data)
+\item
+  \texttt{ccode} The Correlates of War country code
+\item
+  \texttt{ifs} IMF IFS country code
+\item
+  \texttt{Rank\_FP} (most recent year available from Niehaus dataset) Reporters without Borders Press Freedom Annual Ranking
+\item
+  \texttt{Score\_FP} (most recent year available from Niehaus dataset) Reporters with Borders Press Freedom Score
+\item
+  \texttt{state\_IDC} (most recent year available from Niehaus dataset) State/Provincial Governments Locally Elected
+\item
+  \texttt{muni\_IDC} (most recent year available from Niehaus dataset) Municipal Governments Locally Elected
+\item
+  \texttt{dispersive\_IDC} (most recent year available from Niehaus dataset) Dispersive Powersharing
+\item
+  \texttt{constraining\_IDC} (most recent year available from Niehaus dataset) Constraining Powersharing
+\item
+  \texttt{inclusive\_IDC} (most recent year available from Niehaus dataset) Inclusive powersharing
+\item
+  \texttt{sfi\_SFI} (most recent year available from Niehaus dataset) State fragility index
+\item
+  \texttt{ti\_cpi\_TI} (most recent year available from Niehaus dataset) Corruption perceptions index
+\item
+  \texttt{pop\_WDI\_PW} (most recent year available from Niehaus dataset) World Bank population
+\item
+  \texttt{gdp\_WDI\_PW} (most recent year available from Niehaus dataset) World Bank GDP (total)
+\item
+  \texttt{gdppc\_WDI\_PW} (most recent year available from Niehaus dataset) World Bank GDP per capita
+\item
+  \texttt{growth\_WDI\_PW} (most recent year available from Niehaus dataset) World Bank GDP growth percent
+\item
+  \texttt{lnpop\_WDI\_PW} (most recent year available from Niehaus dataset) Log of World Bank population
+\item
+  \texttt{lngdp\_WDI\_PW} (most recent year available from Niehaus dataset) Log of World Bank GDP
+\item
+  \texttt{lngdppc\_WDI\_PW} (most recent year available from Niehaus dataset) Log of World Bank GDP per capita
+\item
+  \texttt{disap\_FA} (most recent year available from Niehaus dataset) 3 category, ordered variable for disappearances index
+\item
+  \texttt{polpris\_FA} (most recent year available from Niehaus dataset) 3 category, ordered variable for political imprisonment index
+\item
+  \texttt{latentmean\_FA} (most recent year available from Niehaus dataset) the posterior mean of the latent variable index for human rights protection)
+\item
+  \texttt{transparencyindex\_HR} (most recent year available from Niehaus dataset) Transparency Index
+\item
+  \texttt{EmigrantStock\_EMS} (most recent year available from Niehaus dataset) Total emmigrant stock from
+\item
+  \texttt{v2x\_polyarchy\_VDEM} (most recent year available from Niehaus dataset) Electoral democracy index
+\item
+  \texttt{news\_WB} (most recent year available from Niehaus dataset) Daily newspapers (per 1,000 people)
+\end{enumerate}
+
+\hypertarget{appendix-b-research-assistant-training-and-management}{%
+\subsection*{Appendix B: Research Assistant Training and Management}\label{appendix-b-research-assistant-training-and-management}}
+\addcontentsline{toc}{subsection}{Appendix B: Research Assistant Training and Management}
+
+\hypertarget{ra-training}{%
+\subsection{RA Training}\label{ra-training}}
+
+All RAs watch a mandatory 50 minute video training of the survey instrument which explains how to use the survey instrument. RAs are also provided with written guidelines on how to collect data and a comprehensive codebook. To briefly describe it here, the written guidelines provide a definition of what counts as a new or updated policy (see Data section for more details) and provides a checklist for RAs to follow in order to identify and document different policies. In the checklist, RAs are instructed to find policies by checking the sources in the order given in the guidelines to identify policies, to document the relevant information into the survey and to save and upload a document of the source they found for each policy into Qualtrics. The codebook meanwhile provides descriptions and examples of the different possible response options in the survey. Using a training video and the written codebook also has the added benefit of helping us efficiently disseminate the information RAs need to use the survey experiment consistently.
+
+In order to participate as an RA in this project, RAs must fill out a form\footnote{See here for the \href{https://docs.google.com/forms/d/e/1FAIpQLSeybAW0DC0UE1x2EqLiTifVFuSUxqJLGFB8VI4wVCG61tVYKg/viewform}{link to the form}.} in which:
+
+\begin{itemize}
+\tightlist
+\item
+  They identify themselves.
+\item
+  They certify that they have viewed the training video in which we explain how to use the survey instrument.
+\item
+  They certify they have joined the CoronaNet Slack Channel (see section below for more information).
+\item
+  They certify that they understand that RA responsibilities entail
+
+  \begin{itemize}
+  \tightlist
+  \item
+    gathering historical data on COVID-19 government policy actions for their country, and;
+  \item
+    providing daily updates for new government policy actions.
+  \end{itemize}
+\item
+  They certify that they understand they can access the data collection guidelines and codebook or pose their questions on the Slack Channel.
+\item
+  They certify that they are expected to upload .pdfs of the sources they access to the survey instrument.
+\end{itemize}
+
+Once the RA submits the form, they are sent a personalized link to access the survey. With the customized link, we are also able to keep track of which RA coded what entries.
+
+\hypertarget{real-time-communication-and-feedback}{%
+\subsection{Real-Time Communication and Feedback}\label{real-time-communication-and-feedback}}
+
+Once an RA joins the project, they can pose their questions on a CoronaNet Slack channel, which they must join in order to participate in the project. The channel allows any RA to pose a question or issue they may have in using the survey instrument to any of the PIs and allows all other RAs to learn from the exchange at the same time. As such, RAs are able to receive feedback and learn from each other's questions in a timely and centralized manner. Since the data collection effort was launched on March 28, 2020 until April 18, 2020, both RAs and PIs have actively used Slack to communicate with one another. On the Slack channel devoted to asking questions about the Qualtrics data survey in particular, there were 1,752 messages posted by 130 project members.
+
+\hypertarget{appendix-c-list-of-contributors-to-dataset}{%
+\subsection*{Appendix C: List of Contributors to Dataset}\label{appendix-c-list-of-contributors-to-dataset}}
+\addcontentsline{toc}{subsection}{Appendix C: List of Contributors to Dataset}
+
+\begin{longtable}{l>{\raggedright\arraybackslash}p{2cm}>{\raggedright\arraybackslash}p{2cm}>{\raggedright\arraybackslash}p{3cm}}
+\caption{\label{tab:ratable}Contributing Researchers and their Responsible Countries}\\
+\toprule
+Name & Affiliation & Country & Vita\\
+\midrule
+\rowcolor{gray!6}  Abdelaziz Ibn Abdelouahab & Mohamed V University & Senegal & Moroccan Medical Doctor.\\
+Abhyudaya Tyagi & NYU Abu Dhabi & Romania & I am a second-year student at NYU Abu Dhabi, majoring in Political Science and Economics.\\
+\rowcolor{gray!6}  Adriana Poppe & University of Cologne & Colombia, Spain & Master Student of Sociology and Social Research at the University of Cologne\\
+Alette Mengerink & Teacher (German and children's righs) to people with a migration background & Bosnia and Herzegovina & Teacher (German and children’s rights).\\
+\rowcolor{gray!6}  Alexander Pachanov & Charite Universitätsmedizin, Berlin School of Public Health & Kazakhstan & Master's student at Berlin School of Public Health\\
+\addlinespace
+Amadeus Albrecht &  & Georgia, Georgia & \\
+\rowcolor{gray!6}  Amanda Panella & Hertie School of Governance, Berlin, Germany & Cyprus & Amanda Panella is a MIA student specialising in international security studies at the Hertie School of Governance, where she graduates in June 2020.\\
+Ana Acero & Sciences Po Paris & Equatorial Guinea & \\
+\rowcolor{gray!6}  Anabella McElroy &  & United States, United States & Anabella is studying political science at Sciences Po Paris and the University of British Columbia.\\
+Anastasia Steinbrunner & Willy Brandt School of Public Policy/ University of Erfurt & Samoa & \\
+\addlinespace
+\rowcolor{gray!6}  Andreas Duncan & University of Applied Forest Scienes Rottenburg & Vanuatu & Andy is an undergraduate student in Sustainable Regional Management.\\
+Andres Lopez Schrader & NYU Abu Dhabi & Morocco & I am a marine genetics researcher with an interest in education policy and language learning.\\
+\rowcolor{gray!6}  Angad Johar & NYU Abu Dhabi & India & Sophomore at New York University Abu Dhabi\\
+Angela Herz & Heidelberg University & Spain: sub-national & Political Science Student from Germany\\
+\rowcolor{gray!6}  Angeline Kanyangi & Kenya School of Law & Eritrea & \\
+\addlinespace
+Anke Horn & Pharmacist & Switzerland: sub-national & Pharmacist\\
+\rowcolor{gray!6}  Anna Sophia Körner & SciencesPo Paris/FU Berlin & Mexico & I am currently doing my dual degree at Sciences Po Paris and FU Berlin with a focus on European Affairs and Public Policy.\\
+Anoushka Thakre & Dual BA Columbia University and Sciences Po Paris & Kuwait & A student currently enrolled in the Dual BA program between Columbia University and Sciences Po Paris interested in economics, healthcare and public policy.\\
+\rowcolor{gray!6}  Antonia Pérez & Dual BA Program Sciences Po Paris/ Columbia University & Venezuela & \\
+Ariana Barrenechea & Willy Brandt School of Public Policy & Spain & Master of Public Policy candidate at the Willy Brandt School\\
+\addlinespace
+\rowcolor{gray!6}  Arianna Schouten & Research Assistant & Canada & I am Canadian with an interdisciplinary Bachelor in Politics, Psychology, Law \& Economics from the University of Amsterdam, and I have a specific interest in law, health policy and pharmaceutical regulation.\\
+Avery Edelman & Journalist & Lebanon & Tufts University graduate with a BA in Arabic and International Relations.\\
+\rowcolor{gray!6}  Aysina Maria & Technische Universität München & Greece & Grew up in Russia. I am a student at the Technical University of Munich and currently Erasmus Student at University of Pavia, Italy.\\
+Babrik Kushwaha & University of Lille & Nepal & Babrik Kushwaha, BA, Graduate student of European and International Studies, Management of European Affairs Program at University of Lille / Trainee at the Institute for the Danube Region and Central (IDM).\\
+\rowcolor{gray!6}  Barbora Bromová & University of Amsterdam & Czechia, Slovakia & \\
+\addlinespace
+Beatrice Di Giulio & Technical University of Munich & San Marino & \\
+\rowcolor{gray!6}  Beatrice von Braunschweig & Leuphana University Lüneburg / Université Paris-Est Créteil & Mali & BA student of political science at Leuphana University Lüneburg, Germany, and Paris XII, France\\
+Borja Arrue-Astrain & Project and Policy Officer at AGE Platform Europe & Equatorinal Guinea & Graduate in Political Science from the University of the Basque Country (Spain) and Masters in European Affairs from Sciences Po Paris, specialised in social policy advocacy.\\
+\rowcolor{gray!6}  Brahim Ouerghi &  & Lebanon & I am a 22 year old student at the Technical University of Munich where I study technology and management\\
+Brian Chesney Quartey & NYU Abu Dhabi & Ghana, Togo & \\
+\addlinespace
+\rowcolor{gray!6}  Bruno Ciccarini & Communication Manager & Italy: sub-national, Italy: sub-national & \\
+Calvin Kaleel & Yale University & Oman & A sophomore at Yale University, Calvin majors in Modern Middle Eastern Studies and is extremely excited about this project!\\
+\rowcolor{gray!6}  Cara Kim & Technical University of Munich & Myanmar & Medical student from Germany\\
+Caress Schenk & Nazarbayev University & Russia & Associate Professor of Political Science\\
+\rowcolor{gray!6}  Carl Philip Dybwad & Sciences Po Paris & Sweden & Circularity Advocate with a passion for the future of electioneering.\\
+\addlinespace
+Carlos Velez & Yale University & Liberia & Yale Undergraduate, Class of 2020, B.A. Political Science\\
+\rowcolor{gray!6}  Carly Kimmett & University of Western Ontario & Republic of the Congo & Canadian. UWO Kin Grad and current BScN Nursing Student\\
+Charlotte Vorbauer & TUM Munich & Namibia & student of political science at TUM\\
+\rowcolor{gray!6}  Cheng-Hao SHEN & Sciences Po Paris & Belize, Palau, Philippines, Saint Lucia & A political science student interested in comparative government, British politics, and cross-strait relations from the Republic of China\\
+Chloë Fraser & Dual BA Sciences Po Paris/University of British Columbia & Guatemala & Having grown up near Montreal and close to Brussels, I am now completing my second year in a Dual BA in social sciences between Sciences Po and UBC, and with an interest in human rights work and sustainable development.\\
+\addlinespace
+\rowcolor{gray!6}  Cornelia Marie Dybwad & ESPOL Lille & Armenia, Estonia & Norwegian International Security Policy student, interested in hybrid security threats.\\
+Csilla Horvath & Customer Support Specialist & Bolivia & \\
+\rowcolor{gray!6}  Dan Downes & TUM Munich & Brazil & Structural Engineer. Currently studying a Masters in Political Science.\\
+Dan Wu & Sciences Po Paris & Finland, Finland & Native Chinese studying Political Science in France and living in Austria\\
+\rowcolor{gray!6}  Daniel Boey & Hertie School \& Columbia University & Thailand & Columbia-Hertie MPA-MPP Dual Degree Candidate working in the intersection of environmental engineering and public policy.\\
+\addlinespace
+Daniel Martínek & Institute for the Danube Region and Central Europe (IDM) Vienna & Czechia, Slovakia & Research Fellow at the Institute for the Danube Region and Central Europe (IDM), Vienna, Austria\\
+\rowcolor{gray!6}  Dariga Abilova & Georgia State U & Barbados, Lesotho & PhD Student\\
+Davit Jintcharadzé & NYU Abu Dhabi & Italy: sub-national & NYU Abu Dhabi Psychology and Philosophy student.\\
+\rowcolor{gray!6}  Deborah Agboola & New York University Abu Dhabi & United Kingdom & I am a British-Nigerian undergraduate student at New York University Abu Dhabi\\
+DICK PAUL OUKO & SciencesPo Paris & Burundi, Rwanda & A student at SciencesPo Paris University who considers himself to be a global citizen.\\
+\addlinespace
+\rowcolor{gray!6}  Diego Calvo & Florencio del Castillo University & Nicaragua & Law student\\
+Dominik Juling & Technical University of Munich & Antigua and Barbuda & Currently studying political science at the Technical University Munich and working as a free journalist.\\
+\rowcolor{gray!6}  Donia Kamel & Paris School of Economics & Comoros, Djibouti & I am currently in my first year of my Masters in Analysis and Policy in Economics at the Paris School of Economics\\
+Dorian Quelle & Zeppelin University & Nicaragua, Panama & \\
+\rowcolor{gray!6}  Dotrus Wilstic & IOM- Johannesburg ZA & Tanzania & A doctor of philosophy (Ph. D)in Education\\
+\addlinespace
+Dylan Ollivier & Columbia College of Columbia University in the City of New York & Gabon & \\
+\rowcolor{gray!6}  Eduardo Landaeta & Old Dominion University & Costa Rica & Doctoral Student in the Graduate Program in International Studies at Old Dominion University\\
+Elfriede Derrer-Merk & Universiity of Liverpool & Switzerland: sub-national, Switzerland: sub-national & I am a PhD student at the University of Liverpool. I am interested in psychological experience of covid-19 of older people. Risk and uncertainty and how it is communicated in this exceptional time might influence the individuals resilience.\\
+\rowcolor{gray!6}  Elisa Seith &  & Luxembourg, Luxembourg & Master Graduate from Heidelberg University, Political Science\\
+Elizabeth (Lizzie) Jones & LSE/Sciences Po Paris/NYU & Cameroon & \\
+\addlinespace
+\rowcolor{gray!6}  Ella Pettersen & Kenyon College & Norway & I am a first year student at Kenyon College, and an intended Political Science major.\\
+Elliot Weir & Otago University & Testing Data & I am an undergraduate student in my second year at Otago University in New Zealand, with a broad interest in statistical research.\\
+\rowcolor{gray!6}  Emma Hutchinson & Sciences Po Paris & Australia, Japan & Sciences Po Paris Masters in International Security Student\\
+Esther Ollivier & SciencesPo Paris & Mali & Esther Ollivier is a French-American student studying in the Columbia-SciencesPo Dual BA program, where she is double majoring in Economics and Music, with a Finance minor.\\
+\rowcolor{gray!6}  Eugene Kwizera & African Leadership University - Kigali & Central African Republic & \\
+\addlinespace
+Fabienne Lind & Univesity of Vienna & Austria & I am a PhD student and work as research associate at the Computational Communication Science Lab at the University of Vienna.\\
+\rowcolor{gray!6}  Fabio Kadner & University Bonn & Palastine & I'm currently writing my master thesis in the programme 'Society, Globalization, Development' at the university of Bonn, Germany. My main research topics include migration, religion and international relations.\\
+Fadhilah Fitri Primandari & Universitas Indonesia & Indonesia & Final year political science student at Universitas Indonesia, with a concentration in comparative politics. Her views on Indonesian politics have previously appeared on several notable platforms, such as East Asia Forum, New Mandala, and The Diplomat.\\
+\rowcolor{gray!6}  Farah Sadek & NYU Abu Dhabi & Qatar & I am an undergraduate student pursuing a degree in Social Research and Public Policy with a minor in Economics and Peace Studies at New York University Abu Dhabi.\\
+Felix Willuweit & London School of Economics and Political Science / Sciences Po Paris & Ethiopia & I am a student from Germany in my 3rd year of a BSc in International Relations at the London School of Economics and Sciences Po Paris with interest in Global Governance and International Development.\\
+\addlinespace
+\rowcolor{gray!6}  Fernanda Werneck & Leipzig University & Sao Tome and Principe & I'm a researcher on International Relations and Environmental Studies and I'm currently studying the last semester of MA. Global Studies\\
+Francis Yoon & FU Berlin & Malaysia, Malaysia, South Korea, South Korea & \\
+\rowcolor{gray!6}  Frank Yuxuan Sun & Technische Universität München & Malta & Active social commentator, interested in political science.\\
+Frederic Denker & I followed the outbreak of the Corona-Crisis in Israel, where I completed an internship and also had to deal with some Corona regulations. I could also work on any spanish-speaking country. & Niger, Nigeria & Undergraduate student interested in innovation and development economics.\\
+\rowcolor{gray!6}  Gloria Mutheu & The University of Nairobi, Kenya & Uganda & LLB 1st year student who has a great passion for research and helping people access information.\\
+\addlinespace
+Gulmira Imanova & Carleton University & Tajikistan & \\
+\rowcolor{gray!6}  Ha-Neul Yu & NYU Abu Dhabi & Testing Data & I am an undergraduate student at New York University Abu Dhabi. I am majoring in biology with a minor in psychology and I have an interest in statistical research.\\
+Hafsa Ahmed & NYU Abu Dhabi & Singapore & A senior undergraduate social research, public policy, and public health student from New York university in Abu Dhabi, driven to tackle global policy challenges in the development field.\\
+\rowcolor{gray!6}  Hajar Chams Eddine & University of Mohammed 5, Rabat & Mozambique & \\
+Helene Paul & TU Darmstadt / Policylead & Germany, Netherlands & Graduate student in governance and public policy, working on political monitoring as a working student for Policylead.\\
+\addlinespace
+\rowcolor{gray!6}  Helwan Felappi & Sciences Po Paris & Moldova, Moldova, Montenegro, Montenegro & I'm a second year Economics and Political Science student at Sciences Po Paris, on exchange at the University of Pennsylvania. I am passionate about studying, describing and better understanding our societies and the challenges they face.\\
+Heman Asibuo & Cornell University & Sierra Leone & \\
+\rowcolor{gray!6}  Henry Okwatch & Advocate of the High Court of Kenya & South Africa, South Africa & \\
+Ilona Koch & German Development Cooperation & Niger & Passionate Political Scientist who loves to analyse the world\\
+\rowcolor{gray!6}  Imogen Rickert & Policy Advisor in non-profit sector & Trinidad and Tobago, United States: sub-national & Social researcher with M.A. in Sociology from Freie Universität Berlin, B.A. from the University of Sydney and experience in providing policy analysis in the non-profit sector.\\
+\addlinespace
+Ines Böhret & University of Manchester, University of Passau & Kiribati & Ines has a B.A. in International Emergency and Disaster Relief and currently writes her theses for a M.Sc. in Global Health and a M.A. in Caritas Science and Value-based Management.\\
+\rowcolor{gray!6}  Ingeborg Sæle Helland & University of Copenhagen & Argentina & Master student in Security Risk Management at the University of Copenhagen\\
+Isabela Russo & TU München HfP & Mozambique & Born and raised in Brazil - currently studying Political Science in Germany.\\
+\rowcolor{gray!6}  Isabelle Smith & Colorado College, SciencesPo Paris & Madagascar & Hello, my name is Isabelle Smith and I am a third year bachelors student in Political Science at Colorado College and have recently completed a year abroad with SciencesPo Paris.\\
+Ismail Jamai Ait Hmitti & Yale University & Ivory Coast & Modern Middle Eastern Studies and History major at Yale University.\\
+\addlinespace
+\rowcolor{gray!6}  Jack Kubinec & Cornell University & Hungary & Jack is a freshman at Cornell University studying Government.\\
+Jakob Berg & Universität Regensburg & Bulgaria & I am a third-year student in the field of political science at the University of Regensburg\\
+\rowcolor{gray!6}  Jane Murutu & Project Management Consultant & Uganda & I am a project Management Specialist Consultant\\
+Janice Klaiber & ESB Business School / Rollins College & Tonga, Tuvalu & \\
+\rowcolor{gray!6}  Janne Luise Piper & Zeppelin University & Israel & I am a student of Sociology, Politics and Economics at Zeppelin University in Germany where I work as a student assistant for the Chair of International Relations.\\
+\addlinespace
+Jasmina Sowa &  & Solomon Islands, Solomon Islands & I am Psychology student from Germany in the fourth year of my bachelors degree.\\
+\rowcolor{gray!6}  Jennifer Noguera Barrera & Universidad del Rosario & Cabo Verde & \\
+Jessica Johansson &  & United Kingdom, United Kingdom & M.Sc. graduate in Politics, Economics and Philosophy from University of Hamburg, with research experience from political science research at the German Institute of Global and Area Studies (Hamburg) as well as economics research at CIESAS (Guadalajara, Mexico).\\
+\rowcolor{gray!6}  Jiho Yoo &  & South Korea, South Korea & Undergraduate student in Sciences Po Paris Campus de Reims, studying Political Humanities\\
+Joana Lencastre Morais & Technische Universität München \& Hochschule für Philosophie München & Angola & Politics \& Technology student at the TU München.\\
+\addlinespace
+\rowcolor{gray!6}  Joel Gräff & Technical Product Designer & South Africa & German and South African Technical Product Design trainee in the final year\\
+Josef Montag & Charles University & Testing Data & I am an Assistant Professor at the Department of Economics, Faculty of Law, Charles University in Prague, the Czech Republic. I do empirical research in fields related to law and economics.\\
+\rowcolor{gray!6}  Jule Scholten & Ruhr-Universität Bochum & Jamaica & Student of Political Science and student assistant, working on a project of interest groups influence on Government decision in Germany\\
+Julia Dröge & University of Natural Resources and Life Sciences & Iceland, Iceland & \\
+\rowcolor{gray!6}  Julia Nassl & University of Munich & Bolivia, Peru & I am a 4th year law student at Ludwig-Maximilians-Universität, Munich with a specialization in Public International Law.\\
+\addlinespace
+Julia Smakman & University of Amsterdam (currently interning with Amnesty International) & Poland & Dutch, BSc Graduate, Law major, Main interest in international law\\
+\rowcolor{gray!6}  Julia Wießmann & University of Heidelberg & Latvia & \\
+Kadriye Nisa Başkan & Yıldız Technical University & Turkey & Economics Graduate from Yıldız Technical University/ Istanbul\\
+\rowcolor{gray!6}  Karina Lisboa Båsund & NYU Abu Dhabi & Norway, Senegal & Research Assistant at NYU Abu Dhabi's Department of Social Science\\
+Karlotta Schultz & University of Edinburgh & Bolivia & I am a recent graduate of the University of Edinburgh in Global Environment, Politics and Society and just complete an internship at the Gesellschaft für Internationale Zusammenarbeit (GIZ).\\
+\addlinespace
+\rowcolor{gray!6}  Katharina Klaunig & NYU Abu Dhabi & Azerbaijan, Kazakhstan, Kyrgyzstan, Tajikistan, Turkmenistan, Uzbekistan & Katharina is a third year B.A. student studying Social Research and Public Policy at New York University Abu Dhabi.\\
+Kayla Schwoerer & Rutgers University-Newark & United States: sub-national & PhD student at Rutgers University-Newark in the School of Public Affairs studying government transparency with a focus on ICT-enabled interactions between government and its stakeholders.\\
+\rowcolor{gray!6}  Khoa Tran & NYU Abu Dhabi & Vietnam & Khoa Tran is a legal studies student at New York University Abu Dhabi and a youth social entrepreneur.\\
+Kojo Vandyck & NYU Abu Dhabi & Guinea & A Ghanaian STEM enthusiast keen on battling COVID-19!\\
+\rowcolor{gray!6}  Konstanze Schönfeld & Universität Leipzig / Fudan University & Japan & Global Studies student at Uni Leipzig / Fudan University, focusing on visa policy; BA in Japanese Studies from Uni Heidelberg\\
+\addlinespace
+Laura Cadena & Rosario University of Colombia & Andorra & I have a degree in International Relations of University of Rosario of Colombia\\
+\rowcolor{gray!6}  Laura Williamson & Colorado Christian University & United States: sub-national & \\
+Laureen Hannig & Universität Erfurt & Chad & Student of International Relations and Communication Science\\
+\rowcolor{gray!6}  Laurent Frick & Social Worker & Eswatini & Graduated Sociology Student and Social Worker\\
+Lea Clara Frömchen-Zwick & Christian-Albrechts Universität zu Kiel & Grenada, Saint Kitts and Nevis, Saint Vincent and the Grenadines & \\
+\addlinespace
+\rowcolor{gray!6}  Lea Wiedmann & University of Groningen & Belize & International Relations graduate\\
+Lena Kolb & Technische Universität München (TUM) & Cabo Verde, Malawi & I study in 4th Semester of political science at TUM\\
+\rowcolor{gray!6}  Leon Kohrt & Zeppelin University & Switzerland: sub-national & Senior Student at Zeppelin University\\
+Leonie Imberger & TU Dresden & Australia & 3rd year Med Student from Germany; interested in Global Health and Public Health Policy\\
+\rowcolor{gray!6}  Li Cheng & NYU Abu Dhabi & Testing Data & I am an undergraduate student at NYU  Abu Dhabi majoring in Interactive Media.\\
+\addlinespace
+Lilli Tabea Albrecht & Institute of Human Rights and Peace Studies, Mahidol University, Thailand & Cambodia & Grad student in Human Rights at the IHRP at Mahidol University, focusing on democracy and global health governance.\\
+\rowcolor{gray!6}  Lily Zandstra & Project Support Officer & Syria & Recent MA graduate from Leiden University in International Relations: European Union Studies. A dynamic thinker with cross-cultural and international experience and a keen interest in project development. Experience working on research projects to bridge the gap between policy and practice.\\
+Lincoln Dow & New York University & Uruguay & Lincoln Dow is an undergraduate student in political science at New York University from Houston, Texas.\\
+\rowcolor{gray!6}  Linlin Chen & TU München HfP & Sri Lanka & Final year M.Sc student in the Politics and Technology program at Technical University of Munich\\
+Luise Modrakowski & Copenhagen University & Norway & Master student of security risk management at Copenhagen University, originally from Dresden (DE), focusing on risk governance, political risk analysis, and sustainability.\\
+\addlinespace
+\rowcolor{gray!6}  Lya Cuéllar & FU Berlin & Costa Rica, El Salvador & \\
+Magdalena Strebling & Management & Marshall Islands & \\
+\rowcolor{gray!6}  Maheen Zahra & Lecturer, Social Policy specialist & Afghanistan, Iran & Lecturer at the Department of Development Studies, National University of Science and Technology (NUST), Pakistan\\
+Maira Sheikh &  & Liberia & Born and raised in Pakistan, I'm a Social Research and Public Policy Major at New York University Abu Dhabi.\\
+\rowcolor{gray!6}  Maisa Nasirova & Technical University of Munich (TUM) & Pakistan, Tanzania & Political Science Student at Technical University of Munich\\
+\addlinespace
+Maite Spel & University of Amsterdam & Suriname & I'm a graduate in Interdisciplinary Social Sciences from the University of Amsterdam\\
+\rowcolor{gray!6}  Malina Winking & University of Amsterdam & Botswana & \\
+Mamle Akosua Kwao & New York University Abu Dhabi & Mauritania & \\
+\rowcolor{gray!6}  Mara Förster & Sciences Po Paris & Trinidad and Tobago & I am currently a first-year student at the Reims Campus of Sciences Po Paris, particularly focusing on North America and Europe.\\
+Marianne Sievers & Humboldt University, Berlin, Germany & Yemen & I'm a freelance researcher, holding a BA in Sociology and Islamic Science, currently a MA student in Berlin.\\
+\addlinespace
+\rowcolor{gray!6}  Marius Deierl & LMU Munich & Ecuador & Student of cultural anthropology, 22, Germany\\
+Marlies Hofmann & University of Amsterdam & United States & Currently completing my BSc in PPLE (Politics, Psychology, Law and Economics) at the University of Amsterdam and looking forward to subsequently continuing my studies of law at the University of Oxford.\\
+\rowcolor{gray!6}  Mary Nussbaumer & Colorado College & United States: sub-national, United States: sub-national & I am Mary Nussbaumer, a sophomore at Colorado College\\
+Mascha Hotopp &  & United States, United States & I am a Master 1 journalism and human rights and humanitarian action student at the Sciences Po Paris.\\
+\rowcolor{gray!6}  Mats Jensen & Sciences Po Paris & Iceland & \\
+\addlinespace
+Matthew Cottrell & University of Cologne & United States & \\
+\rowcolor{gray!6}  Matthew Hargreaves & University of Amsterdam & Switzerland & A graduate in psychology, politics, law and economics from the university of Amsterdam.\\
+Maximilian Dirks & University of Bochum, Germany & New Zealand & I am studying Economic Policy Consulting M.Sc. at the University of Bochum.\\
+\rowcolor{gray!6}  Maya Rollberg & University of Freiburg & Germany: sub-national & I am a Liberal Arts and Sciences student, currently writing my Bachelor's thesis in Germany.\\
+Mehdi Bhouri & Technische Universität München & Algeria & I am a Business/Political science student at The Technical University of Munich\\
+\addlinespace
+\rowcolor{gray!6}  Michaela Balluff & Gesellschaft für Internationale Zusammenarbeit (GIZ) GmbH & Eritrea & \\
+Milan Chen & HfP (Munich) & Taiwan & Doctoral researcher at the Technical University of Munich\\
+\rowcolor{gray!6}  Milos Moskovljevic & City University of Hong Kong & Maldives, Serbia & PhD student at City University of Hong Kong\\
+Miranda Tessore Janowski &  & Argentina, Argentina & I am a graduate of Politics, Psychology, Law and Economics (PPLE) with a specialisation in International Law from the University of Amsterdam, where I graduated with an Upper 2:1. I currently live in London and will start a Master's in International Peace and Security at King's College London in September 2020.\\
+\rowcolor{gray!6}  Miriam Witte & University of Regensburg, Germany & Ireland & Psychology student BSc at the University of Regensburg, scholarship holder of the Friedrich-Ebert-Foundation, lived and worked in L'Arche Ireland for 1 1/2 years.\\
+\addlinespace
+Mirjam Muller & European Parliament & European Union, Latvia, Lithuania & BSc law graduate working for the Greens in the European Parliament and hoping to contribute to some good on this earth!\\
+\rowcolor{gray!6}  Mona Horn &  & Costa Rica, Costa Rica & I am a student of geosciences at the University of Freiburg.\\
+Muhammad Masood & City University of Hong Kong & Bahrain & Muhammad Masood is a Ph.D. student at the Department of Media and Communication, City University of Hong Kong, since September 2018. Muhammad's dissertation focuses on the impact of social media use on the socio-political landscape of Pakistani society.\\
+\rowcolor{gray!6}  Muhannad Alramlawi & NYU Abu Dhabi & Jordan & I am senior student studying Economics at New York University Abu Dhabi (NYUAD).\\
+Museera Moghis & NYU Abu Dhabi & United Arab Emirates & Museera is an undergraduate student at New York University Abu Dhabi, double majoring in Political Science and Social Research \& Public Policy.\\
+\addlinespace
+\rowcolor{gray!6}  Mustafa Nasery & Researcher and Consultant & Afghanistan & Co-founder and Board-Member of Afghanistan Center for Policy Studies (ACPS)\\
+Nadja Grossenbacher & Utrecht University / University of Vienna & Gambia & Nadja Grossenbacher holds a MA degree in Conflict Studies \& Human Rights as well as a BA degree in Cultural \& Social Anthropology and set her regional focus on Sub-Saharan Africa.\\
+\rowcolor{gray!6}  Natalia Filkina-Spreizer & HfP (Munich) & Belarus, Russia & M.Sc. student of Politics and Technology at Technical University of Munich\\
+Nicolas Göller & Zeppelin University & Germany & Undergraduate student of Sociology, Politics \& Economics with an interest in interdisciplinary research and Data Science.\\
+\rowcolor{gray!6}  Nicole Oubre & Willy Brandt School of Public Policy & Honduras & I am a Master of Public Policy student at the Willy Brandt School of Public Policy in Erfurt, Germany.\\
+\addlinespace
+Nida Hasan & Dual BA Sciences Po Paris/Columbia Universiity & Saudi Arabia & I am an undergraduate student in the Dual BA program with Sciences Po Paris and Columbia University, passionate about working in the fields of Medicine and Public Health.\\
+\rowcolor{gray!6}  Niklas Illenseer & SciencesPo Paris/FU Berlin & Austria, France, Liechtenstein & Dual Degree Master's student in Environmental Policy at Sciences Po Paris and Political Science \& International Relations at FU Berlin.\\
+Nikolina Klatt & Fernuniversität Hagen & Croatia, United States & Political Science student based in New York City\\
+\rowcolor{gray!6}  Nivedita Darshini Bholah & University of Tübingen & Mauritius, Mauritius & Graduate Student/Avid Researcher\\
+Noelle Kubinec & English teacher & Albania, North Macedonia & I am a Language and Orientation Coordinator for a non-profit and have been living in the Balkan region of Europe for 8.5 years.\\
+\addlinespace
+\rowcolor{gray!6}  Noor Altunaiji & NYU Abu Dhabi & Libya & I'm a student studying at NYU Abu Dhabi.\\
+Océane Mauffrey & Colorado College & Guinea-Bissau & \\
+\rowcolor{gray!6}  Oketch Juliet Anyango & University of Nairobi & Burundi, Sierra Leone & \\
+Oliver Pollex & TUM Munich & Brunei & B.Sc. student politics and technology TU Munich\\
+\rowcolor{gray!6}  Oliver Weber & University of Regensburg, Germany & Denmark, Germany, Italy, Monaco & Graduate Student at the University of Regensburg, Bachelor's Degree from the University of Mannheim\\
+\addlinespace
+Olzhas Gibatov & Nazarbayev University & Barbados & 2nd year MA student at the Department of Political Science and International Relations at Nazarbayev University\\
+\rowcolor{gray!6}  Ongun Durhan & University of Amsterdam & Turkey & Graduate student of Political Economy at the University of Amsterdam (expected to graduate this year).\\
+Pablo Robles & Hochschule Fresenius & Paraguay & Ecuadorian Architect pursuing an International Business Masters degree\\
+\rowcolor{gray!6}  Paula Germana & Willy Brandt School of Public Policy/ University of Erfurt & El Salvador & Peruvian Sociologist. Master in Public Policy Student at the Willy Brandt School of Public Policy.\\
+Philipp Weber & Motio Gmbh \& Co. KG & Fiji & \\
+\addlinespace
+\rowcolor{gray!6}  Pia Bansagi & University of Vienna & Nauru, Timor Leste & Erasmus Mundus Masters of Global Studies student at the University of Leipzig and University of Vienna.\\
+Racha Hanine & University of Oslo & Tunisia & First year BA student in Political Science at the University of Oslo\\
+\rowcolor{gray!6}  Raquel Karl & Zeppelin University & Cuba, Dominican Republic & Undergraduate student in Sociology, Politics \& Economics.\\
+Rebecca Beigel & Stiftung Neue Verantwortung, Project Manager International Cybersecurity Policy & Syria & \\
+\rowcolor{gray!6}  Ricardo Buitrago & Universidad de La Salle Colombia & Honduras & Head of the B.A. in International Business \& Relations\\
+\addlinespace
+Richmond Silvanus Baye & University of Tuebingen & Mauritius & I am into environmental and food economics research\\
+\rowcolor{gray!6}  Robin Fischer & University of Braunschweig & Dominica & I study Mathematics and Philosophy at the University in Braunschweig.\\
+Rosana Fayazzadh & University of Oslo & Iran & Oslo-based student majoring in law and economics at the University of Oslo\\
+\rowcolor{gray!6}  Saif Khan & Technical University of Munich & Seychelles & M.Sc. Politics and Technology student.\\
+Salma Soliman & NYU Abu Dhabi & Egypt & I am a third year student studying Economics with a Data Science Track at NYUAD.\\
+\addlinespace
+\rowcolor{gray!6}  Samantha Reinard & San Francisco State University/On Exchange Sciences Po Reims & Bhutan, Mongolia & Undergraduate student of International Relations and Comparative World Literature, soon to study in Taiwan.\\
+Sana Moghis & Shifa College of Medicine & Bangladesh, Nepal, Testing Data & I am a young doctor who has just graduated from Shifa College of Medicine. Passionate about developing a career in Critical Care and exploring methods that revolutionize modern healthcare.\\
+\rowcolor{gray!6}  Sarah Edmonds & TUM Munich & Papua New Guinea, United States: sub-national & \\
+Sau Kan Chan & HfP (Munich) & China, Hong Kong, Macau & PhD student at HfP (Munich). My research focuses on transparency in Chinese governance.\\
+\rowcolor{gray!6}  Saw Eh Doh Soe & Institute of Human Rights and Peace Studies, Mahidol University, Thailand & Zimbabwe & \\
+\addlinespace
+Sean-Michael Pigeon & Yale University & United States: sub-national & I'm Sean-Michael, I am a Junior at Yale University working on a double major in History and Political Science\\
+\rowcolor{gray!6}  Shalini Corea & NYU Abu Dhabi & United States: sub-national & I am a Junior majoring in Theater and Political Science at NYU Abu Dhabi\\
+Shruti Shukla & Consultant, C4ED & Guyana & I am a qualitative research with a global health background.\\
+\rowcolor{gray!6}  Simon Hüttemann & TUM Munich & Nigeria & I am a Student for political science at Technical University Munich.\\
+Sophia Tomany & Willy Brandt School of Public Policy & Iraq, South Sudan & Sophia is a Master's student in Public Policy at the Willy Brandt School, specializing in Conflict Studies and Management.\\
+\addlinespace
+\rowcolor{gray!6}  Stefanie Mallow & Sustainable Development Consultant & Portugal & I have a master's degree in Cultural Anthropology from Uppsala University and I am interested in inequalities in knowledge production.\\
+Stella Dold &  & Bahamas, Bahamas & Student of Political Science\\
+\rowcolor{gray!6}  Su Ülkenli &  & Democratic Republic of the Congo & Second-year student at SciencesPo Paris, pursuing a BA in Political Humanities.\\
+Surendra Belbase & Georg August University of Göttingen & United States: sub-national & I am a Business and Social Science graduate and interest in Social entrepreneurship, Media Anthropology, Censorship and Marginalisation issues.\\
+\rowcolor{gray!6}  Symrun Razaque & NUST, H-12. Islamabad & Laos & Postgraduate student in quarantine\\
+\addlinespace
+Tanja Matheis & University of Kassel & Benin, Indonesia & PhD candidate, Friedrich Ebert Foundation Fellow, writer and consultant with a background in economics, passionate about decent work in supply chains.\\
+\rowcolor{gray!6}  Tasia Wagner & Institute for Islamic Strategic Affairs (IISA),  programme advisor \& advisor to Executive Director & Finland: sub-national & A passionate researcher with a strong background in international relations.\\
+Temur Davronov & Carleton University & Uzbekistan & I'm a first-year MA student in European, Russian and Eurasian studies program at Carleton University in Ottawa, Canada.\\
+\rowcolor{gray!6}  Tess de Rooij & University of Amsterdam & Belgium & I hold a BSc in Politics, Psychology, Law \& Economics (politics major, cum laude) from the University of Amsterdam. I've worked as a guest teacher and campaigner, and I'm currently deciding where to pursue my master's next year - next to assisting in the CoronaNet Research Project!\\
+Tess Martin & Sciences Po Paris & Micronesia & Tess Martin is an American undergraduate student currently pursuing her degree in Politics \& Government at Sciences Po Paris.\\
+\addlinespace
+\rowcolor{gray!6}  Tilda Nilsson Gige & Sciences Po Paris & Libya & \\
+Tom Seiler & University of Bremen & Denmark & \\
+\rowcolor{gray!6}  Tristan Brömsen & Zeppelin University & Ukraine & \\
+Ursela Barteczko &  & Chile, Uruguay, Chile & Enthusiastic student of Political Science, Sociology, Data Science and Artificial Intelligence.\\
+\rowcolor{gray!6}  Vellah Kedogo Kigwiru & Technical University of Munich & Kenya & A Doctoral Research Fellow at the Technical University of Munich, Hochschule für Politik and Guest Researcher at Marx Planck Institute für Innovation and Competition, Munich Germany.\\
+\addlinespace
+Veronika Bartáková & London School of Economics and Political Science & Slovenia, United Kingdom & I am a student at the London School of Economics and Political Science, pursuing an MSc in Theory \& History of International Relations. I am passionate about research, data, public policy and I am very excited to be a part of this project.\\
+\rowcolor{gray!6}  Victor Abuor & Kenyatta University & Zambia & A data-driven young professional passionate in research, data analysis and presentation.\\
+Victoria Atanasov & Humboldt University Berlin, Rikkyo University Tokyo & Japan: sub-national & MA Gender Studies, Rikkyo University Tokyo/Humboldt University Berlin\\
+\rowcolor{gray!6}  Vida Han & Dual BA SciencesPo Paris / Columbia University & Burkina Faso & I am a student in the Dual BA program between SciencesPo and Columbia University who strongly believes in the power of kindness, and is interested in sustainability, development and management.\\
+Vinayak Rajesekhar & Independent Researcher and Communications Professional & India & Vinayak is an independent communications professional based in New Delhi, India. He holds a masters degree in international security from the Paris School of International Affairs, SciencesPo in Paris, France.\\
+\addlinespace
+\rowcolor{gray!6}  Winrose Njuguna & Practising Advocate, Commercial \& Corporate Law & Somalia, Sudan & \\
+Xian Jin & Technical University of Munich & China & \\
+\rowcolor{gray!6}  Yifei Zhu & FU Berlin & North Korea & I am a PhD student on political science and East Asia Studies at FU Berlin\\
+Yoes C. Kenawas & Northwestern University & Bahamas, Philippines & I am PhD Candidate in Political Science at Northwestern University, specializing in subnational dynastic politics in Indonesia and Southeast Asia.\\
+\bottomrule
+\end{longtable}
+
+\hypertarget{references}{%
+\section*{References}\label{references}}
+\addcontentsline{toc}{section}{References}
+
+\hypertarget{refs}{}
+\leavevmode\hypertarget{ref-MTurk2011}{}%
+Amazon.com, Inc. 2011. ``Amazon Mechanical Turk Requester Best Practices Guide.'' User Guide. Amazon.com, Inc. \url{https://mturkpublic.s3.amazonaws.com/docs/MTURK_BP.pdf}.
+
+\leavevmode\hypertarget{ref-gelman2005}{}%
+Bafumi, Joseph, Andrew Gelman, David K. Park, and Noah Kaplan. 2005. ``Practical Issues in Implementing and Understanding Bayesian Ideal Point Estimation.'' \emph{Political Analysis} 13 (2): 171--87.
+
+\leavevmode\hypertarget{ref-benoitetal2016}{}%
+Benoit, Kenneth, Drew Conway, Benjamin E. Lauderdale, Michael Laver, and Slava Mikhaylov. 2016. ``Crowd-Sourced Text Analysis: Reproduceable and Agile Production of Political Data.'' \emph{American Political Science Review} 110 (2): 278--95.
+
+\leavevmode\hypertarget{ref-blaikie2014risk}{}%
+Blaikie, Piers, Terry Cannon, Ian Davis, and Ben Wisner. 2014. \emph{At Risk: Natural Hazards, People's Vulnerability and Disasters}. Routledge.
+
+\leavevmode\hypertarget{ref-boin2016politics}{}%
+Boin, Arjen, Eric Stern, Paul 't Hart, and Bengt Sundelius. 2016. \emph{The Politics of Crisis Management: Public Leadership Under Pressure}. Cambridge University Press.
+
+\leavevmode\hypertarget{ref-jackman2004}{}%
+Clinton, Joshua, Simon Jackman, and Douglas Rivers. 2004. ``The Statistical Analysis of Rollcall Data.'' \emph{American Political Science Review} 98 (2): 355--70.
+
+\leavevmode\hypertarget{ref-dasgupta2002confronting}{}%
+Dasgupta, Susmita, Benoit Laplante, Hua Wang, and David Wheeler. 2002. ``Confronting the Environmental Kuznets Curve.'' \emph{Journal of Economic Perspectives} 16 (1): 147--68.
+
+\leavevmode\hypertarget{ref-flaxman2020}{}%
+Flaxman, S, S Mishra, A Gandy, H Unwin, H Coupland, T Mellan, H Zhu, et al. 2020. ``Estimating the Number of Infections and the Impact of Non-Pharmaceutical Interventions on COVID-19 in 11 European Countries.'' \emph{Preprint:10.25561/77731}. Imperial College London.
+
+\leavevmode\hypertarget{ref-folke2006resilience}{}%
+Folke, Carl. 2006. ``Resilience: The Emergence of a Perspective for Social--Ecological Systems Analyses.'' \emph{Global Environmental Change} 16 (3): 253--67.
+
+\leavevmode\hypertarget{ref-gailmard2019preventing}{}%
+Gailmard, Sean, and John W Patty. 2019. ``Preventing Prevention.'' \emph{American Journal of Political Science} 63 (2): 342--52.
+
+\leavevmode\hypertarget{ref-galea2003trends}{}%
+Galea, Sandro, David Vlahov, Heidi Resnick, Jennifer Ahern, Ezra Susser, Joel Gold, Michael Bucuvalas, and Dean Kilpatrick. 2003. ``Trends of Probable Post-Traumatic Stress Disorder in New York City After the September 11 Terrorist Attacks.'' \emph{American Journal of Epidemiology} 158 (6): 514--24.
+
+\leavevmode\hypertarget{ref-gifford2014environmental}{}%
+Gifford, Robert. 2014. ``Environmental Psychology Matters.'' \emph{Annual Review of Psychology} 65: 541--79.
+
+\leavevmode\hypertarget{ref-Horn2019}{}%
+Horn, Alexander. 2019. ``Can the Online Crowd Match Real Expert Judgments? How Task Complexity and Coder Location Affect the Validity of Crowd-Coded Data.'' \emph{European Journal of Political Research} 58: 236--47.
+
+\leavevmode\hypertarget{ref-kilian2009not}{}%
+Kilian, Lutz. 2009. ``Not All Oil Price Shocks Are Alike: Disentangling Demand and Supply Shocks in the Crude Oil Market.'' \emph{American Economic Review} 99 (3): 1053--69.
+
+\leavevmode\hypertarget{ref-kindleberger2011manias}{}%
+Kindleberger, Charles P, and Robert Z Aliber. 2011. \emph{Manias, Panics and Crashes: A History of Financial Crises}. Palgrave Macmillan.
+
+\leavevmode\hypertarget{ref-kitschelt2007patrons}{}%
+Kitschelt, Herbert, Steven I Wilkinson, and others. 2007. \emph{Patrons, Clients and Policies: Patterns of Democratic Accountability and Political Competition}. Cambridge University Press.
+
+\leavevmode\hypertarget{ref-kubinec2019ideal}{}%
+Kubinec, Robert. 2019. ``Generalized Ideal Point Models for Time-Varying and Missing-Data Inference.'' \emph{Preprint at Open Science Foundation Preprints: 10.31219/Osf.io/8j2bt}.
+
+\leavevmode\hypertarget{ref-longabaugh2012}{}%
+Longabaugh, William JR. 2012. ``Combing the Hairball with Biofabric: A New Approach for Visualization of Large Networks.'' \emph{BMC Bioinformatics} 13 (1): 275.
+
+\leavevmode\hypertarget{ref-marquardtetal2017}{}%
+Marquardt, Kyle L., Daniel Pemstein, Constanza Sanhueza Petrarca, Brigitte Seim, Steven Lloyd Wilson, Michael Bernhard, Michael Coppedge, and Staffan I. Lindberg. 2017. ``Experts, Coders, and Crowds: An Analysis of Substitutability.'' Working Paper. \emph{Preprint at V-Dem Working Paper 2017:53: Http://Dx.doi.org/10.2139/Ssrn.3046462}.
+
+\leavevmode\hypertarget{ref-quinn2002}{}%
+Martin, Andrew D., and Kevin M. Quinn. 2002. ``Dynamic Ideal Point Estimation via Markov Chain Monte Carlo for the U.s. Supreme Court, 1953-1999.'' \emph{Political Analysis} 10 (2): 134--53.
+
+\leavevmode\hypertarget{ref-noy2009macroeconomic}{}%
+Noy, Ilan. 2009. ``The Macroeconomic Consequences of Disasters.'' \emph{Journal of Development Economics} 88 (2): 221--31.
+
+\leavevmode\hypertarget{ref-nunn2009importance}{}%
+Nunn, Nathan. 2009. ``The Importance of History for Economic Development.'' \emph{Annu. Rev. Econ.} 1 (1): 65--92.
+
+\leavevmode\hypertarget{ref-pierson2000increasing}{}%
+Pierson, Paul. 2000. ``Increasing Returns, Path Dependence, and the Study of Politics.'' \emph{American Political Science Review} 94 (2): 251--67.
+
+\leavevmode\hypertarget{ref-przeworski1999democracy}{}%
+Przeworski, Adam, Susan Carol Stokes Stokes, Susan C Stokes, and Bernard Manin. 1999. \emph{Democracy, Accountability, and Representation}. Vol. 2. Cambridge University Press.
+
+\leavevmode\hypertarget{ref-Raykar2009}{}%
+Raykar, Vikas C., Shipeng Yu, Linda H. Zhao, Anna Jerebko, Charles Florin, Gerardo Hermosillo Valadez, Luca Bogoni, and Linda Moy. 2009. ``Supervised Learning from Multiple Experts: Whom to Trust When Everyone Lies a Bit.'' \emph{ICML '09: Proceedings of the 26th Annual International Conference on Machine Learning: Https://Doi.org/10.1145/1553374.1553488}. \url{https://doi.org/10.1145/1553374.1553488}.
+
+\leavevmode\hypertarget{ref-Raykar2010}{}%
+Raykar, Vikas C., Shipeng Yu, Linda H. Zhao, Gerardo Hermosillo Valadez, Charles Florin, and Luca Bogoni, and Linda Moy. 2010. ``Learning from Crowds.'' \emph{Journal of Machine Learning Research} 11 (43): 1297--1322.
+
+\leavevmode\hypertarget{ref-reckase2009}{}%
+Reckase, M. D. 2009. \emph{Multidimensional Item Response Theory}. Springer.
+
+\leavevmode\hypertarget{ref-Sheng2008}{}%
+Sheng, Victor S., Foster Provost, and Panagiotis G. Ipeirotis. 2008. ``Get Another Label? Improving Data Quality and Data Mining Using Multiple, Noisy Labelers.'' \url{https://dl.acm.org/doi/abs/10.1145/1401890.1401965}.
+
+\leavevmode\hypertarget{ref-sumneretal2019}{}%
+Sumner, Jane Lawrence, Emily M. Farris, and Mirya R. Holman. 2019. ``Crowdsourcing Reliable Local Data.'' \emph{Political Analysis} 28 (2): 244--62.
+
+\leavevmode\hypertarget{ref-svolik2012politics}{}%
+Svolik, Milan W. 2012. \emph{The Politics of Authoritarian Rule}. Cambridge University Press.
+
+\leavevmode\hypertarget{ref-takane1986}{}%
+Takane, Yoshio, and Jan de Leeuw. 1986. ``On the Relationship Between Item Response Theory and Factor Analysis of Discretized Variables.'' \emph{Psychometrika} 52 (3): 393--408.
+
+\leavevmode\hypertarget{ref-tierney2007margins}{}%
+Tierney, Kathleen J. 2007. ``From the Margins to the Mainstream? Disaster Research at the Crossroads.'' \emph{Annu. Rev. Sociol.} 33: 503--25.
+
+
+\end{document}

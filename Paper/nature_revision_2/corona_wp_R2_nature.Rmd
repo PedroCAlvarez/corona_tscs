@@ -896,6 +896,7 @@ compare_plot <- merge_est %>%
   theme(panel.grid = element_blank()) +
   xlab("") +
   ylab("Policy Activity Index Scale (0 to 100)") +
+  labs(caption = "Each cross-sectional model was re-fitted to each day's data independently using MCMC.\nHigh variance in cross-sectional estimates is a result of limited data per day and\ndistortion due to latent scaling effects.") +
   guides(color=guide_legend(title="")) +
   facet_wrap(~country)
 
@@ -946,7 +947,8 @@ get_var %>%
         axis.ticks.y=element_blank()) +
   coord_flip() +
   xlab("") +
-  ylab("Over-Time Variance of Latent Scale")
+  ylab("Over-Time Variance of Latent Scale") +
+  labs(caption="Each estimate is the country-specific variance (heteroskedasticity) parameter reflecting the average amount of over-time\nchange in the estimates. Scale is the original (logit) scale.")
 ggsave("Figure5.jpg", width = 180, height = 240, units = 'mm')
 
 ```

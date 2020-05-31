@@ -2,7 +2,7 @@
 // Robert Kubinec
 // New York University Abu Dhabi
 // March 20, 2020
-functions {
+functions{
   vector setstep(vector col_var) {
     
     vector[rows(col_var)] diff_var = col_var + (max(fabs(col_var)) * sqrt(0.0000007)) - col_var;
@@ -17,10 +17,14 @@ data {
     int tests[num_country,time_all];
     int time_outbreak[num_country,time_all];
     int S; // number of suppression measures
+    int G; // google mobility data (by type of mobility)
+    int L; // just lockdown data (for hierarchical predictor)
     matrix[time_all,3] ortho_time;
-    matrix[num_country,S] suppress;
-    matrix[num_country,time_all] time_outbreak_center;
+    matrix[num_country*time_all,S] suppress; // time-varying suppression measures
+    matrix[num_country*time_all,G] mobility; // time-varying mobility measures
+    matrix[num_country*time_all,L] lockdown; // hierachical lockdown predictors
     vector[time_all] count_outbreak;
+    matrix[num_country,time_all] time_outbreak_center;
     int country_pop[num_country];
     real phi_scale; // prior on how much change there could be in infection rate over time
 }
@@ -29,6 +33,11 @@ transformed data {
   matrix[num_country,time_all] time_outbreak_trans2; // convert raw time numbers to ortho-normal polynomials
   matrix[num_country,time_all] time_outbreak_trans3; // convert raw time numbers to ortho-normal polynomials
   matrix[num_country,3] time_array[time_all]; 
+  matrix[num_country,S] suppress_array[time_all];
+  matrix[num_country,G] mobility_array[time_all];
+  matrix[num_country,L] lock_array[time_all];
+  
+  // make some arrays of counts of the outbreak
   
   for(t in 1:time_all) {
     for(n in 1:num_country) {
@@ -52,18 +61,34 @@ transformed data {
                                             time_outbreak_trans3[,t]));
   }
   
-  // need a centered time vector
+  // make arrays of covariates
   
-  // for(n in 1:num_country) {
-  //   time_outbreak_center[n,] = (to_vector(time_outbreak[n,])' - mean(to_vector(time_outbreak[n,])))/sd(to_vector(time_outbreak[n,]));
-  // }
-    
+  for(t in 1:time_all) {
+    for(n in 1:num_country) {
+      for(s in 1:S) {
+        suppress_array[t,n,s] = suppress[(t-1)*num_country + n,s];
+      }
+      for(g in 1:G) {
+        mobility_array[t,n,g] = mobility[(t-1)*num_country + n,g];
+      }
+      for(l in 1:L) {
+        lock_array[t,n,l] = lockdown[(t-1)*num_country + n,l];
+      }
+    }
+  }
+  
 }
 parameters {
   vector[3] poly; // polinomial function of time
   real<lower=0> finding; // difficulty of identifying infected cases 
-  real<lower=0> world_infect;// infection rate based on number of travelers
+  real<lower=0> world_infect; // infection rate based on number of travelers
   row_vector[S] suppress_effect[2]; // suppression effect of govt. measures, cannot increase virus transmission rate
+  row_vector[L] suppress_hier_const[G];
+  row_vector[L] suppress_hier_time[G];
+  row_vector[G] mob_effect[2];
+  vector[G] mob_alpha_const; // mobility hierarchical intercepts
+  vector[G] mob_alpha_time; // mobility hierarchical intercepts for time
+  real<lower=0> sigma_med;
   vector<lower=0>[num_country] country_test_raw; // unobserved rate at which countries are willing to test vs. number of infected
   // we assume that as infection rates increase, more tests will be conducted
   vector[3] alpha; // other intercepts
@@ -71,30 +96,48 @@ parameters {
   real<lower=0> sigma_test_raw; // estimate of between-state testing heterogeneity
 }
 transformed parameters {
+
   matrix[num_country,time_all] num_infected_high; // modeled infection rates for domestic transmission
   
   for(t in 1:time_all) {
-      //real num_low;
+        
       num_infected_high[,t] = alpha[2] + time_array[t]*poly + 
                                         world_infect*count_outbreak[t] +
-                                        (suppress_effect[1]*suppress')' +
-                                        + ((suppress_effect[2]*suppress') .* time_outbreak_trans1[,t]')';
+                                        (suppress_effect[1]*suppress_array[t]')' +
+                                        //+ ((suppress_effect[2]*suppress_array[t]') .* time_outbreak_trans1[,t]')' +
+                                        //(mob_alpha_const[1]*mobility_array[t]')' +
+                                        //((mob_alpha_const[2]*mobility_array[t]').* time_outbreak_trans1[,t]')'; 
+                                        ((mob_effect[1] * mobility_array[t]') * rep_vector(1,num_country));
+                                        //  (mob_effect[2] * mobility_array[t]') * time_outbreak_trans1[,t];
   }
 
   
 }
 model {
   
-  poly ~ normal(0,10); // could be large
+  poly ~ normal(0,5); // could be large
   world_infect ~ normal(0,1);
   alpha ~ normal(0,10); // this can reach extremely low values
+  
+  //mob_alpha_time ~ normal(0,5);
   phi ~ exponential(phi_scale);
-  for(i in 1:2)
-    suppress_effect[i] ~ normal(0,2);
+  for(i in 1:2) {
+    suppress_effect[i] ~ normal(0,5);
+    mob_effect[i] ~ normal(0,5);
+    
+  } 
   
+  for(g in 1:G) {
+    suppress_hier_const[g] ~ normal(0,5);
+    suppress_hier_time[g] ~ normal(0,5);
+  }
   
-  finding ~ exponential(5);
+   mob_alpha_const ~ normal(0,5);
+    
+  
+  finding ~ exponential(.1);
   sigma_test_raw ~ exponential(.1);
+  sigma_med ~ exponential(.1);
   country_test_raw ~ exponential(sigma_test_raw); // more likely near the middle than the ends
   
   // first model probability of infection
@@ -107,19 +150,26 @@ model {
     vector[num_country] mu_cases = inv_logit(alpha[3] + finding*num_infected_high[,t]);
     vector[num_country] mu_tests = inv_logit(alpha[1] + country_test_raw .* num_infected_high[,t]);
     
-    tests[,t] ~ beta_binomial(country_pop,mu_tests*phi[1],(1-mu_tests)*phi[1]);
-    cases[,t] ~ beta_binomial(tests[,t],mu_cases*phi[2],(1-mu_cases)*phi[2]);
+    // mediator
+    
+    for(g in 1:G) 
+      to_vector(mobility_array[t,,g]) ~ normal(mob_alpha_const[g] + (suppress_hier_const[g]*lock_array[t]')',sigma_med);
+
+    tests[,t] ~ beta_binomial(country_pop,exp(log(mu_tests) + log(phi[1])),exp(log1m(mu_tests) + log(phi[1])));
+    cases[,t] ~ beta_binomial(tests[,t],exp(log(mu_cases)  + log(phi[2])),exp(log1m(mu_cases) + log(phi[2])));
     
     log(mix_prop) - log(mu_tests) ~ std_normal();
-    
+
     // jacobian adjustment
     target += log1m(mix_prop) + log1m(mu_tests);
+
   
   }
 
   
 }
 generated quantities {
+  
   //   vector[S] suppress_margin;
   //   matrix[time_all,rows(suppress)] suppress_margin_time;
   // 
@@ -157,4 +207,7 @@ generated quantities {
   //   
   //   suppress_margin[s] = mean(inv_logit(to_vector(suppress_margin_time)));
   // }
+  
+  
 }
+

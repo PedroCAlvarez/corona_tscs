@@ -212,7 +212,7 @@ emergency <- read_xlsx("../data/state_emergency_wikipedia.xlsx") %>%
                       `rth Carolina`="North Carolina",
                       `rth Dakota`="North Dakota",
                       `Illiis`="Illinois"))
-  #filter(!is.na(day_emergency))
+
 
 end_stayhome <- read_xlsx("../data/state_emergency_wikipedia.xlsx",sheet = "Sheet1") %>% 
   select(state="State",end_stayhome="Date lifted")
@@ -279,8 +279,7 @@ combined <- group_by(combined,state) %>%
                                   month_day[outbreak==1] - max(month_day),
                                   month_day[outbreak==1] - month_day[month_day==stayhome]),
          lockdown=ifelse(lockdown>0,cumsum(lockdown),lockdown)) %>% 
-  filter(state %in% c("New York","West Virginia","California","Maryland","Hawaii"),
-         !is.na(grocery))
+  filter(!is.na(grocery))
 
 # look at how days after lockdown versus days after emergency compare
 

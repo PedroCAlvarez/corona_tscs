@@ -82,12 +82,10 @@ parameters {
   vector[3] poly; // polinomial function of time
   real<lower=0> finding; // difficulty of identifying infected cases 
   real<lower=0> world_infect; // infection rate based on number of travelers
-  row_vector[S] suppress_effect[2]; // suppression effect of govt. measures, cannot increase virus transmission rate
+  row_vector[S] suppress_effect; // suppression effect of govt. measures, cannot increase virus transmission rate
   row_vector[L] suppress_hier_const[G];
-  row_vector[L] suppress_hier_time[G];
-  row_vector[G] mob_effect[2];
+  row_vector[G] mob_effect;
   vector[G] mob_alpha_const; // mobility hierarchical intercepts
-  vector[G] mob_alpha_time; // mobility hierarchical intercepts for time
   real<lower=0> sigma_med;
   vector<lower=0>[num_country] country_test_raw; // unobserved rate at which countries are willing to test vs. number of infected
   // we assume that as infection rates increase, more tests will be conducted
@@ -103,12 +101,8 @@ transformed parameters {
         
       num_infected_high[,t] = alpha[2] + time_array[t]*poly + 
                                         world_infect*count_outbreak[t] +
-                                        (suppress_effect[1]*suppress_array[t]')' +
-                                        //+ ((suppress_effect[2]*suppress_array[t]') .* time_outbreak_trans1[,t]')' +
-                                        //(mob_alpha_const[1]*mobility_array[t]')' +
-                                        //((mob_alpha_const[2]*mobility_array[t]').* time_outbreak_trans1[,t]')'; 
-                                        ((mob_effect[1] * mobility_array[t]') * rep_vector(1,num_country));
-                                        //  (mob_effect[2] * mobility_array[t]') * time_outbreak_trans1[,t];
+                                        (suppress_effect*suppress_array[t]')' +
+                                        (mob_effect * mobility_array[t]')' ;
   }
 
   
@@ -121,15 +115,11 @@ model {
   
   //mob_alpha_time ~ normal(0,5);
   phi ~ exponential(phi_scale);
-  for(i in 1:2) {
-    suppress_effect[i] ~ normal(0,5);
-    mob_effect[i] ~ normal(0,5);
-    
-  } 
+  mob_effect ~ normal(0,5);
+  suppress_effect ~ normal(0,5);
   
   for(g in 1:G) {
     suppress_hier_const[g] ~ normal(0,5);
-    suppress_hier_time[g] ~ normal(0,5);
   }
   
    mob_alpha_const ~ normal(0,5);
@@ -155,8 +145,8 @@ model {
     for(g in 1:G) 
       to_vector(mobility_array[t,,g]) ~ normal(mob_alpha_const[g] + (suppress_hier_const[g]*lock_array[t]')',sigma_med);
 
-    tests[,t] ~ beta_binomial(country_pop,exp(log(mu_tests) + log(phi[1])),exp(log1m(mu_tests) + log(phi[1])));
-    cases[,t] ~ beta_binomial(tests[,t],exp(log(mu_cases)  + log(phi[2])),exp(log1m(mu_cases) + log(phi[2])));
+    tests[,t] ~ beta_binomial(country_pop,mu_tests*phi[1],(1-mu_tests) * phi[1]);
+    cases[,t] ~ beta_binomial(tests[,t],mu_cases *phi[2],(1-mu_cases) * phi[2]);
     
     log(mix_prop) - log(mu_tests) ~ std_normal();
 

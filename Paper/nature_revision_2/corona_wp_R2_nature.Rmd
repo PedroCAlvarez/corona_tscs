@@ -21,7 +21,7 @@ institute:
   - tum: Hochschule für Politik at the Technical University of Munich (TUM) and the TUM School of Governance, Munich, Germany
   - nyuad: Social Science Division, New York University Abu Dhabi, Abu Dhabi, United Arab Emirates
   - yale: Department of Political Science, Yale University, New Haven, United States
-date: "May 30th, 2020"
+date: "May 31st, 2020"
 toc: false
 bibliography: BibTexDatabase.bib
 always_allow_html: yes
@@ -113,13 +113,13 @@ With the help of a team of over 260 research assistants in 18 time zones, we are
 
 <!-- The rapid and devastating spread of the SARS-CoV-2 virus has put in stark relief the previously invisible connections among different countries and people. Our dataset illuminates a countervailing kind of network --- it documents not only what actions governments have taken against COVID-19, but how these actions have targeted other geographical regions and the people and resources within them over time. The data, which is publicly available, will allow us to understand among other things, how the effectiveness of different government policies may vary over time or depending on policy actions taken by other governments.  -->
 
-Though government responses to the COVID-19 pandemic have inaugurated considerable changes in how billions of people live their lives, they draw on the lessons learned from the long history of pandemics and epidemics that came before. Indeed, the earliest written sources document how ancient Mesopotamians responded to the constant threat of epidemic by, on the one hand drawing on spiritual practices and on the other hand, isolating people showing the first symptoms of a disease from others. [@porter2005health, pp. 11-13;@farber2006health;@scott2017against, pp. 98] As time has marched forward, pandemics and epidemics have consistently and significantly affected the course of human history [@behbehani1983smallpox;@@duncan1996impact;@crosby2003columbian;@ziegler2013black;@jannetta2014epidemics] and governments have continued to implement a variety of policies in response.[@hatchett2007public;@shah2016pandemic;@porter2005health] Throughout it all, the collection of reliable data has helped advance collective understanding of which policies are effective in curbing the effects of a given disease outbreak. [@snow1854cholera;@paneth2004assessing] This is no trivial task given that a policy that is effective in one context may be ineffective in another due to a whole host of potentially conditioning factors, including the pathogenesis of the particular disease [@taubenberger20061918;@kilbourne2006influenza], the characteristics of the underlying population [@farmer1996social;@van2020using;@bootsma2007effect;@hunter2007changing], and the available medical[@bandayrel2013information;@abelin2011lessons] and communication [@chew2010pandemics;@jarynowski2020attempt;@boyd2010use;@galaz2009pandemic] technology at the time.
+Though government responses to the COVID-19 pandemic have inaugurated considerable changes in how billions of people live their lives, they draw on the lessons learned from the long history of pandemics and epidemics that came before. Indeed, the earliest written sources document how ancient Mesopotamians responded to the constant threat of epidemic by, on the one hand drawing on spiritual practices and on the other hand, isolating people showing the first symptoms of a disease from others. [@porter2005health, pp. 11-13;@farber2006health;@scott2017against, pp. 98] As time has marched forward, pandemics and epidemics have consistently and significantly affected the course of human history [@behbehani1983smallpox;@@duncan1996impact;@crosby2003columbian;@ziegler2013black;@jannetta2014epidemics] and governments have continued to implement a variety of policies in response.[@hatchett2007public;@shah2016pandemic;@porter2005health] Throughout it all, the collection of reliable data has helped advance collective understanding of which policies are effective in curbing the effects of a given disease outbreak. [@snow1854cholera;@paneth2004assessing] This is no trivial task. Indeed, previous research on pandemics and epidemics suggests that a policy which is effective in one context may be ineffective in another due to a whole host of potentially conditioning factors, including the pathogenesis of the particular disease [@taubenberger20061918;@kilbourne2006influenza], the characteristics of the underlying population [@farmer1996social;@van2020using;@bootsma2007effect;@hunter2007changing], and the available medical[@bandayrel2013information;@abelin2011lessons] and communication [@chew2010pandemics;@jarynowski2020attempt;@boyd2010use;@galaz2009pandemic] technology at the time.
 
 
 We believe that the data presented in this paper can similarly help policy makers and researchers assess how effective different policies are in addressing the spread and health outcomes of COVID-19 [@flaxman2020]. While available research is necessarily preliminary, it suggests that which policies governments have implemented in response to COVID-19 [@ferguson2020report;@goumenou2020covid,@prem2020effect;@singh2020age], when they decided to implement them [@chen2020covid;@koo2020interventions], who they were targeted toward [@arriola2020;@yancy2020covid] and what state capacity they possessed to do so [@anwar2020covid;@corburn2020slum] have all significantly influenced how the virus has affected health outcomes both within and across different country contexts [@anderson2020will;@van2020covid;@barcelo2020voluntary], all of which is readily captured by this dataset [@buthe_etal2020;@kubinec_middleeast_2020] . Equally important is understanding why countries adopt different policies, with early analyses suggesting that institutional and political factors, e.g. the authoritarian or democratic nature of a country's institutions [@cronert2020democracy] or its level of political partisanship [@allcott2020polarization], play an important role. These findings will not only help improve the global response to the current crisis, but can also build an influential foundation of knowledge for responding to future outbreaks  [@barrett1998emerging;@miller2009signature].
  
  
-Meanwhile, given the exogenous timing of the initial outbreak in Wuhan, China, government policies made in reaction to the COVID-19 pandemic constitute the single largest natural experiment in recent memory, allowing researchers to improve causal inference in any number of fields. Indeed, government reactions to the COVID-19 pandemic may forward our understanding of a wide-range of social phenomena, from the evolution of political institutions [@pierson2000increasing;@przeworski1999democracy;@svolik2012politics; @kitschelt2007patrons; @gailmard2019preventing] to the progression of economic development [@meltzer1999economic;@nunn2009importance; @kilian2009not; @noy2009macroeconomic;@correia1918pandemics] and the stability of financial markets [@kindleberger2011manias;@peckham2013economies] to say nothing of what we might learn about environmental economics [@dasgupta2002confronting; @folke2006resilience], mental health [@galea2003trends; @gifford2014environmental], disaster response [@baekkeskov2014pandemic;@boin2016politics] and disaster preparedness [@tierney2007margins;@blaikie2014risk;@burby2006hurricane], based in part on studies from previous pandemics . One early analysis has already made use of our data to explore how lockdown policies affects political attitudes [@boleffect]. Other initial analyses suggest that the COVID-19 pandemic has already led to authoritarian backsliding in some countries [@luhrmann2020], unprecedented shocks to economies around the world [@coibion2020labor;@atkeson2020will;@mckibbin2020global;@fernandes2020economic], and serious negative mental health effects for millions of people [@zandifar2020iranian;@qiu2020nationwide]. While scholars have always sought to understand how large-scale historical events have shaped contemporary phenomena, modern technological tools allow us to document such events more quickly and more precisely than ever before.   
+Meanwhile, given the exogenous timing of the initial outbreak in Wuhan, China, government policies made in reaction to the COVID-19 pandemic constitute the single largest natural experiment in recent memory, allowing researchers to improve causal inference in any number of fields. Indeed, government reactions to the COVID-19 pandemic may forward our understanding of a wide-range of social phenomena, from the evolution of political institutions [@pierson2000increasing;@przeworski1999democracy;@svolik2012politics; @kitschelt2007patrons; @gailmard2019preventing] to the progression of economic development [@meltzer1999economic;@nunn2009importance; @kilian2009not; @noy2009macroeconomic;@correia1918pandemics] and the stability of financial markets [@kindleberger2011manias;@peckham2013economies] to say nothing of what we might learn about environmental economics [@dasgupta2002confronting; @folke2006resilience], mental health [@galea2003trends; @gifford2014environmental], disaster response [@baekkeskov2014pandemic;@boin2016politics] and disaster preparedness [@tierney2007margins;@blaikie2014risk;@burby2006hurricane]. One early analysis has already made use of our data to explore how lockdown policies affects political attitudes [@boleffect]. Other initial analyses suggest that the COVID-19 pandemic has already led to authoritarian backsliding in some countries [@luhrmann2020], unprecedented shocks to economies around the world [@coibion2020labor;@atkeson2020will;@mckibbin2020global;@fernandes2020economic], and serious negative mental health effects for millions of people [@zandifar2020iranian;@qiu2020nationwide]. While scholars have always sought to understand how large-scale historical events have shaped contemporary phenomena, modern technological tools allow us to document such events more quickly and more precisely than ever before.   
 
 
 <!--
@@ -218,7 +218,7 @@ clean_data %>%
         strip.background = element_blank()) +
   xlab("") +
   facet_wrap(~type)
-ggsave("Figure1.jpg",height=225,width=180,units="mm")
+ggsave("Figure1.jpg",height=200,width=180,units="mm", dpi = 300)
 
  
                     
@@ -371,7 +371,7 @@ ggraph(graph, 'fabric', sort.by = node_rank_fabric()) +
   annotate("text", x=7, y=7.9, label= "Greece", size = 8, angle = 90)+
   theme(panel.background = element_blank())+
   expand_limits(x = c(-2, 5), y = c(0,9))
-ggsave("Figure2.jpg", height = 115, width = 88, units = 'mm')
+ggsave("Figure2.jpg", height = 115, width = 88, units = 'mm', dpi= 300)
 ``` 
 
 
@@ -398,7 +398,7 @@ Figure 3 shows the estimated index scores for the `r length(unique(clean_data$co
 Of course, a caveat with the index is that we may be missing some possible policy measures that have occurred due to the difficulty in finding them in published sources. However, there is still clear differentiation within the index in terms of when policies were imposed, with some countries starting to impose policies much earlier than others. Furthermore, there is a clear break around March 1st when countries began to impose more stringent policies across the world.
 
 
-```{r plotindex,fig.cap="CoronaNet Time-Varying Index of National Policy Activity of Measures Opposing COVID-19 Pandemic. Estimates are derived from Stan, a Markov Chain Monte Carlo sampler. Median posterior estimates are shown. Plot A shows the full distribution of countries, while plot B shows each month separately with the top 3 countries for that month in terms of increases in activity scores from start of the month to the end of the month.", fig.show='hide'}
+```{r plotindex,fig.cap="CoronaNet Time-Varying Index of National Policy Activity of Measures Opposing COVID-19 Pandemic. ", fig.show='hide'}
 
 # severity_fit <- readRDS("../data/activity_fit_rw.rds")
 # 
@@ -518,7 +518,7 @@ overall <- to_plot  %>%
 overall + breakout +
   plot_annotation(tag_levels="A")
 
-ggsave("Figure3.jpg", width = 180, height = 225, units = 'mm')
+ggsave("Figure3.jpg", width = 180, height = 170, units = 'mm', dpi = 300)
 
 
 
@@ -896,13 +896,14 @@ compare_plot <- merge_est %>%
   theme(panel.grid = element_blank()) +
   xlab("") +
   ylab("Policy Activity Index Scale (0 to 100)") +
-  labs(caption = "Each cross-sectional model was re-fitted to each day's data independently using MCMC.\nHigh variance in cross-sectional estimates is a result of limited data per day and\ndistortion due to latent scaling effects.") +
+ # labs(caption = "Each cross-sectional model was re-fitted to each day's data independently using MCMC.\nHigh #variance in cross-sectional estimates is a result of limited data per day and\ndistortion due to latent scaling #effects.") +
   guides(color=guide_legend(title="")) +
-  facet_wrap(~country)
+  facet_wrap(~country)+ 
+  theme(legend.position="bottom")
 
 compare_plot
 
-ggsave("Figure4.jpg", width = 180, height = 220, units = 'mm')
+ggsave("Figure4.jpg", width = 180, height = 200, units = 'mm', dpi = 300)
 
 ```
 
@@ -930,8 +931,8 @@ We note as well that the model is parameterized so that each country has its own
 
 get_var <- readRDS("../../data/get_var.rds")
 
-set.seed(2)
-get_var$select = ifelse(1:194 %in% unique(c(1, sample(1:194, 90))), 1, 0)
+set.seed(27)
+get_var$select = ifelse(1:194 %in% unique(c(1, 123, sample(1:194, 63))), 1, 0)
  
 get_var %>% 
   ggplot(aes(y=med_est2,x=reorder(country,med_est2))) +
@@ -940,16 +941,16 @@ get_var %>%
   geom_point(alpha=0.5,colour="blue") +
   geom_text_repel(
     data = subset(get_var, select ==1),
-    aes(label=country),size=3,force=1.8,segment.alpha=0.5,hjust=1) +
+    aes(label=country),size=3,force=3,segment.alpha=0.5,hjust=1) +
   theme(panel.grid = element_blank(),
         panel.background = element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank()) +
   coord_flip() +
   xlab("") +
-  ylab("Over-Time Variance of Latent Scale") +
-  labs(caption="Each estimate is the country-specific variance (heteroskedasticity) parameter reflecting the average amount of over-time\nchange in the estimates. Scale is the original (logit) scale.")
-ggsave("Figure5.jpg", width = 180, height = 240, units = 'mm')
+  ylab("Over-Time Variance of Latent Scale") #+
+  #labs(caption="Each estimate is the country-specific variance (heteroskedasticity) parameter reflecting the #average amount of over-time\nchange in the estimates. Scale is the original (logit) scale.")
+ggsave("Figure5.jpg", width = 88, height = 220, units = 'mm', dpi = 300)
 
 ```
 
@@ -1022,7 +1023,7 @@ Abdelaziz Ibn Abdelouahab, Abhyudaya Tyagi, Adel Clemonds, Adriana Poppe, Advait
 &nbsp;
 &nbsp;
 
-We also thank Brandon Rose and Jataware for making the news database available to this project. We thank Tim Büthe and Tobias Rommel, the Chair for International Relations, the Hochschule für Politik at the Technical University of Munich (TUM), as well as the TUM School of Governance, and the TUM School of Management for the many ways they have supported this project, including with funding in the case of Tim Büthe. We further thank New York University Abu Dhabi for funding in support of this endeavor. Moreover, we appreciate the support by Slack Technologies and RStudio Inc. who provided access to their technical infrastructure.
+We also thank Brandon Rose and Jataware for making the news database available to this project. We thank Tim Büthe, Tobias Rommel, the Chair for International Relations, the Hochschule für Politik at the Technical University of Munich (TUM), as well as the TUM School of Governance, and the TUM School of Management for the many ways they have supported this project. We further thank the Chair of International Relations, the Hochschule für Politik, and New York University Abu Dhabi for their funding in support of this endeavor. Moreover, we appreciate the support by Slack Technologies and RStudio Inc. who provided access to their technical infrastructure.
 
 
 ## Author Contributions {-}
@@ -1040,9 +1041,9 @@ The authors declare no competing interests.
 
 + Figure 3: CoronaNet Time-Varying Index of National Policy Activity of Measures in Response to COVID-19 Pandemic. Estimates are derived from Stan, a Markov Chain Monte Carlo sampler. Median posterior estimates are shown. Plot A shows the full distribution of countries, while plot B shows each month separately with the top 3 countries for that month in terms of increases in activity scores from start of the month to the end of the month.
 
-+ Figure 4: Comparison of Cross-sectional Estimates of Policy Activity Scores to the Random-Walk Time Series Estimates.
++ Figure 4: Comparison of Cross-sectional Estimates of Policy Activity Scores to the Random-Walk Time Series Estimates. This figure provides a comparison of cross-sectional estimates of policy activity scores to the random-walk time series estimates. Each cross-sectional model was re-fitted to each day's data independently using MCMC. High variance in cross-sectional estimates is a result of limited data per day and distortion due to latent scaling effects.
 
-+ Figure 5: Country-level Variance (Over-time Change) Parameters from Policy Activity Index Estimation.
++ Figure 5: Country-level Variance (Over-time Change) Parameters from Policy Activity Index Estimation. This figure shows the country-level variance (over-time change) parameters from the estimation of the policy activity index. Each estimate is the country-specific variance (heteroskedasticity) parameter reflecting the average amount of over-time change in the estimates. Scale is the original (logit) scale.
 
 + Extended Data Figure 1: Network Map of Bans on Inbound Flights of all European countries as of March 15, 2020. This figure shows a network of bans on inbound flights initiated by all European countries as of March 15, 2020. 
 

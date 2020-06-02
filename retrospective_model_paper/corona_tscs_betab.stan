@@ -82,12 +82,10 @@ parameters {
   vector[3] poly; // polinomial function of time
   real<lower=0> finding; // difficulty of identifying infected cases 
   real<lower=0> world_infect; // infection rate based on number of travelers
-  row_vector[S] suppress_effect[2]; // suppression effect of govt. measures, cannot increase virus transmission rate
+  row_vector[S] suppress_effect; // suppression effect of govt. measures, cannot increase virus transmission rate
   row_vector[L] suppress_hier_const[G];
-  row_vector[L] suppress_hier_time[G];
-  row_vector[G] mob_effect[2];
+  row_vector[G] mob_effect;
   vector[G] mob_alpha_const; // mobility hierarchical intercepts
-  vector[G] mob_alpha_time; // mobility hierarchical intercepts for time
   real<lower=0> sigma_med;
   vector<lower=0>[num_country] country_test_raw; // unobserved rate at which countries are willing to test vs. number of infected
   // we assume that as infection rates increase, more tests will be conducted
@@ -100,30 +98,11 @@ transformed parameters {
   matrix[num_country,time_all] num_infected_high; // modeled infection rates for domestic transmission
   
   for(t in 1:time_all) {
-    
-        //matrix[num_country,G] mob_effect[2]; // effect of changes in state-level mobility
-        //
-        //
-        //for(g in 1:G) {
-          //print(g);
-          //mob_effect[1,,g] =
-          //mob_effect[2,,g] = mob_alpha_time[g] + (suppress_hier_time[g]*lock_array[t]')';
-          // print(mob_alpha_const[g]);
-          // print(mob_alpha_time[g]);
-          // print((suppress_hier_const[g]*suppress_array[t]')');
-          // print(((suppress_hier_const[G+g]*suppress_array[t]') .* time_outbreak_trans1[,t]')');
-        //}
         
-    
-      //real num_low;
       num_infected_high[,t] = alpha[2] + time_array[t]*poly + 
                                         world_infect*count_outbreak[t] +
-                                        (suppress_effect[1]*suppress_array[t]')' +
-                                        //+ ((suppress_effect[2]*suppress_array[t]') .* time_outbreak_trans1[,t]')' +
-                                        //(mob_alpha_const[1]*mobility_array[t]')' +
-                                        //((mob_alpha_const[2]*mobility_array[t]').* time_outbreak_trans1[,t]')'; 
-                                        ((mob_effect[1] * mobility_array[t]') * rep_vector(1,num_country));
-                                        //  (mob_effect[2] * mobility_array[t]') * time_outbreak_trans1[,t];
+                                        (suppress_effect*suppress_array[t]')' +
+                                        (mob_effect * mobility_array[t]')' ;
   }
 
   
@@ -136,15 +115,11 @@ model {
   
   //mob_alpha_time ~ normal(0,5);
   phi ~ exponential(phi_scale);
-  for(i in 1:2) {
-    suppress_effect[i] ~ normal(0,5);
-    mob_effect[i] ~ normal(0,5);
-    
-  } 
+  mob_effect ~ normal(0,5);
+  suppress_effect ~ normal(0,5);
   
   for(g in 1:G) {
     suppress_hier_const[g] ~ normal(0,5);
-    suppress_hier_time[g] ~ normal(0,5);
   }
   
    mob_alpha_const ~ normal(0,5);
@@ -164,38 +139,15 @@ model {
     // locations for cases and tests
     vector[num_country] mu_cases = inv_logit(alpha[3] + finding*num_infected_high[,t]);
     vector[num_country] mu_tests = inv_logit(alpha[1] + country_test_raw .* num_infected_high[,t]);
-    // vector[num_country] check_tests;
-    // vector[num_country] check_cases;
     
     // mediator
     
     for(g in 1:G) 
       to_vector(mobility_array[t,,g]) ~ normal(mob_alpha_const[g] + (suppress_hier_const[g]*lock_array[t]')',sigma_med);
 
-    tests[,t] ~ beta_binomial(country_pop,exp(log(mu_tests) + log(phi[1])),exp(log1m(mu_tests) + log(phi[1])));
-    cases[,t] ~ beta_binomial(tests[,t],exp(log(mu_cases)  + log(phi[2])),exp(log1m(mu_cases) + log(phi[2])));
-    // for(n in 1:num_country) {
-    //   //print(phi);
-    //   print(mu_tests);
-    //   check_tests[n] = beta_binomial_lpmf(tests[,t]|country_pop,exp(log(mu_tests) + log(phi[1])),exp(log1m(mu_tests) + log(phi[1])));
-    //   check_cases[n] = beta_binomial_lpmf(cases[,t]|tests[,t],exp(log(mu_cases)  + log(phi[2])),exp(log1m(mu_cases) + log(phi[2])));
-    // 
-    //   if(check_tests[n]==negative_infinity()) {
-    //     print("Tests failed at time point ",t," and country ",n);
-    //   } else {
-    //     target += check_tests[n];
-    //   }
-    // 
-    //   if(check_cases[n]==negative_infinity()) {
-    //     print("Cases failed at time point ",t," and country ",n);
-    //   } else {
-    //     target += check_cases[n];
-    //   }
-    // 
-    // }
-    
-    
-    
+    tests[,t] ~ beta_binomial(country_pop,mu_tests*phi[1],(1-mu_tests) * phi[1]);
+    cases[,t] ~ beta_binomial(tests[,t],mu_cases *phi[2],(1-mu_cases) * phi[2]);
+
   
   }
 

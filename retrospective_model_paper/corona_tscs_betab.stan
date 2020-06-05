@@ -109,9 +109,9 @@ transformed parameters {
 }
 model {
   
-  poly ~ normal(0,5); // could be large
+  poly ~ normal(0,10); // could be large
   world_infect ~ normal(0,1);
-  alpha ~ normal(0,10); // this can reach extremely low values
+  alpha ~ normal(0,5); // this can reach extremely low values
   
   //mob_alpha_time ~ normal(0,5);
   phi ~ exponential(phi_scale);

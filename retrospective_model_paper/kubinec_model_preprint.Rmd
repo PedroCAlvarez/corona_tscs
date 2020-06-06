@@ -10,7 +10,7 @@ author:
 institute:
   - nyuad: New York University Abu Dhabi
   - gvf: School of Applied Mathematics, Getulio Vargas Foundation
-date: "April 20th, 2020"
+date: "June 8th, 2020"
 toc: false
 output: 
   bookdown::pdf_document2:
@@ -23,7 +23,7 @@ output:
       - '--lua-filter=author-info-blocks.lua'
   #bookdown::word_document2
 bibliography: BibTexDatabase.bib
-abstract: "As the COVID-19 outbreak progresses, increasing numbers of researchers are examining how an array of factors either hurt or help the spread of the disease. Unfortunately, the majority of available data, primarily confirmed cases of COVID-19, are widely known to be biased indicators of the spread of the disease. In this paper we present a retrospective Bayesian model that is much simpler than epidemiological models of disease progression but is still able to identify the effect of covariates on the historical infection rate. The model is validated by comparing our estimation of the count of infected to projections from expert surveys and extant disease forecasts. To apply the model, we show that as of April 20th, there are approximately 3 million infected people in the United States, and these people are increasingly concentrated in states with more wealth, better air quality, fewer smokers, more residents under the age of 18, more public health funding and a history of more cardiovascular deaths. On the other hand, the timing of state declarations of emergency and the proportion of people who voted for President Trump in 2016 are not clear predictors of COVID-19 trends. In addition, we find that the US states have increased testing at approximately the same level in line with infections, suggesting that testing has not yet increased significantly above infection trends.^[To reproduce the model and to access the underlying Stan code, please see our [Github page](https://github.com/saudiwin/corona_tscs). This paper is part of the [CoronaNet project](https://lumesserschmidt.github.io/CoronaNet/) collecting data on government responses to the COVID-19 pandemic. For helpful comments we thank Cindy Cheng and Joan Barcelo.]"
+abstract: "As the COVID-19 outbreak progresses, increasing numbers of researchers are examining how an array of factors either hurt or help the spread of the disease. Unfortunately, the majority of available data, primarily confirmed cases of COVID-19, are widely known to be biased indicators of the spread of the disease. In this paper we present a retrospective Bayesian model that is much simpler than epidemiological models of disease progression but is still able to identify the effect of covariates on the historical infection rate. The model is validated by comparing our estimation of the count of infected to projections from expert surveys and extant disease forecasts. To apply the model, we show that as of May 25th, there are approximately 4 million infected people presently infected in the United States, and these people are increasingly concentrated in states with higher vote shares for President Donald Trump in 2016, higher rates of cardiovascular deaths, fewer medical providers and more smokers on average than other states. We also estimate the effect of state stay-at-home orders, showing that orders that were imposed long after COVID-19 infections were first discovered have proved to be more effective at stamping out the virus than lockdowns imposed very soon after positive cases were discovered. We use mediation analysis to show that the discrepancy is in part explained by the limited reductions in social contact as measured by Google mobility data for these social distancing measures, suggesting limited enforcement and compliance with the orders.^[To reproduce the model and to access the underlying Stan code, please see our [Github page](https://github.com/saudiwin/corona_tscs). This paper is part of the [CoronaNet project](https://lumesserschmidt.github.io/CoronaNet/) collecting data on government responses to the COVID-19 pandemic. For helpful comments we thank Cindy Cheng and Joan Barcelo.]"
 ---
 
 ```{r setup, include=FALSE}
@@ -82,7 +82,7 @@ The mediation analysis further shows that the effect of lockdowns through decrea
 
 # Methods
 
-In this section we present an intuitive overview of the model, and we refer the interested reader to the supplemental materials for a more complete exposition combined with Monte Carlo simulations showing recovery of the latent infection rate. 
+In this section we present a formal definition of the model. We refer the reader to the supplementary materials for details of Monte Carlo simulations showing recovery of the latent infection rate. 
 
 Compartmental models employed by epidemiologists to study disease, and in particular SARS-CoV2 [@peak2020;@riou2020;@verity2020;@perkins2020;@lourenco2020;@li2020;@ferguson2020], suppose different classes (compartments) of individuals in the population, denoted $S$ for susceptible, $I$ for infectious, and $R$ for removed (other compartments may be added such as $E$ for exposed). The model is usually written in the form of a system of ordinary differential equations (ODEs) and assumes a fixed population size, as seems reasonable during a relatively quick epidemic.
 The number infected individuals can then be obtained from the solution of the ODE system for the $I$ compartment.
@@ -106,11 +106,133 @@ However, we do not have estimates of the actual infected rate $I_{ct}$, only pos
 \footnotesize{Figure shows the relationship between a covariate $X_{ct}$ representing a policy or social factor influencing the infection rate $I_{ct}$. Because the infection rate $I_{ct}$ influences both the number of reported tests $q_{ct}$ and reported cases $a_{ct}$, any regression of a covariate $X_{ct}$ on the reported data will be biased.}
 \end{figure}
 
-The Bayesian model presented in the supplementary materials provides a full explanation of how to model the infection rate's influence on both cases and tests simultaneously. We further show in the supplementary materials that two restrictions are necessary to identify the sign and rank of the effect of covariates $X_{ct}$ on $I_{ct}$: the paths $I_{ct} \rightarrow q_{ct}$ and $I_{ct} \rightarrow a_{ct}$ must be strictly positive so that an increasing infection rate will have a non-decreasing effect on cases and tests. Given these restrictions and weakly informative priors on the parameters, it is possible to know whether $X_{ct}$ is associated with increasing or decreasing $I_{ct}$, though not with respect to the actual number of infected people, only in terms of the covariate's sign or rank relative to other covariates.
+Given this intuitive overview, we turn to a more formal definition. The outcome to be explained is more specifically defined as the tests and cases reported on a given day rather than the cumulative total for ease of modeling purposes (i.e., the lagged difference of the cumulative total). We assume that $I_{ct}$ is an unobserved Beta-distributed variable with a 3-order polynomial time trend of the number of post-outbreak time periods $T_O < T$, where an outbreak begins at the first reported case in a given area. The third-order polynomial reflects the fact that epidemics occur in waves, although the curve is unlikely to be symmetric as a simpler quadratic function would require.
+By using a single time function, the model assumes that the coronavirus follows a similar pattern of infection across states, as appears to be the case (i.e., all states are infected with the same virus).
 
-Furthermore, we show in the supplementary materials that if further prior information can be put on the ratio between the true number of infected individuals $I_{ct}$ and the number of tests $q_{ct}$, it is possible to transform inferences from the model to approximate counts of infected people up to the present. Thankfully, this information is available through epidemiological models of the disease, which offer inferences on the number of un-diagnosed cases [@li2020;@peak2020]. Based on these estimates, we can put an informative prior in the model that the number of tests is likely to be at least 10% of the total number of infected individuals, reaching as high as 10 times the number of infected.   With this prior information from disease simulations, it is possible to obtain an empirical estimate of infected rates and covariate effects that are more useful to the general public than solely observed tests and cases, as we demonstrate in the next section.
+The unobserved infection rate $I_{ct}$ is a function of the following parameters:
 
-Finally, we note that an advantage of this framework is providing a way to measured the count of infected adjusting for known biases in the number of tests. By comparing numbers of tests per capita and growth rates in cases across regions, the model is able to backwards infer a likely number of infected individuals in a given area. As such it exploits both within-area and between-area variance to adjust for the biases of imperfect testing.
+\begin{align}
+\operatorname{Pr}(I_{ct} \mid T=t) \sim \operatorname{Beta}(&\alpha_1 + \beta_{O1}\sum_{c=1}^{C} \textbf{1}(a_{ct'}>0) \forall t'<t + \beta_{S1}X_{ct} + \\
+                        &\beta_{I1}t_o + \beta_{I2}t_o^2 + \beta_{I3}t_o^3, \phi),
+  (\#eq:binom)
+\end{align}
+
+where $g(\cdot)$ is the inverse logit function, $\beta_{O1}\sum_{c=1}^{C} \textbf{1}(a_{ct-1}>0) \forall t'<t$ is the sum of states with at least one case of infection in the world at any previous time point, which we term the world infection rate, and the three $\beta_{Ii}$ are polynomial coefficients of the number of post-outbreak time periods $t_o$.
+
+The world infection parameter measures the spread of the virus due to travel across state borders, and as such will increase rapidly as more states are infected.
+By contrast, the polynomial time trends represent possible within-state transmission of the virus, which can cause exponentially growing case counts compared to the linear sum of infected states parameter.
+Finally, the parameter $\phi$ is a dispersion parameter governing how precise the infection rate estimate is. 
+
+Given these two primary ways that the infection rate can increase, we can model the effect of background covariates and suppression policies as $\beta_{S1}X_{ct}$. We can include linear time counters in $X_c$ and interactions to more flexibly model time-varying covariates as well.
+
+<!-- The second way suppression measures enter the model is through $\beta_{S2}X_c$, which can increase over time as the virus increases. This parameter reflects possible measures which will grow more effective as domestic transmission of the virus increases (i.e. as the polynomial time trend takes off). -->
+<!-- As such, it is assumed that any deviation from the common domestic transmission pattern is due to these time-varying suppression measures. -->
+
+Once an outbreak has started in state $c$, which is indicated by a positive case count in time $t-1$, a time counter $t_o=1$ starts for that state and increases by 1 for each following time point until $T$.
+
+Given this specification of the infection rate process, we can then move to the generation of the observed data, tests $q_{ct}$ and cases $a_{ct}$.
+The infection rate is assumed to influence both of these quantities.
+First, an increasing number of infections is associated with more tests as states try to identify who may have the virus. Furthermore, a rising infection rate is associated with a higher ratio of positive results (reported cases) conditional on the number of tests.
+We model both of these observed indicators, tests and cases, jointly to simultaneously adjust for the infection rate's influence on both factors.
+
+To model the number of tests, we assume that each state has an unobserved level of testing parameter, $\beta_{cq}>0$, indicating how strongly each state is willing and able to perform tests as a factor of the unobserved infection rate.
+The number of observed tests $q_{ct}$ for a given time point $t$ and state $c$ conditional on  the states' population, $c_{p}$, has a binomial distribution: 
+
+\begin{equation}
+q_{ct} \sim \operatorname{Binomial}(c_{p}, g(\alpha_2 + \beta_{cq}I_{ct})).
+(\#eq:binom2)
+\end{equation}
+
+The parameter $\beta_{cq}$ serves to scale the infection rate $I_{ct}$ so that an increasing infection rate has heterogeneous effects on the number of tests by state.
+The intercept $\alpha_2$ indicates how many tests would be performed in a state with an infection rate of zero.
+It is assumed that this number is quite low, though not necessarily zero. 
+
+Given the parameter $\beta_{cq}$, a state could test almost no one or test far more than are actually infected depending on their willingness to impose tests.
+However, the number of tests is increasing in $I_{ct}$ conditional on a state's willingness to test people.
+That is, regardless of how much a state wants to test people, as the outbreak grows the number of tests will increase though at very different rates.^[For a very compelling visualiation of this process with empirical data from the COVID-19 pandemic, we refer the reader to this website: https://ourworldindata.org/grapher/covid-19-tests-cases-scatter-with-comparisons.]
+
+Given the number of observed tests $q_{ct}$, we can then generate the number of observed cases $a_{ct}$ as a binomial random variable conditional on the number of tests $q_{ct}$:
+
+\begin{equation}
+a_{ct} \sim \operatorname{Binomial}(q_{ct}, g(\alpha_3 + \beta_a I_{ct})),
+(\#eq:binom3)
+\end{equation}
+where $g(\cdot)$ is again the inverse logit function, $\alpha_3$ is an intercept that indicates how many cases would test positive with an infection rate of zero (equal to the false positive rate of the test), and $\beta_a>0$ is a parameter that determines how hard it is to find the infected people and test them as opposed to people who are not actually infected.
+The multiplication of this parameter and the infection rate determines the observed number of cases $a_{ct}$ as a proportion of the number of observed tests $q_{ct}$. 
+
+To summarize the model, infection rates determine how many tests a state is likely to undertake and also the number of positive tests they receive conditional on a certain number of tests.
+This simultaneous adjustment helps takes care of mis-interpreting the observed data by not taking into account varying testing rates, which is likely why some policy makers argue that the epidemiological models are wrong.
+
+Because sampling from a model with a hierarchical Beta parameter can be difficult, we can simplify the final likelihood by combining the beta distribution and the binomial counts into a beta-binomial model for tests:
+
+\begin{equation}
+q_{ct} \sim \operatorname{Beta-Binomial}(c_p, g(\alpha_2 + \beta_qI_{ct}), \phi_q),
+(\#eq:binom4)
+\end{equation}
+
+and cases:
+
+\begin{equation}
+a_{ct} \sim \operatorname{Beta-Binomial}(q_{ct}, g(\alpha_3 + \beta_a I_{ct}), \phi_a).
+(\#eq:binom5)
+\end{equation}
+
+For computational reasons, the infection rates $I_{ct}$ are put in to the beta-binomial model on the logit scale instead of transforming them to (0,1), but they can be transformed to proportions post-estimation with the inverse logit function.
+
+## Identification
+
+This model contains an unobserved latent process $I_{ct}$, and as such there are further constraints necessary in order to have a unique scale and rotation of the latent variable.
+The most important restrictions are positivity constraints on the parameters $\beta_a$ and $\beta_q$ that govern the relationship between the infection rate and test and case counts.
+It is assumed that infection rates will increase both the number of tests and the number of cases relative to the number of tests, though at necessarily different rates.
+
+To add further indentification, it would be possible to fix or put an informative prior on $\alpha_3$ as the intercept necessarily equals the false positive rate of a COVID-19 test.
+The actual false positive rate of the tests being used for the virus is very low, near zero for the PCR tests, according to the Federal Drug Administration.^[See https://www.fda.gov/media/136151/download.] For the purposes of this simulation, we will allow $\alpha_3$ to float as it will not affect identification of the sign of the covariates.
+
+As we will show, no other identification restrictions are necessary to estimate the model beyond weakly informative priors assigned to parameters.
+These are:
+\begin{align}
+\beta_a &\sim \operatorname{Exponential}(.1),\\
+\beta_{qc} &\sim \operatorname{Exponential}(\sigma_q),\\
+\sigma_q &\sim \operatorname{Exponential}(.1),\\
+\beta_{Si} &\sim \operatorname{Normal}(0, 2),\\
+\beta_{Ii} &\sim \operatorname{Normal}(0, 5),\\
+\alpha_1 &\sim \operatorname{Normal} (0,10),\\
+\alpha_2 &\sim \operatorname{Normal}(0,10),
+(\#eq:binom6)
+\end{align}
+where the normal distribution is parametrized in terms of mean and standard deviation.
+
+The one prior to note is that a hierarchical regularizing prior is put on the varying testing adjustment parameters $\beta_{qc}$ for regularization purposes due to the limited data available to inform the parameter.
+
+Other than these weakly informative priors, the model is identified, as we show in the next section.
+However, it is important to emphasize that there is no information in the model that identifies the *true* number of infected people. Rather, the infection rate is a latent process, and as such it is not known exactly what scale to assign to it without further information. However, both the relative growth in infection rates are identified, along with the effect of suppression measures, so *the model is useful without being fully identified*.
+Furthermore, by incorporating insights from SIR/SEIR models we can also identify the latent scale with reasonable informative priors, as we show in the data analysis section.
+
+We note that an advantage of this framework is providing a way to measured the count of infected adjusting for known biases in the number of tests. By comparing numbers of tests per capita and growth rates in cases across regions, the model is able to backwards infer a likely number of infected individuals in a given area. As such it exploits both within-area and between-area variance to adjust for the biases of imperfect testing.
+
+<!-- The Bayesian model presented in the supplementary materials provides a full explanation of how to model the infection rate's influence on both cases and tests simultaneously. We further show in the supplementary materials that two restrictions are necessary to identify the sign and rank of the effect of covariates $X_{ct}$ on $I_{ct}$: the paths $I_{ct} \rightarrow q_{ct}$ and $I_{ct} \rightarrow a_{ct}$ must be strictly positive so that an increasing infection rate will have a non-decreasing effect on cases and tests. Given these restrictions and weakly informative priors on the parameters, it is possible to know whether $X_{ct}$ is associated with increasing or decreasing $I_{ct}$, though not with respect to the actual number of infected people, only in terms of the covariate's sign or rank relative to other covariates. -->
+
+
+
+<!-- Furthermore, we show in the supplementary materials that if further prior information can be put on the ratio between the true number of infected individuals $I_{ct}$ and the number of tests $q_{ct}$, it is possible to transform inferences from the model to approximate counts of infected people up to the present. Thankfully, this information is available through epidemiological models of the disease, which offer inferences on the number of un-diagnosed cases [@li2020;@peak2020]. Based on these estimates, we can put an informative prior in the model that the number of tests is likely to be at least 10% of the total number of infected individuals, reaching as high as 10 times the number of infected.   With this prior information from disease simulations, it is possible to obtain an empirical estimate of infected rates and covariate effects that are more useful to the general public than solely observed tests and cases, as we demonstrate in the next section. -->
+
+We can extend this model further by considering the mediation of covariates $X_{ct}$ by adding a mediator $M_{ct}$ to the causal diagram, as in Figure \@ref(fig:tikzfig2). Because the mediator operates on the latent variable, it can allow us to separate the direct from indirect effects of the covariate on the infection rate. Adding this step into the model only requires an additional likelihood for the mediator-covariate relationship as in @Yuan2009. With the joint posterior estimates, it is straightforward to decompose the effect of $X_{ct}$ into indirect and direct effects employing the total derivative of the infection rate from @winship1983. 
+
+\begin{figure}
+\label{tikzfig2}
+\caption{Directed Acyclic Graph for Latent Infection Rate with Mediator}
+\ctikzfig{policy_dag_mediate}
+\footnotesize{This figure adds a mediator $M_{ct}$ that mediates the relationship between a covariate $X_{ct}$ and the latent infection rate $I_{ct}$.}
+\end{figure}
+
+To add continuous mediation covariates $M_{ct}$, we add the following likelihood to the joint posterior:
+
+\begin{equation}
+M_{ct} \sim N(\alpha_m +_ \gamma X_{ct},\sigma_m)
+(\#eq:mediate)
+\end{equation}
+
+as well as include $M_{ct}$ as a linear predictor in \@ref(eq:binom).
 
 # Results
 

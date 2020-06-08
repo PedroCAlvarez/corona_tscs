@@ -56,6 +56,11 @@ rstan_options(auto_write=T)
 
 knitr::opts_chunk$set(warning=F,message=F)
 
+# NEED THESE GITHUB REPOS IN YOUR HOME FOLDER:
+
+# https://github.com/COVID19Tracking/covid-tracking-data
+# https://github.com/nytimes/covid-19-data
+
 system2("git",args=c("-C ~/covid-tracking-data","pull"))
 system2("git",args=c("-C ~/covid-19-data","pull"))
 
@@ -290,7 +295,7 @@ merge_names <- tibble(state.abb,
 
 # google mobility data
 
-goog_mobile <- read_csv("../data/Global_Mobility_Report.csv",
+goog_mobile <- read_csv("https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv?cachebust=b8b0c30cbee5f341",
                         col_types = cols(sub_region_2=col_character())) %>% filter(sub_region_1 %in% merge_names$state,
                                                    is.na(sub_region_2),
                                                    country_region=="United States") %>% 
@@ -842,10 +847,10 @@ case_count <- left_join(case_count,select(combined,deaths,recovered,month_day,st
                         c("time_point"="month_day","state")) %>% 
   mutate(recovered=coalesce(recovered,0),
          deaths=coalesce(deaths,0),
-         cum_sum_cases = cum_sum_cases - deaths - recovered,
-         lag_case=ifelse(dplyr::lag(cum_sum_cases,n=14)<0 & !is.na(dplyr::lag(cum_sum_cases,n=14)),0,
-                         coalesce(dplyr::lag(cum_sum_cases,n=14),0)),
-         cum_sum_cases = cum_sum_cases - lag_case)
+         cum_sum_cases = cum_sum_cases - deaths - recovered)
+         # lag_case=ifelse(dplyr::lag(cum_sum_cases,n=14)<0 & !is.na(dplyr::lag(cum_sum_cases,n=14)),0,
+         #                 coalesce(dplyr::lag(cum_sum_cases,n=14),0)),
+         # cum_sum_cases = cum_sum_cases - lag_case)
 
 us_case_count <- group_by(case_count,time_point) %>% 
   summarize(all_cum_sum=sum(cum_sum_cases),
@@ -956,7 +961,7 @@ all_est_state <- as.data.frame(us_fit_scale,"num_infected_high") %>%
   gather(key="variable",value="estimate",-iter) %>% 
   group_by(variable) %>% 
   mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-         time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
+         time_point=as.numeric(str_extract(variable,"[0-9]+(?=\\])")),
          time_point=ymd(min(combined$month_day)) + days(time_point-1))
 
 all_est_state <- left_join(all_est_state,tibble(state_num=1:nrow(cases_matrix),
@@ -971,13 +976,15 @@ calc_sum_state <- all_est_state %>%
   #mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
   mutate(estimate=(plogis(estimate))*((state_pop))) %>%
   group_by(state,iter) %>% 
-  arrange(state,time_point) %>% 
+  arrange(state,iter,time_point) %>% 
   mutate(cum_est=cumsum(estimate) - recovered - deaths,
          cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=14),0)) %>% 
   group_by(time_point,state,suppress_measures) %>% 
   summarize(med_est=quantile(cum_est,.5),
             high_est=quantile(cum_est,.95),
             low_est=quantile(cum_est,.05)) 
+
+saveRDS(calc_sum_state,"../data/calc_sum_state.rds")
 
 # Annotations
 
@@ -1010,21 +1017,6 @@ all <- calc_sum_state %>%
         legend.position = "top")
 
 # same calculations, but per capita
-
-all_est_state <- as.data.frame(us_fit_scale,"num_infected_high") %>% 
-  mutate(iter=1:n()) %>% 
-  gather(key="variable",value="estimate",-iter) %>% 
-  group_by(variable) %>% 
-  mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-         time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
-         time_point=ymd(min(combined$month_day)) + days(time_point-1))
-
-all_est_state <- left_join(all_est_state,tibble(state_num=1:nrow(cases_matrix),
-                                                state=cases_matrix$state,
-                                                state_pop=real_data$country_pop,
-                                    suppress_measures=real_data$suppress[1:nrow(cases_matrix),"emer_outbreak"],by="state_num"))
-
-all_est_state <- left_join(all_est_state,case_count,by=c("state","time_point"))
 
 calc_sum_state <- all_est_state %>% 
   ungroup %>% 
@@ -1111,8 +1103,8 @@ if(run_model) {
       over_mod <- lapply(seq(min(combined$lockdown_outbreak),max(combined$lockdown_outbreak),
                              length.out=10), function(d) {
 
-          tibble(direct_eff=rowMeans((direct_effect[i,12] + direct_effect[i,13]*d)*p_infected),
-                  indirect_eff=rowMeans((mob_effect[i,m]*(lock_effect[i,m,3] + lock_effect[i,m,4]*d)*p_infected)),
+          tibble(direct_eff=rowMeans((direct_effect[,12] + direct_effect[,13]*d)*p_infected),
+                  indirect_eff=rowMeans((mob_effect[,m]*(lock_effect[,m,3] + lock_effect[,m,4]*d)*p_infected)),
                  total_eff=direct_eff + indirect_eff,
                  prop_med=indirect_eff/total_eff) %>% 
             mutate(mobility=colnames(covs_mob)[m],

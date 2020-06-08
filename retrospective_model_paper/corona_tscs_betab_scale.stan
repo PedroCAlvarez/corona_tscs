@@ -36,6 +36,7 @@ transformed data {
   matrix[num_country,S] suppress_array[time_all];
   matrix[num_country,G] mobility_array[time_all];
   matrix[num_country,L] lock_array[time_all];
+  matrix[num_country,time_all] test_max;
   
   // make some arrays of counts of the outbreak
   
@@ -50,7 +51,22 @@ transformed data {
         time_outbreak_trans2[n,t] = 0;
         time_outbreak_trans3[n,t] = 0;
       }
+      if(t==1) {
+        test_max[n,t] = tests[n,t];
+      } else {
+        if(test_max[n,t-1]>tests[n,t]) {
+          test_max[n,t] = test_max[n,t-1];
+        } else {
+          test_max[n,t] = tests[n,t];
+        }
+      }
     }
+  }
+  
+  // standardized time max
+  
+  for(n in 1:num_country) {
+    test_max[n,] = (test_max[n,] - mean(test_max[n,]))/sd(test_max[n,]);
   }
   
   // make a new array of time indices
@@ -85,6 +101,7 @@ parameters {
   row_vector[S] suppress_effect; // suppression effect of govt. measures, cannot increase virus transmission rate
   row_vector[L] suppress_hier_const[G];
   row_vector[G] mob_effect;
+  real test_max_par;
   vector[G] mob_alpha_const; // mobility hierarchical intercepts
   real<lower=0> sigma_med;
   vector<lower=0>[num_country] country_test_raw; // unobserved rate at which countries are willing to test vs. number of infected
@@ -117,6 +134,7 @@ model {
   phi ~ exponential(phi_scale);
   mob_effect ~ normal(0,5);
   suppress_effect ~ normal(0,5);
+  test_max_par ~ normal(0,5);
   
   for(g in 1:G) {
     suppress_hier_const[g] ~ normal(0,5);
@@ -138,7 +156,8 @@ model {
     vector[num_country] mix_prop = inv_logit(num_infected_high[,t]);
     // locations for cases and tests
     vector[num_country] mu_cases = inv_logit(alpha[3] + finding*num_infected_high[,t]);
-    vector[num_country] mu_tests = inv_logit(alpha[1] + country_test_raw .* num_infected_high[,t]);
+    vector[num_country] mu_tests = inv_logit(alpha[1] + country_test_raw .* num_infected_high[,t] +
+                                              test_max_par*test_max[,t]);
     
     // mediator
     

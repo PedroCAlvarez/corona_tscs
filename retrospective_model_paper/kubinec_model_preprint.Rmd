@@ -66,7 +66,7 @@ system2("git",args=c("-C ~/covid-19-data","pull"))
 
 # whether to run model (it will take a few hours) or load saved model from disk
 
-run_model <- F
+run_model <- T
 
 pan_model <- stan_model("corona_tscs_betab.stan")
 
@@ -270,7 +270,10 @@ state_gdp <- readxl::read_xlsx("../data/qgdpstate0120_0_bea.xlsx",sheet="Table 3
   mutate(gdp=Q1 + Q2 + Q3 +Q4)
 
 # US Census data - population & percent foreign-born
-# note: you need a Census API key loaded to use this -- see package tidycensus docs
+# note: you need a Census API key loaded to use this -- see package tidycensus docs and use 
+# function census_api_key with the key number and install=T
+
+census_api_key(Sys.getenv("CENSUS_API_KEY"))
 
 acs_data <- get_acs("state",variables=c("B01003_001","B05002_013"),year=2018,survey="acs1") %>% 
   select(-moe) %>% 
@@ -316,7 +319,7 @@ nyt_data <- read_csv("~/covid-19-data/us-states.csv") %>%
   mutate(month_day=ymd(date)) %>% 
   group_by(state) %>% 
     arrange(state,date) %>% 
-  mutate(cases=floor(c(cases[1:2],roll_mean(cases,n=3))),
+  mutate(cases=floor(c(cases[1:6],roll_mean(cases,n=7))),
          Difference=cases - dplyr::lag(cases),
          Difference=coalesce(Difference,0,0)) %>% 
   left_join(merge_names,by="state")
@@ -326,7 +329,7 @@ tests <- read_csv("~/covid-tracking-data/data/states_daily_4pm_et.csv") %>%
   arrange(state,month_day) %>% 
   group_by(state) %>% 
   # first do 3-day moving average
-  mutate(total=floor(c(total[1:2],roll_mean(total,n=3)))) %>% 
+  mutate(total=floor(c(total[1:6],roll_mean(total,n=7)))) %>% 
   mutate(tests_diff=total-dplyr::lag(total),
          cases_diff=positive-dplyr::lag(positive),
          cases_diff=coalesce(cases_diff,positive),
@@ -386,7 +389,6 @@ combined <- group_by(combined,state) %>%
                     TRUE~tests),
            gdp=gdp/state_pop,
            Difference=ifelse(Difference<0,0,Difference)) %>% 
-  arrange(state) %>% 
   filter(state!="Puerto Rico")
 
 combined <- group_by(combined,state) %>% 
@@ -395,22 +397,6 @@ combined <- group_by(combined,state) %>%
   fill(outbreak,.direction="down") %>% 
   mutate(outbreak_time=cumsum(outbreak)) %>% 
   ungroup %>%
-  mutate_at(c("Cardiovascular Deaths",
-              "outbreak_time",
-              "Air Pollution",
-              "Dedicated Health Care Provider",
-              "Smoking",
-              "Population under 18 years",
-              "Public Health Funding",
-              "gdp",
-              "grocery",
-              "parks",
-              "residential",
-              "retail",
-              "transit",
-              "workplaces",
-              "trump",
-              "prop_foreign"), ~as.numeric(scale(.,scale = F))) %>% 
   group_by(month_day) %>% 
   mutate(world_infect=sum(outbreak_time>1)) %>% 
   group_by(state) %>% 
@@ -421,7 +407,32 @@ combined <- group_by(combined,state) %>%
          lockdown_outbreak=ifelse(length(month_day[outbreak==1] - month_day[month_day==stayhome])==0,
                                   month_day[outbreak==1] - max(month_day),
                                   month_day[outbreak==1] - month_day[month_day==stayhome]),
-         lockdown=ifelse(lockdown>0,cumsum(lockdown),lockdown)) %>% 
+         lockdown=ifelse(lockdown>0,cumsum(lockdown),lockdown),
+         lockdown=dplyr::lag(lockdown,n=14)) %>% 
+  mutate_at(c("grocery",
+              "parks",
+              "residential",
+              "retail",
+              "transit",
+              "workplaces"), ~dplyr::lag(.,n=14)) %>% 
+    ungroup %>% 
+  mutate_at(c("grocery",
+              "parks",
+              "residential",
+              "retail",
+              "transit",
+              "workplaces",
+              "trump",
+              "gdp",
+              "Dedicated Health Care Provider",
+              "Smoking",
+              "Population under 18 years",
+              "Air Pollution",
+              "Cardiovascular Deaths",
+              "Public Health Funding"), ~as.numeric(scale(.))) %>% 
+  mutate_at(c("lockdown",
+              "emer_outbreak",
+              "lockdown_outbreak"),~scale(.,scale=F)) %>% 
   filter(!is.na(grocery))
 
 # look at how days after lockdown versus days after emergency compare
@@ -517,7 +528,7 @@ real_data <- list(time_all=ncol(cases_matrix_num),
                  S=ncol(covs),
                  G=ncol(covs_mob),
                  L=ncol(covs_lock),
-                 country_pop=unique(floor(just_data$state_pop/100)),
+                 country_pop=floor(unique(just_data$state_pop)/100),
                  cases=cases_matrix_num,
                  ortho_time=ortho_time,
                  phi_scale=.01,
@@ -544,11 +555,12 @@ init_vals <- function() {
 if(run_model) {
   # loop over states
       
-  us_fit <- sampling(pan_model,data=real_data,chains=3,cores=3,iter=800,warmup=500,init=0)
+  #us_fit <- sampling(pan_model,data=real_data,chains=3,cores=3,iter=800,warmup=500,init=0)
 
 
   
-  saveRDS(us_fit,"../data/us_fit.rds")
+  #saveRDS(us_fit,"../data/us_fit.rds")
+  us_fit <- readRDS("../data/us_fit.rds")
 } else {
   us_fit <- readRDS("../data/us_fit.rds")
 }
@@ -765,7 +777,7 @@ if(run_model) {
   pan_model_scale <- stan_model("corona_tscs_betab_scale.stan")
   
   us_fit_scale <- sampling(pan_model_scale,data=real_data,chains=3,cores=3,iter=800,warmup=500,
-                           init=0)
+                           init=0,control=list(max_treedepth=12))
   
   saveRDS(us_fit_scale,"../data/us_fit_scale.rds")
 } else {
@@ -847,10 +859,10 @@ case_count <- left_join(case_count,select(combined,deaths,recovered,month_day,st
                         c("time_point"="month_day","state")) %>% 
   mutate(recovered=coalesce(recovered,0),
          deaths=coalesce(deaths,0),
-         cum_sum_cases = cum_sum_cases - deaths - recovered)
-         # lag_case=ifelse(dplyr::lag(cum_sum_cases,n=14)<0 & !is.na(dplyr::lag(cum_sum_cases,n=14)),0,
-         #                 coalesce(dplyr::lag(cum_sum_cases,n=14),0)),
-         # cum_sum_cases = cum_sum_cases - lag_case)
+         cum_sum_cases = cum_sum_cases - deaths - recovered,
+         lag_case=ifelse(dplyr::lag(cum_sum_cases,n=14)<0 & !is.na(dplyr::lag(cum_sum_cases,n=20)),0,
+                         coalesce(dplyr::lag(cum_sum_cases,n=20),0)),
+         cum_sum_cases = cum_sum_cases - lag_case)
 
 us_case_count <- group_by(case_count,time_point) %>% 
   summarize(all_cum_sum=sum(cum_sum_cases),
@@ -864,12 +876,13 @@ calc_sum <- all_est_state %>%
   mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
   group_by(state_num,iter) %>% 
   arrange(state_num,time_point) %>% 
-  mutate(cum_est=cumsum(estimate)) %>% 
-  group_by(time_point,iter,all_cum_sum,all_rec,all_death) %>% 
-  summarize(us_total=sum(cum_est) - unique(all_rec) - unique(all_death)) %>%
-  group_by(iter) %>% 
-  arrange(iter,time_point) %>% 
-  mutate(us_total=us_total - coalesce(dplyr::lag(us_total,n=14),0)) %>% 
+  #mutate(cum_est=cumsum(estimate)) %>% 
+  group_by(time_point,iter,all_cum_sum,all_rec,all_death) %>%
+  summarize(us_total=sum(estimate)) %>%
+  # summarize(us_total=estimate) %>% 
+  # group_by(iter) %>% 
+  # arrange(iter,time_point) %>% 
+  # mutate(us_total=us_total - coalesce(dplyr::lag(us_total,n=14),0)) %>% 
   #summarize(us_total=sum(cum_est)) %>% 
   group_by(time_point,all_cum_sum) %>% 
   summarize(med_est=quantile(us_total,.5),
@@ -973,18 +986,19 @@ all_est_state <- left_join(all_est_state,case_count,by=c("state","time_point"))
 
 calc_sum_state <- all_est_state %>% 
   ungroup %>% 
-  #mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
-  mutate(estimate=(plogis(estimate))*((state_pop))) %>%
+  mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
+  #mutate(estimate=(plogis(estimate))*((state_pop))) %>%
   group_by(state,iter) %>% 
   arrange(state,iter,time_point) %>% 
-  mutate(cum_est=cumsum(estimate) - recovered - deaths,
-         cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=14),0)) %>% 
-  group_by(time_point,state,suppress_measures) %>% 
+  mutate(cum_est=cumsum(estimate) - recovered - deaths, 
+  cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=19),0)) %>% 
+  #cum_sum_cases = cum_sum_cases - coalesce(dplyr::lag(cum_sum_cases,n=14),0)) %>% 
+  group_by(time_point,state,suppress_measures,cum_sum_cases) %>% 
   summarize(med_est=quantile(cum_est,.5),
             high_est=quantile(cum_est,.95),
             low_est=quantile(cum_est,.05)) 
 
-saveRDS(calc_sum_state,"../data/calc_sum_state.rds")
+saveRDS(calc_sum_state,"calc_sum_state.rds")
 
 # Annotations
 
@@ -1020,16 +1034,18 @@ all <- calc_sum_state %>%
 
 calc_sum_state <- all_est_state %>% 
   ungroup %>% 
-  mutate(estimate=((plogis(estimate))*state_pop)) %>% 
+  mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
   group_by(state,iter) %>% 
   arrange(state,time_point) %>% 
   mutate(cum_est=cumsum(estimate) - recovered - deaths,
-         cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=14),0),
-         cum_est=cum_est/(state_pop*100)) %>% 
-  group_by(time_point,state,suppress_measures) %>% 
+         cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=19),0),
+  cum_sum_cases = cum_sum_cases / (state_pop)) %>% 
+  group_by(time_point,state,suppress_measures,cum_sum_cases) %>% 
   summarize(med_est=quantile(cum_est,.5),
             high_est=quantile(cum_est,.95),
             low_est=quantile(cum_est,.05)) 
+
+saveRDS(calc_sum_state,"percap.rds")
 
 # Annotations
 
@@ -1488,20 +1504,28 @@ this_infect <- filter(ungroup(num_infected),time_point==max(time_point)) %>%
                                                 state_pop=real_data$country_pop)) %>% 
   mutate(estimate2=qlogis(plogis(estimate)+.01))
 
+this_test_max <- ungroup(combined) %>% 
+  group_by(state) %>% 
+  summarize(max_test=max((tests/(state_pop/100))))
+
 test_var <- left_join(test_var,tibble(state_num=1:nrow(cases_matrix),
                                                 state=cases_matrix$state,
-                                                state_pop=real_data$country_pop))
+                                                state_pop=real_data$country_pop)) %>% 
+  left_join(this_test_max,"state")
 
 alpha_test <- as.data.frame(us_fit_scale,pars="alpha[1]")
+
+test_max_par <- as.data.frame(us_fit_scale,"test_max_par")
 
 # loop over infections
 
 over_states <- lapply(unique(test_var$state), function(s) {
-  tibble(estimate=plogis((alpha_test$`alpha[1]` + test_var$estimate[test_var$state==s] * this_infect$estimate2[this_infect$state==s])) - plogis((alpha_test$`alpha[1]` + test_var$estimate[test_var$state==s] * this_infect$estimate[this_infect$state==s])),
+  tibble(estimate=plogis((alpha_test$`alpha[1]` + test_var$estimate[test_var$state==s] * this_infect$estimate2[this_infect$state==s]) + test_max_par$test_max_par*test_var$max_test[test_var$state==s]) - plogis((alpha_test$`alpha[1]` + test_var$estimate[test_var$state==s] * this_infect$estimate[this_infect$state==s] +
+                                                                                                                                                                                                                    test_max_par$test_max_par*test_var$max_test[test_var$state==s])),
          state=s)
 }) %>% bind_rows
 
-
+saveRDS(over_states,"test_data.rds")
 
 over_states %>%
   group_by(state) %>%
@@ -1513,6 +1537,7 @@ over_states %>%
   theme_minimal() +
   theme(panel.grid = element_blank()) +
   coord_flip() +
+  geom_hline(yintercept=.01) +
   xlab("") +
   scale_y_continuous(labels=scales::percent) +
   # scale_y_continuous(breaks=c(.96,.98,1,1.02,1.04,1.06),

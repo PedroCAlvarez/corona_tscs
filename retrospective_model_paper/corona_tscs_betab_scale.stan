@@ -37,6 +37,30 @@ transformed data {
   matrix[num_country,G] mobility_array[time_all];
   matrix[num_country,L] lock_array[time_all];
   matrix[num_country,time_all] test_max;
+  matrix[num_country,time_all] cases_per_capita; // need for prior adjustment
+  
+  // need to convert to real for division
+  
+  for(t in 1:time_all) {
+    cases_per_capita[,t] = to_vector(cases[,t]) ./ to_vector(country_pop);
+  }
+  
+  // can't have any zeroes as this will screw up the prior adjustment
+  
+  for(t in 1:time_all) {
+    for(n in 1:num_country) {
+      if(cases_per_capita[n,t] == 0) {
+        cases_per_capita[n,t] = 0.000000001;
+      } else {
+        cases_per_capita[n,t] = cases_per_capita[n,t];
+      }
+      
+    }
+  }
+  
+  //print(cases_per_capita);
+  
+  
   
   // make some arrays of counts of the outbreak
   
@@ -66,7 +90,7 @@ transformed data {
   // standardized time max
   
   for(n in 1:num_country) {
-    test_max[n,] = (test_max[n,] - mean(test_max[n,]))/sd(test_max[n,]);
+    test_max[n,] = (test_max[n,] / country_pop[n]);
   }
   
   // make a new array of time indices
@@ -95,13 +119,14 @@ transformed data {
   
 }
 parameters {
-  vector[3] poly; // polinomial function of time
+  matrix[num_country,3] poly; // polinomial function of time
   real<lower=0> finding; // difficulty of identifying infected cases 
   real<lower=0> world_infect; // infection rate based on number of travelers
   row_vector[S] suppress_effect; // suppression effect of govt. measures, cannot increase virus transmission rate
   row_vector[L] suppress_hier_const[G];
   row_vector[G] mob_effect;
   real test_max_par;
+  vector<lower=0>[3] sigma_poly; // varying sigma polys
   vector[G] mob_alpha_const; // mobility hierarchical intercepts
   real<lower=0> sigma_med;
   vector<lower=0>[num_country] country_test_raw; // unobserved rate at which countries are willing to test vs. number of infected
@@ -116,7 +141,7 @@ transformed parameters {
   
   for(t in 1:time_all) {
         
-      num_infected_high[,t] = alpha[2] + time_array[t]*poly + 
+      num_infected_high[,t] = alpha[2] + (time_array[t] .* poly) * rep_vector(1,3) + 
                                         world_infect*count_outbreak[t] +
                                         (suppress_effect*suppress_array[t]')' +
                                         (mob_effect * mobility_array[t]')' ;
@@ -126,7 +151,11 @@ transformed parameters {
 }
 model {
   
-  poly ~ normal(0,5); // could be large
+  for(c in 1:3) {
+    poly[,c] ~ normal(0,sigma_poly[c]);
+  }
+  
+  sigma_poly ~ exponential(.1);
   world_infect ~ normal(0,1);
   alpha ~ normal(0,10); // this can reach extremely low values
   
@@ -161,16 +190,16 @@ model {
     
     // mediator
     
-    for(g in 1:G) 
-      to_vector(mobility_array[t,,g]) ~ normal(mob_alpha_const[g] + (suppress_hier_const[g]*lock_array[t]')',sigma_med);
+    // for(g in 1:G) 
+    //   to_vector(mobility_array[t,,g]) ~ normal(mob_alpha_const[g] + (suppress_hier_const[g]*lock_array[t]')',sigma_med);
 
     tests[,t] ~ beta_binomial(country_pop,mu_tests*phi[1],(1-mu_tests) * phi[1]);
     cases[,t] ~ beta_binomial(tests[,t],mu_cases *phi[2],(1-mu_cases) * phi[2]);
     
-    log(mix_prop) - log(mu_tests) ~ std_normal();
-
+    (log(cases_per_capita[,t]) - log(mix_prop)) ~ normal(-2.3,.5);
+    // 
     // jacobian adjustment
-    target += log1m(mix_prop) + log1m(mu_tests);
+    target += log(mix_prop .* (1-mix_prop)) - log(mix_prop) ;
 
   
   }

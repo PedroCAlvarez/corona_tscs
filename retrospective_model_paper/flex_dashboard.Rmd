@@ -1,24 +1,13 @@
 ---
 title: "Understanding Total Number of COVID-19 Infections in the United States"
-author: 
-  - Robert Kubinec:
-      email: rmk7@nyu.edu
-      institute: nyuad
-      correspondence: false
-  - Luiz Max Carvalho:
-      institute: gvf
-institute:
-  - nyuad: New York University Abu Dhabi
-  - gvf: School of Applied Mathematics, Getulio Vargas Foundation
+author: Robert Kubinec and Luiz Max Carvalho
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: fill
-    pandoc_args:
-      - '--lua-filter=scholarly-metadata.lua'
-      - '--lua-filter=author-info-blocks.lua'
 urlcolor: black
 linkcolor: black
+runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
@@ -33,7 +22,21 @@ require(ggrepel)
 
 # load fitted model object
 
-us_fit_scale <- readRDS("us_fit_scale.rds")
+calc_sum_state <- readRDS("calc_sum_state.rds") %>% 
+  ungroup %>% 
+  mutate(label=ifelse(time_point==max(time_point),
+                      paste0(state,":",formatC(low_est,big.mark=",",format = "f",digits=0)," - ",
+                                                         formatC(high_est,big.mark=",",format = "f",digits=0)),NA),
+         label_cases=ifelse(time_point==max(time_point),
+                      paste0(state,":",formatC(cum_sum_cases,big.mark=",",format = "f",digits=0)),NA))
+
+percap <- readRDS("percap.rds") %>% 
+  ungroup %>% 
+  mutate(label=ifelse(time_point==max(time_point),
+                      paste0(state,":",formatC(low_est,big.mark=",",format = "f",digits=3)," - ",
+                                                         formatC(high_est,big.mark=",",format = "f",digits=3)),NA),
+         label_cases=ifelse(time_point==max(time_point),
+                      paste0(state,":",formatC(cum_sum_cases,big.mark=",",format = "f",digits=3)),NA))
 
 
 combined <- readRDS("combined.rds")
@@ -41,11 +44,26 @@ combined <- readRDS("combined.rds")
 cases_matrix <- readRDS("cases_matrix.rds")
 
 real_data <- readRDS("real_data.rds")
+
+test_data <- readRDS("test_data.rds") %>% 
+  group_by(state) %>% 
+      summarize(med_est=quantile(estimate,.5),
+            high_est=quantile(estimate,.95),
+            low_est=quantile(estimate,.05)) 
+
 ```
 
 This dashboard shows estimates of the number of people presently infected in the United States with COVID-19. The estimates are available since January 1st for each state. The estimation strategy employs Bayesian inference based on the number of tests and cases in each state, and the relationship between the two. For more reference, we refer the reader to our working paper, ["A Retrospective Bayesian Model for Measuring Covariate Effects on Observed COVID-19 Test and Case Counts."](https://osf.io/preprints/socarxiv/jp4wk/) Unlike other models, such as epidemiological SEIR/SIR models, we do not aim to understand the full trajectory of the disease, but rather to adjust empirical data to gain an understanding of how many people are infected at a particular time. The model is useful for producing a much more accurate understanding of the state of COVID-19 infections, rather than try to forecast the disease trajectory. 
 
 The model is also useful for understanding the relationship between tests and infections--how far ahead or behind testing capacity is relative to the number of infeted people--and also the relationship between background factors, like partisanship, on the spread of the virus. The plots in this dashboard permit you to track different states in terms of their counts of infected individuals, and to explore whether states are ahead/behind of testing capacity per infected. Finally, we include estimates we run in the model calculating how much different state-level factors, such as social distancing policies, state wealth, public health preparedness, and vote share for President Trump track with infection rates.
+
+```{r controls}
+selectizeInput("state", "Type in a state name to display present infected count", choices = unique(calc_sum_state$state), selected = "New York",multiple=TRUE)
+checkboxInput("percap","Show Infections Per Capita?",value = F)
+checkboxInput("actual","Show recorded cases on plot as well?")
+
+```
+
 
 Column {data-width=650}
 -----------------------------------------------------------------------
@@ -55,65 +73,42 @@ Column {data-width=650}
 ```{r statetrend}
 
 
-# need different figures for case-level deaths + recovered
-
-all_est_state <- as.data.frame(us_fit_scale,"num_infected_high") %>% 
-  mutate(iter=1:n()) %>% 
-  gather(key="variable",value="estimate",-iter) %>% 
-  group_by(variable) %>% 
-  mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-         time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
-         time_point=ymd(min(combined$month_day)) + days(time_point-1))
-
-all_est_state <- left_join(all_est_state,tibble(state_num=1:nrow(cases_matrix),
-                                                state=cases_matrix$state,
-                                                state_pop=real_data$country_pop,
-                                    suppress_measures=real_data$suppress,by="state_num"))
-
-all_est_state <- left_join(all_est_state,case_count,by=c("state","time_point"))
-
-calc_sum_state <- all_est_state %>% 
-  ungroup %>% 
-  mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
-  group_by(state,iter) %>% 
-  arrange(state,time_point) %>% 
-  mutate(cum_est=cumsum(estimate) - recovered - deaths,
-         cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=14),0)) %>% 
-  group_by(time_point,state,suppress_measures) %>% 
-  summarize(med_est=quantile(cum_est,.5),
-            high_est=quantile(cum_est,.95),
-            low_est=quantile(cum_est,.05)) 
-
 # Annotations
-
-# get top 5 plus random 5 
-
-top_5 <- filter(calc_sum_state,time_point==max(calc_sum_state$time_point)) %>% 
-  arrange(desc(med_est)) %>% 
-  ungroup %>% 
-  slice(c(1:5,sample(6:length(unique(calc_sum_state$state)),5))) %>% 
-  distinct %>% 
-  mutate(label=paste0(state,":",formatC(low_est,big.mark=",",format = "f",digits=0)," - ",
-                                                         formatC(high_est,big.mark=",",format = "f",digits=0)))
-
-calc_sum_state %>% 
+renderPlot({
+  
+  if(input$percap) {
+    this_data <- percap
+  } else {
+    this_data <- calc_sum_state
+  }
+  
+  out_plot <- this_data %>% 
+  filter(state %in% input$state) %>% 
   ggplot(aes(y=med_est,x=time_point)) +
-  geom_line(aes(group=state,colour=med_est)) +
-  # geom_ribbon(aes(ymin=low_est,
-  # ymax=high_est,
-  # group=state_num,
-  # fill=suppress_measures),alpha=0.5) +
+  geom_line(aes(group=state),colour="black") +
+  geom_ribbon(aes(ymin=low_est,
+  ymax=high_est,
+  group=state),alpha=0.5,fill="red",colour=NA) +
   theme_minimal() +
-  scale_color_distiller(palette="Reds",direction=1) +
-  ylab("Cumulative Count") +
-  labs(caption="Some lines are labeled with uncertainty of estimates (5% - 95% Interval).\nThese estimates are based on the assumption that as few as\n10% of cases may be reported based on SIR/SEIR models. Does not exclude people\nwho may have recovered or died.") +
-  geom_text_repel(data=top_5,aes(x=time_point,y=med_est,label=label),
+  scale_fill_distiller(palette="Reds",direction=1) +
+  ylab("Number Presently Infected") +
+  labs(caption="Lines are shaded with uncertainty of estimates (5% - 95% Interval).\nThese estimates are based on the assumption that as few as\n10% of cases may be reported.") +
+  geom_text_repel(aes(x=time_point,y=med_est,label=label),
                   size=3,fontface="bold",segment.colour = NA) +
   scale_y_continuous(labels=scales::comma) +
   xlab("Days Since Outbreak Start") + 
   guides(colour="none") +
   theme(panel.grid = element_blank(),
         legend.position = "top")
+  
+  if(input$actual) {
+    out_plot <- out_plot + geom_line(aes(y=cum_sum_cases,group=state)) +
+      geom_text_repel(aes(y=cum_sum_cases,label=label_cases),
+                  size=3,fontface="bold",segment.colour = NA) 
+  }
+  out_plot
+})
+
 ```
 
 Column {data-width=350}
@@ -123,148 +118,25 @@ Column {data-width=350}
 
 ```{r testcap}
 
-```
-
-### Possible Observed Cases Given Number of COVID-19 Tests
-
-```{r posobs}
-
-```
-
-Row
--------------------------------------
-
-### Effects of Background Factors & Suppression Policies
-
-```{r suppress}
-
-suppress_effect <- as.data.frame(us_fit_scale,"suppress_effect") %>% 
-  mutate(iter=1:n()) %>% 
-  gather(key="parameter",value="estimate",-iter) %>% 
-  mutate(supp_type=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?")),
-         variable=as.numeric(str_extract(parameter,"[1-9]?0?(?=\\])")))
-
-num_infected <- as.data.frame(us_fit_scale,"num_infected_high") %>% 
-  mutate(iter=1:n()) %>% 
-  gather(key="variable",value="estimate",-iter) %>% 
-  group_by(variable) %>% 
-  mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-         time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
-         time_point=ymd(min(combined$month_day)) + days(time_point-1))
-
-# iterate this bugger
-
-
-p_infected <- group_by(num_infected,iter) %>% 
-  summarize(est=mean(dlogis(estimate)))
-
-if(run_model) {
-    over_all2 <- parallel::mclapply(sample(1:max(num_infected$iter),100), function(q) {
-    over_supp <- lapply(1:max(suppress_effect$variable), function(s) {
-      over_time_level <- lapply(seq(min(time_outbreak_center),max(time_outbreak_center),length.out=100), function(i) {
-        this_eff <- p_infected$est[q] * (suppress_effect$estimate[suppress_effect$supp_type==1 & suppress_effect$variable==s & suppress_effect$iter==q] + suppress_effect$estimate[suppress_effect$supp_type==2 & suppress_effect$variable==s & suppress_effect$iter==q]*i)
-      
-      tibble(estimate=this_eff,
-             time_scale_point=i,
-             iter=q,
-             variable=s)
-      }) %>% bind_rows
-      
-      over_time_level
-      
-    }) %>% bind_rows
-    
-    return(over_supp)
-  },mc.cores=3) %>% bind_rows
-    
-    saveRDS(over_all2,"../data/over_all2.rds")
-    
-} else {
-  over_all2 <- readRDS("../data/over_all2.rds")
-}
-
-
-
-
-over_all_time2 <- group_by(over_all2,variable,time_scale_point) %>% 
-  summarize(med_est=median(estimate),
-            high_est=quantile(estimate,.95),
-            low_est=quantile(estimate,.05)) %>% 
-  mutate(model="Fully\nIdentified")
-
-
-over_all_sum2 <- group_by(over_all2,variable) %>% 
-  summarize(med_est=median(estimate),
-            high_est=quantile(estimate,.95),
-            low_est=quantile(estimate,.05)) %>% 
-  mutate(model="Fully\nIdentified")
-  
-  
-
-# calculate marginal effects
-
-over_all_time2 <- left_join(over_all_time2,tibble(variable=1:ncol(covs),
-                                        label=colnames(covs))) %>% 
-  mutate(label=recode(label,
-                      air="Air\nQuality",
-                      providers="No.\nProviders",
-                      gdp="GDP",
-                      heart="Cardiovascular\nDeaths",
-                      day_emergency="Date\nEmergency",
-                      young="% Population\n<18",
-                      smoking="% Smokers",
-                      trump="Trump\nVote Share",
-                      prop_foreign="% Foreign-Born",
-                      public_health="Public Health\nFunding"))
-
-over_all_sum2 <- left_join(over_all_sum2,tibble(variable=1:ncol(covs),
-                                        label=colnames(covs))) %>% 
-  mutate(label=recode(label,
-                      air="Air\nQuality",
-                      providers="No.\nProviders",
-                      gdp="GDP",
-                      heart="Cardiovascular\nDeaths",
-                      day_emergency="Date\nEmergency",
-                      young="% Population\n<18",
-                      smoking="% Smokers",
-                      trump="Trump\nVote Share",
-                      prop_foreign="% Foreign-Born",
-                      public_health="Public Health\nFunding"))
-
-p3 <- over_all_sum2 %>%
-  ggplot(aes(y=med_est,x=reorder(label,med_est))) +
-  geom_pointrange(aes(ymin=low_est,ymax=high_est),alpha=0.8) +
+renderPlot({
+test_data %>%
+  filter(state %in% input$state) %>%
+  ggplot(aes(y=med_est,x=reorder(state,med_est))) +
+  geom_pointrange(aes(ymin=low_est,ymax=high_est)) +
   theme_minimal() +
-  xlab("")  +
-  ylab("Effect on Proportion Infected") +
-  geom_hline(yintercept=0,linetype=2) +
-  ggtitle("Cumulative Effect on\nProportion Infected") +
-  theme(panel.grid=element_blank(),
-        plot.title = element_text(size=10,hjust=0.5),
-        strip.text=element_text(face="bold"),
-        axis.text.y=element_text(size=8)) +
-  coord_flip()
-
-p4 <- over_all_time2 %>%
- ggplot(aes(y=med_est,x=time_scale_point)) +
-    xlab("Time Since Outbreak Began")  +
-  ylab("Effect on Proportion Infected") +
-  labs("Intervals are 5% - 95% high posterior density (HPD) uncertainty intervals.") +
-  geom_ribbon(aes(ymin=low_est,ymax=high_est),alpha=0.5,fill="red") +
-  geom_line(linetype=2) +
-  ggtitle("Time-varying Effect on\nProportion Infected") +
-  theme_minimal() +
-  geom_hline(yintercept=0,linetype=3) +
-  theme(panel.grid=element_blank(),
-        plot.title = element_text(size=10,hjust=0.5),
-        strip.text=element_text(face="bold",size=9),
-        axis.text.y=element_text(size=8)) +
-  facet_wrap(~label,scales="free_y")
-
-p3 + p4 +
-  plot_layout(nrow=2) +
-  plot_annotation(caption="Marginal effects calculated as a 1-standard deviation change in a covariate on the\nlatent infection rate. 5% - 95% high posterior density intervals derived from\n100 Markov Chain Monte Carlo posterior draws.")
-
+  theme(panel.grid = element_blank()) +
+  coord_flip() +
+  geom_hline(yintercept=.01) +
+  xlab("") +
+  scale_y_continuous(labels=scales::percent) +
+  # scale_y_continuous(breaks=c(.96,.98,1,1.02,1.04,1.06),
+  #                    labels = c("Ahead of\nCurve",".98","Keeping\nUp","1.02","1.04","Behind\nCurve")) +
+  # annotate("text",y=c(.96,1.05),x=c("Georgia","North Dakota"),label=c("Testing More\nThan Infection Growth","Testing Less\nThan Infection Growth"),size=3) +
+  # geom_hline(yintercept=1,linetype=2) +
+  labs(caption = "Scale of the estimates shows how increases in the infection rate increase\nthe number of tests in a given state. Higher numbers indicate fewer tests\nconducted for a unit increase in the infection rate (on the logit scale).") +
+  ylab("Additional Proportion Tested of Population for Every Percent Increase in Infected")
+  
+})
 ```
 
 

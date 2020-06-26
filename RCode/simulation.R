@@ -18,10 +18,16 @@ count_love$NAME<-char2end(count_love$City, ", ")
 count_love$STNAME<-count_love$`State Name`
 
 census$NAME <- gsub(" city", "", census$NAME)
-census$NAME <- gsub(" town", "", census$NAME)
 census$NAME <- gsub(" township", "", census$NAME)
+census$NAME <- gsub(" town", "", census$NAME)
 census$NAME <- gsub(" borough", "", census$NAME)
 census$NAME <- gsub(" County", "", census$NAME)
+census$NAME <- gsub(" municipality", "", census$NAME)
+census$NAME <- gsub(" village", "", census$NAME)
+
+census[which(census$NAME=="Louisville/Jefferson metro government (balance)"),"NAME"]  = "Louisville"
+
+
 
 # Left Join by State and City
 
@@ -30,7 +36,6 @@ join<-left_join(count_love,census,by=c("STNAME","NAME"))
 final<- join %>% 
   distinct(Date, Location, Attendees, Source, .keep_all = TRUE)
 
-sum(is.na(final$POPESTIMATE2019))
 
 #save csv
 

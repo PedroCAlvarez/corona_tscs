@@ -40,3 +40,24 @@ final<- join %>%
 #save csv
 
 write.csv(final,"data/simulation/protest/protest_population.csv")
+
+
+# Unemployment Data
+unemployment <- read.csv("data/simulation/unemployment/unemployment_raw.csv",head = TRUE, sep=";")
+
+unemployment<-unemployment%>% mutate_if(is.factor, as.character)
+unemployment$Initial.Claims <- gsub(",","",unemployment$Initial.Claims)
+unemployment$Continued.Claims <- gsub(",","",unemployment$Continued.Claims)
+unemployment$Covered.Employment <- gsub(",","",unemployment$Covered.Employment)
+
+names(unemployment)
+unemployment$Filed.week.ended <- as.Date(unemployment$Filed.week.ended , "%m/%d/%Y")
+unemployment$Reflecting.Week.Ended <- as.Date(unemployment$Reflecting.Week.Ended, "%m/%d/%Y")
+unemployment$Initial.Claims <- as.numeric(unemployment$Initial.Claims)
+unemployment$Continued.Claims <- as.numeric(unemployment$Continued.Claims)
+unemployment$Covered.Employment <- as.numeric(unemployment$Covered.Employment)
+
+write.csv(unemployment,"data/simulation/unemployment/unemployment.csv")
+
+
+

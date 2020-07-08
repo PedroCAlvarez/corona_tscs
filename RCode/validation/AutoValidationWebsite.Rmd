@@ -1,0 +1,271 @@
+---
+title: "Post-Data Collection Validation Checks"
+output: pdf_document
+---
+
+
+CoronaNet implements the following processes to validate the quality of the dataset:
+
+### Cleaning {-}
+
+Before validation, we use a team of RAs to check the raw data for logical inconsistencies and typographical errors. In our latest data release, we have cleaned all observations until April 1st.
+
+### Multiple Coding for Validation {-}
+
+We randomly sample 10% of the dataset using the source of the data (e.g. newspaper article, government press release) as our unit of randomization. We use the source as our unit of randomization because one source may detail many different policy types. We then provide this source to a fully independent RA and ask her to code for the government policy contained in the sampled source in a separate, but identical, survey instrument. If the source is in a language the RA cannot read, then a new source is drawn. The RA then codes all policies in the given source. This practice is repeated a third time by a third independent coder. Given the fact that each source in the sample is coded three times, we can assess the reliability of our measures and report the reliability score of each coder.
+
+```{r , results = 'asis', echo=FALSE, warning=FALSE, message=FALSE}
+
+library(rstudioapi)
+library(foreign)
+library(dplyr)
+library(tidyverse)
+library(htmlTable)
+library(compareDF)
+library(reshape2)
+library(stargazer)
+library(psych)
+library(irr)
+library(SPEI)
+
+current_path <- getActiveDocumentContext()$path 
+setwd(dirname(current_path))
+
+Corona <- read.csv2("CoronaNet_08_07.csv", sep = ",")
+Corona_validation <- read.csv2("coronanet_validation_july8.csv", sep = ",")#latest
+
+###*****####This is to compare the validation dataset with the main clean dataset####
+
+val_records <- as.character(Corona_validation$entry_type_3_TEXT)[-c(1:2)]
+
+small_validate <- Corona_validation[-c(1:2),] %>%
+  filter(!(entry_type_3_TEXT == "")) %>%
+  select(entry_type_3_TEXT, event_description, ra_name, type, init_country) 
+
+colnames(small_validate) <- c('record_id', 'event_description', 'ra_name', 'type', 'country')
+
+small_main <- Corona %>%
+  filter(record_id %in% small_validate$record_id) %>%
+  select(record_id, event_description, ra_name, type, init_country)
+
+colnames(small_main) <- c('record_id', 'event_description', 'ra_name', 'type', 'country')
+
+small_main$record_id <- as.numeric(as.character(small_main$record_id))
+small_validate$record_id <- as.numeric(as.character(small_validate$record_id))
+
+small_validate$type[which(small_validate$type == "Quarantine")] <- "Quarantine/Lockdown"
+small_validate$type[which(small_validate$type == "Lockdown")] <- "Quarantine/Lockdown"
+small_validate$type[which(small_validate$type == "Quarantine/Lockdown")] <- "Quarantine/Lockdown"
+
+small_validate$type[which(small_validate$type == "Health Testing" |
+                            small_validate$type == "Health Monitoring" |
+                            small_validate$type == "Health Resources")] <- "Health"
+
+small_validate$type[which(small_validate$type == "New Task Force or Bureau" |
+                            small_validate$type == "New Task Force, Bureau or Administrative Configuration")] <- "New Task Force, Bureau or Administrative Configuration"
+
+small_validate$type[which(small_validate$type == "Public Awareness Campaigns" |
+                            small_validate$type == "Public Awareness Measures" |
+                            small_validate$type == "Anti-Disinformation Measures")] <- "Public Awareness Measures"
+
+small_main$type[which(small_main$type == "Quarantine")] <- "Quarantine/Lockdown"
+small_main$type[which(small_main$type == "Lockdown")] <- "Quarantine/Lockdown"
+small_main$type[which(small_main$type == "Quarantine/Lockdown")] <- "Quarantine/Lockdown"
+
+small_main$type[which(small_main$type == "Closure of Schools")] <- "Closure and Regulation of Schools"
+
+small_main$type[which(small_main$type == "Restrictions of Government Services")] <- 'Restriction and Regulation of Government Services'
+
+small_main$type[which(small_main$type == "Restriction of Non-Essential Businesses")] <- 'Restriction and Regulation of Businesses'
+
+small_main$type[which(small_main$type == "Health Testing" |
+                        small_main$type == "Health Monitoring" |
+                        small_main$type == "Health Resources")] <- "Health"
+
+small_main$type[which(small_main$type == "New Task Force or Bureau" |
+                        small_main$type == "New Task Force, Bureau or Administrative Configuration")] <- "New Task Force, Bureau or Administrative Configuration"
+
+small_main$type[which(small_main$type == "Public Awareness Campaigns" |
+                            small_main$type == "Public Awareness Measures" |
+                            small_main$type == "Anti-Disinformation Measures")] <- "Public Awareness Measures"
+
+
+ctable_validation <- compare_df(small_main, small_validate, c("record_id"))
+
+validation_table <- as.data.frame(cbind(ctable_validation$comparison_df[c('chng_type', 'record_id',
+                                        'ra_name',  'country', 'type')]))
+
+#write.csv(validation_table,"Validation_table.csv", row.names = FALSE)
+
+raw_comparison <- validation_table %>% 
+  group_by(record_id) %>%
+  filter(!type == "" & !type == "Other Policy Not Listed Above") %>%
+  mutate(match = ifelse(type[1] %in% type[2:length(type)], 1, 0),
+         type_coder2 = ifelse(type[1] %in% type[2:length(type)], type[1], type[2]))
+
+raw_comparison_unique <- raw_comparison[raw_comparison$chng_type == "+", c("record_id", "type", "match", "type_coder2")]
+
+Percentage_Agreement = c((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Hygiene'$mean*100),
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Restrictions of Mass Gatherings'$mean*100), 
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Closure and Regulation of Schools'$mean*100), 
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Restriction and Regulation of Businesses'$mean*100),
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'External Border Restrictions'$mean*100),
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Internal Border Restrictions'$mean*100),
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Curfew'$mean*100),
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Declaration of Emergency'$mean*100),
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Social Distancing'$mean*100),
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Restriction and Regulation of Government Services'$mean*100),
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Quarantine/Lockdown'$mean*100),
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Health'$mean*100),
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Public Awareness Measures'$mean*100),
+                         (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'New Task Force, Bureau or Administrative Configuration'$mean*100))
+
+
+n = c((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Hygiene'$n),
+      (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Restrictions of Mass Gatherings'$n), 
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Closure and Regulation of Schools'$n),
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Restriction and Regulation of Businesses'$n),
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'External Border Restrictions'$n),
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Internal Border Restrictions'$n),
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Curfew'$n),
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Declaration of Emergency'$n),
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Social Distancing'$n),
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Restriction and Regulation of Government Services'$n),
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Quarantine/Lockdown'$n),
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Health'$n),
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Public Awareness Measures'$n),
+                 (describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'New Task Force, Bureau or Administrative Configuration'$n))
+
+Cohens_Kappa = c((((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Hygiene'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Restrictions of Mass Gatherings'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Closure and Regulation of Schools'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Restriction and Regulation of Businesses'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'External Border Restrictions'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Internal Border Restrictions'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Curfew'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Declaration of Emergency'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Social Distancing'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Restriction and Regulation of Government Services'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Quarantine/Lockdown'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Health'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'Public Awareness Measures'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)),
+                 (((describeBy(raw_comparison_unique$match, raw_comparison_unique$type)$'New Task Force, Bureau or Administrative Configuration'$mean*100) -
+                     (1/length(unique(raw_comparison_unique$type)))*100) / (100 - (1/length(unique(raw_comparison_unique$type)))*100)))
+
+
+ratings <- raw_comparison_unique[,c(2,4)]
+krippalpha = kripp.alpha(t(ratings), method=c("nominal"))
+
+table1 = data.frame(n, Percentage_Agreement, Cohens_Kappa, row.names = c("Hygiene", "Restrictions of Mass Gatherings", "Closure and Regulation of Schools", "Restriction and Regulation of Businesses", "External Border Restrictions", "Internal Border Restrictions", "Curfew", "Declaration of Emergency", "Social Distancing", "Restriction and Regulation of Government Services", "Quarantine/Lockdown", "Health", "Public Awareness Measures", "New Task Force, Bureau or Administrative Configuration"))[order(-Percentage_Agreement),]
+
+table2 = (data.frame(row.names = c("Percentage Agreement", "Cohen's Kappa", "Krippendorff’s Alpha"), c(mean(Percentage_Agreement), mean(Cohens_Kappa), krippalpha$value)))
+
+#stargazer(table1, header=FALSE, type='latex', summary=FALSE, title="Inter-Coder Reliability Measures for On-Going Validation", covariate.labels = c("Policy", "(n)", "Percentage Agreement", "Cohen's Kappa (k)"), digits=2 )
+
+#stargazer(table2, header=FALSE, type='latex', summary=FALSE, title="Summary Inter-coder Reliability Scores", covariate.labels = c("Measurement", ""), digits=2)
+
+```
+
+We are currently in the process of completing our second coding of the validation sample. `r length(unique(validation_table$record_id))` policies have been double coded---`r length(unique(validation_table$record_id))-nrow(unique(validation_table[which(validation_table$chng_type == "+" & validation_table$type == "Other Policy Not Listed Above"),]))` double-coded policies after excluding the category 'Other policies' from the analysis---out of the original 1,200 randomly-selected policies included in our validation set. This is equivalent to 10\% of the first new entries `r nrow(Corona)` policies in the dataset. We will be gradually expanding the validation set until we cover 10\% of all observations.
+
+The following table reports the inter-coder reliability at the current stage of validation:
+
+\begin{table}[!h]
+\centering
+\caption{Inter-Coder Reliability Measures for On-Going Validation}
+\label{tab:validation}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccc}
+\hline
+\textbf{Policy} & \multicolumn{1}{c}{\textbf{(n)}} & \multicolumn{1}{c}{\textbf{Percentage Agreement}} & \multicolumn{1}{c}{\textbf{Cohen's Kappa (k)}} \\ \hline
+Hygiene       & `r table1[c('Hygiene'),c('n')]` 
+                                      & `r round(table1[c('Hygiene'),c('Percentage_Agreement')],1)` 
+                                      & `r round(table1[c('Hygiene'),c('Cohens_Kappa')],2)` \\
+                                      
+Restrictions of Mass Gatherings       & `r table1[c('Restrictions of Mass Gatherings'),c('n')]` 
+                                      & `r round(table1[c('Restrictions of Mass Gatherings'),c('Percentage_Agreement')],1)` 
+                                      & `r round(table1[c('Restrictions of Mass Gatherings'),c('Cohens_Kappa')],2)` \\
+                                
+Closure and Regulation of Schools            & `r table1[c('Closure and Regulation of Schools'),c('n')]` 
+                              & `r round(table1[c('Closure and Regulation of Schools'),c('Percentage_Agreement')],1)` 
+                              & `r round(table1[c('Closure and Regulation of Schools'),c('Cohens_Kappa')],2)` \\
+                      
+External Border Restrictions  & `r table1[c('External Border Restrictions'),c('n')]` 
+                              & `r round(table1[c('External Border Restrictions'),c('Percentage_Agreement')],1)` 
+                              & `r round(table1[c('External Border Restrictions'),c('Cohens_Kappa')],2)` \\
+                              
+Curfew                        & `r table1[c('Curfew'),c('n')]` 
+                              & `r round(table1[c('Curfew'),c('Percentage_Agreement')],1)` 
+                              & `r round(table1[c('Curfew'),c('Cohens_Kappa')],2)` \\
+
+Declaration of National Emergency & `r table1[c('Declaration of Emergency'),c('n')]` 
+                              & `r round(table1[c('Declaration of Emergency'),c('Percentage_Agreement')],1)` 
+                              & `r round(table1[c('Declaration of Emergency'),c('Cohens_Kappa')],2)` \\
+
+Restriction and Regulation of Businesses & `r table1[c('Restriction and Regulation of Businesses'),c('n')]` 
+                              & `r round(table1[c('Restriction and Regulation of Businesses'),c('Percentage_Agreement')],1)`
+                              & `r round(table1[c('Restriction and Regulation of Businesses'),c('Cohens_Kappa')],2)` \\
+                      
+Internal Border Restrictions & `r table1[c('Internal Border Restrictions'),c('n')]` 
+                              & `r round(table1[c('Internal Border Restrictions'),c('Percentage_Agreement')],1)` 
+                              & `r round(table1[c('Internal Border Restrictions'),c('Cohens_Kappa')],2)` \\
+                              
+Quarantine/Lockdown & `r table1[c('Quarantine/Lockdown'),c('n')]` 
+                              & `r round(table1[c('Quarantine/Lockdown'),c('Percentage_Agreement')],1)` 
+                              & `r round(table1[c('Quarantine/Lockdown'),c('Cohens_Kappa')],2)` \\
+                              
+Health Measures  & `r table1[c('Health'),c('n')]` 
+                              & `r round(table1[c('Health'),c('Percentage_Agreement')],1)` 
+                              & `r round(table1[c('Health'),c('Cohens_Kappa')],2)` \\
+                              
+Restriction and Regulation of Government Services 
+                    & `r table1[c('Restriction and Regulation of Government Services'),c('n')]` 
+                    & `r round(table1[c('Restriction and Regulation of Government Services'),c('Percentage_Agreement')],1)` 
+                    & `r round(table1[c('Restriction and Regulation of Government Services'),c('Cohens_Kappa')],2)` \\
+                              
+New Task Force, Bureau or Administrative Configuration 
+              & `r table1[c('New Task Force, Bureau or Administrative Configuration'),c('n')]` 
+              & `r round(table1[c('New Task Force, Bureau or Administrative Configuration'),c('Percentage_Agreement')],1)` 
+              & `r round(table1[c('New Task Force, Bureau or Administrative Configuration'),c('Cohens_Kappa')],2)` \\
+                            
+Public Awareness Measures & `r table1[c('Public Awareness Measures'),c('n')]` 
+              & `r round(table1[c('Public Awareness Measures'),c('Percentage_Agreement')],1)` 
+              & `r round(table1[c('Public Awareness Measures'),c('Cohens_Kappa')],2)` \\
+                  
+Social Distancing & `r table1[c('Social Distancing'),c('n')]`
+              & `r round(table1[c('Social Distancing'),c('Percentage_Agreement')],1)` 
+              & `r round(table1[c('Social Distancing'),c('Cohens_Kappa')],2)` \\
+ &  &  &  \\
+ \hline
+ \hline
+ &  &  &  \\
+\textbf{Summary Inter-coder Reliability Scores} &  &  &  \\
+Percentage Agreement & \multicolumn{1}{c}{`r round(mean(Percentage_Agreement),2)`} & &  \\
+Cohen's Kappa & \multicolumn{1}{c}{`r round(mean(Cohens_Kappa),2)`} & & \multicolumn{1}{l}{} \\
+Krippendorff's alpha & \multicolumn{1}{c}{`r round(krippalpha$value,2)`} & & \multicolumn{1}{l}{} \\
+ &  & & \\
+\hline \hline
+\end{tabular}
+}
+\end{table}
+
+In the following weeks, we expect inter-coder reliability scores to improve as a consequence of three processes: (a) our coders are becoming more experience with the codebook and the coding tasks in general; (b) we are cleaning the dataset of obvious errors and logical inconsistencies; and, (c) we are working on clarifying and improving the codebook and the coding system. Notwithstanding these processes, we acknowledge that some ambiguities will unavoidably remain providing evidence for the utility of our planned "majority voting" validation strategy.
+
+### Evaluation and Reconciliation {-}
+
+We check for discrepancies between the originally coded data and the second and third coding of the data through two primary methods. First, we use majority-voting to establish a consensus for policy labels. In addition, we will provide RA identification codes that will allow users to evaluate coder accuracy.
+
+If the majority achieves consensus, then we consider the entry valid. If a discrepancy exists, a fourth RA or PI makes an assessment of the three entries to determine whether one, some, a combination of all three is most accurate. Reconciled policies are then entered into the dataset as a correction for full transparency. If an RA was found to have made a coding mistake, then we sample six of their previous entries: 3 entries which correspond to the type of mistake made (e.g. if the RA incorrectly codes an 'External Border Restriction' as a 'Quarantine', we sample 3 entries where the RA has coded a policy as being about a 'Quarantine') and randomly sample 3 more entries to ascertain whether the mistake was systematic or not. If systematic errors are found, entries coded by that individual will be entirely recoded by a new RA.

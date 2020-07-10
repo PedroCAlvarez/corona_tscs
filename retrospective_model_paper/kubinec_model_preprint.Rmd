@@ -47,8 +47,6 @@ require(readxl)
 require(ggrepel)
 require(missRanger)
 # update this package /w data
-remotes::install_github("kjhealy/covdata")
-require(covdata) # need to install from github repo remotes::install_github("kjhealy/covdata")
 
 set.seed(662817)
 
@@ -68,7 +66,7 @@ system2("git",args=c("-C ~/covid-19-data","pull"))
 
 run_model <- T
 
-pan_model <- stan_model("corona_tscs_betab.stan")
+#pan_model <- stan_model("corona_tscs_betab.stan")
 
 ```
 
@@ -269,6 +267,10 @@ vote_share <- filter(x,candidate=="Trump, Donald J.",
 state_gdp <- readxl::read_xlsx("../data/qgdpstate0120_0_bea.xlsx",sheet="Table 3") %>% 
   mutate(gdp=Q1 + Q2 + Q3 +Q4)
 
+# state-level unemployment (week-varying)
+# too old to be of much use
+unemp <- read_csv("../data/simulation/unemployment/unemployment.csv")
+
 # US Census data - population & percent foreign-born
 # note: you need a Census API key loaded to use this -- see package tidycensus docs and use 
 # function census_api_key with the key number and install=T
@@ -321,7 +323,7 @@ nyt_data <- read_csv("~/covid-19-data/us-states.csv") %>%
     arrange(state,date) %>% 
   mutate(cases=floor(c(cases[1:6],roll_mean(cases,n=7))),
          Difference=cases - dplyr::lag(cases),
-         Difference=coalesce(Difference,0,0)) %>% 
+         Difference=coalesce(Difference,0)) %>% 
   left_join(merge_names,by="state")
 
 tests <- read_csv("~/covid-tracking-data/data/states_daily_4pm_et.csv") %>% 
@@ -344,28 +346,125 @@ combined <- left_join(nyt_data,tests,by=c("state.abb","month_day")) %>%
   left_join(acs_data,by=c("state"="NAME")) %>% 
   filter(!is.na(state_pop))
 
+# add protest data
+# need to impute
+prot_data <- read_csv("../data/simulation/protest/count_love/count_love_data.csv") %>% 
+  select(event=`Event (legacy; see tags)`,
+         articles=`Total Articles`,
+         state=`State Name`,
+         state_code=`State Code`,everything()) %>% 
+  mutate(floyd=as.numeric(grepl(x=Tags,pattern="racial justice") & Date>ymd("2020-05-25"))) %>% 
+  missRanger(pmm.k=10L) %>% 
+  group_by(state,Date,floyd) %>% 
+  summarize(sum_prot=sum(Attendees)) %>% 
+  spread(key="floyd",value="sum_prot",fill = 0) %>% 
+  select(reg_prot="0",
+         floyd_prot="1")
+
+# protests by day
+
+# group_by(prot_data,state,Date) %>% 
+#   summarize(n_prot=sum(Attendees)) %>% 
+#   ggplot(aes(y=n_prot,x=Date)) +
+#   geom_line(aes(group=state))
+
+# add polling data 
+
+approval <- read_csv("../data/simulation/Civiqs/civiqs_approve_president_trump_states_2020-06-24.csv") %>%   select(date,state,approve)
+concern <- read_csv("../data/simulation/Civiqs/civiqs_coronavirus_concern_states_2020-06-24.csv") %>% 
+  select(state,date,extremely_concerned)
+# response <- read_csv("../data/simulation/Civiqs/civiqs_response_local_states_2020-06-24.csv") %>% 
+  
+economy <- read_csv("../data/simulation/Civiqs/civiqs_economy_us_now_states_2020-06-24.csv") %>% 
+  select(date,state,very_good)
+
+masks <- read_csv("../data/simulation/masks/masks_yougov.csv") %>% 
+  select(state="X.1",
+         mask_wear="% that selected")
+
 # add suppression data
 
-emergency <- read_xlsx("../data/state_emergency_wikipedia.xlsx") %>% 
-  mutate(emergency=as_date(emergency),
-         stayhome=as_date(stayhome),
-         stayhome=coalesce(stayhome,lubridate::today() + days(1)),
-         emergency=coalesce(emergency,lubridate::today() + days(1))) %>% 
-  select(state,emergency,stayhome) %>% 
-  mutate(state=substr(state,2,nchar(state)),
-         state=recode(state,
-                      `rth Carolina`="North Carolina",
-                      `rth Dakota`="North Dakota",
-                      `Illiis`="Illinois"))
+coronanet <- read_csv("../data/CoronaNet/coronanet_release.csv") %>% 
+  filter(country=="United States of America",
+         type %in% c("Health Testing","Lockdown","Quarantine","Restriction and Regulation of Government Services",
+                     "Restriction and Regulation of Businesses",
+                     "Restrictions of Mass Gatherings",
+                     "Social Distancing","Health Resources")) %>% 
+  filter(type_sub_cat=="Masks" || type!="Health Resources")
 
+# need to replace end date
 
-end_stayhome <- read_xlsx("../data/state_emergency_wikipedia.xlsx",sheet = "Sheet1") %>% 
-  select(state="State",end_stayhome="Date lifted")
+coronanet <- group_by(coronanet,country,province,policy_id) %>% 
+  mutate(date_end=case_when(update_type=="End of Policy" & !is.na(date_end)~date_end,
+                                                  update_type=="End of Policy" & is.na(date_end)~date_start,
+                                        any(!is.na(date_end[date_start==max(date_start,na.rm=T)]))~unique(max(date_end,na.rm=T)),
+                                        TRUE~lubridate::today())) %>% 
+  ungroup %>% 
+  mutate(type_sub_cat=coalesce(type_sub_cat,"General"),
+         type=recode(type,Lockdown="Quarantine"))
 
-emergency <- left_join(emergency,end_stayhome) %>% 
-  mutate(end_stayhome=coalesce(as_date(end_stayhome),lubridate::today() + days(1)))
+# do a summing exercise over policy types in terms of what is still available at a given day
+count_pol <- parallel::mclapply(unique(coronanet$province), function(p) {
+    
+    # loop over policies
+      these_pol <- unique(coronanet$policy_id[coronanet$province==p])
+    
+    lapply(these_pol, function(t) {
+      
+      if(!is.na(p)) { 
+        this_chunk <- filter(coronanet,policy_id==t,province==p)
+      } else {
+        this_chunk <- filter(coronanet,policy_id==t)
+      }
+      
+      
+      # loop over days 
+      
+      lapply(seq(ymd("2019-12-30"),today(),by=1), function(d) {
+        
+        this_day_pol <- table(this_chunk$type_sub_cat[d>this_chunk$date_start & d<this_chunk$date_end])
+        
+        if(length(this_day_pol)==0) {
+          tibble(month_day=d,
+                 type=paste0(unique(this_chunk$type),collapse=";"),
+                 type_sub_cat=unique(this_chunk$type_sub_cat),
+                 count_pol_eff=rep(0,length(unique(this_chunk$type_sub_cat))),
+                 province=p)
+        } else {
+          
+          tibble(month_day=d,
+                 type=paste0(unique(this_chunk$type),collapse=";"),
+                 type_sub_cat=names(this_day_pol),
+                 count_pol_eff=as.numeric(this_day_pol),
+                 province=p)
+        }
+        
+      }) %>% bind_rows
+      
+    }) %>% bind_rows
+  
+},mc.cores=3) %>% bind_rows
 
-combined <- left_join(combined,emergency,by="state")
+# sum over multiple overlapping policies
+
+count_pol_sum <- mutate(count_pol,
+                    type=recode(type,`Restriction and Regulation of Businesses;Restrictions of Mass Gatherings`="Restriction and Regulation of Businesses")) %>% 
+                    group_by(month_day,type,province) %>% 
+  summarize(sum_pol=sum(count_pol_eff))
+
+count_pol_sum <- spread(count_pol_sum,key="type",value="sum_pol") %>% 
+  mutate_at(vars(`Health Resources`:`Social Distancing`),~ifelse(month_day==min(month_day),
+                                                               coalesce(.,0),
+                                                               .)) %>% 
+  fill(`Health Resources`:`Social Distancing`,.direction=c("down"))
+
+combined <- left_join(combined, count_pol_sum,by=c("state"="province","month_day"))
+
+# add in civiqs
+
+combined <- left_join(combined,approval,by=c("state","month_day"="date")) %>% 
+  left_join(concern,by=c("state","month_day"="date")) %>% 
+  left_join(economy,by=c("state","month_day"="date"))
 
 # add in other datasets 
 
@@ -373,6 +472,13 @@ combined <- left_join(combined,health,by="state")
 combined <- left_join(combined,select(state_gdp,state,gdp),by="state")
 combined <- left_join(combined,select(vote_share,state,trump))
 combined <- left_join(combined,select(goog_mobile,state,month_day="date",retail:residential))
+combined <- left_join(combined,select(prot_data,state,Date,reg_prot,floyd_prot),by=c(month_day="Date",
+                                                                           "state")) %>% 
+  mutate(reg_prot=coalesce(reg_prot,0),
+         reg_prot=reg_prot/state_pop,
+         floyd_prot=coalesce(floyd_prot,0),
+         floyd_prot=floyd_prot/state_pop)
+combined <- left_join(combined,select(masks,state,mask_wear),by="state")
 
 # impute data
 
@@ -393,7 +499,8 @@ combined <- group_by(combined,state) %>%
 
 combined <- group_by(combined,state) %>% 
   arrange(month_day) %>% 
-  mutate(outbreak=as.numeric(cases>1)) %>% 
+  mutate(outbreak=as.numeric(cases>1),
+         lin_counter=1:n()) %>% 
   fill(outbreak,.direction="down") %>% 
   mutate(outbreak_time=cumsum(outbreak)) %>% 
   ungroup %>%
@@ -401,20 +508,24 @@ combined <- group_by(combined,state) %>%
   mutate(world_infect=sum(outbreak_time>1)) %>% 
   group_by(state) %>% 
   arrange(state,month_day) %>% 
-  mutate(lockdown=as.numeric(month_day>stayhome & month_day<end_stayhome),
-         outbreak=cumsum(cumany(Difference>1)),
-         emer_outbreak=month_day[outbreak==1] - month_day[month_day==emergency],
-         lockdown_outbreak=ifelse(length(month_day[outbreak==1] - month_day[month_day==stayhome])==0,
-                                  month_day[outbreak==1] - max(month_day),
-                                  month_day[outbreak==1] - month_day[month_day==stayhome]),
-         lockdown=ifelse(lockdown>0,cumsum(lockdown),lockdown),
-         lockdown=dplyr::lag(lockdown,n=14)) %>% 
+  mutate(cases_per_cap=Difference/(state_pop/100),
+         cases_per_cap=ifelse(cases_per_cap==0,.00000001,cases_per_cap)) %>% 
   mutate_at(c("grocery",
               "parks",
               "residential",
               "retail",
               "transit",
-              "workplaces"), ~dplyr::lag(.,n=14)) %>% 
+              "workplaces",
+              "Health Resources",
+              "Health Testing",
+              "Restriction and Regulation of Businesses",
+              "Restrictions of Mass Gatherings",
+              "Quarantine",
+              "Restriction and Regulation of Government Services",
+              "Social Distancing",
+              "approve",
+              "extremely_concerned",
+              "very_good"), ~dplyr::lag(.,n=14)) %>% 
     ungroup %>% 
   mutate_at(c("grocery",
               "parks",
@@ -428,31 +539,43 @@ combined <- group_by(combined,state) %>%
               "Smoking",
               "Population under 18 years",
               "Air Pollution",
+              "floyd_prot",
+              "reg_prot",
               "Cardiovascular Deaths",
-              "Public Health Funding"), ~as.numeric(scale(.))) %>% 
-  mutate_at(c("lockdown",
-              "emer_outbreak",
-              "lockdown_outbreak"),~scale(.,scale=F)) %>% 
-  filter(!is.na(grocery))
+              "Public Health Funding",
+              "approve",
+              "extremely_concerned",
+              "very_good",
+              "Health Resources",
+              "Health Testing",
+              "mask_wear",
+              "Restriction and Regulation of Businesses",
+              "Restrictions of Mass Gatherings",
+              "Quarantine",
+              "Restriction and Regulation of Government Services",
+              "Social Distancing"), ~as.numeric(scale(.))) %>% 
+  mutate_at(c("lin_counter"),~scale(.,scale=F)) %>% 
+  filter(!is.na(grocery),!is.na(extremely_concerned),!is.na(very_good))
+  #filter(state %in% c("New York","California","Alabama","Florida","Vermont","New Mexico"))
 
 # look at how days after lockdown versus days after emergency compare
 
-combined %>% 
-  ungroup %>% 
-  filter(month_day==max(month_day)) %>% 
-  distinct(cases,state,lockdown_outbreak,emer_outbreak,state_pop) %>% 
-  ggplot(aes(y=lockdown_outbreak,
-             x=emer_outbreak)) +
-  geom_point(aes(size=cases/state_pop),colour="red",alpha=0.5) +
-  geom_text_repel(aes(label=state)) +
-  theme(panel.grid = element_blank(),
-        panel.background = element_blank()) + 
-  xlab("How Many Days Before the First COVID Case Was a State of Emergency Declared?") +
-  ylab("How Many Days Before the First COVID Case Was a Stay at Home Order Imposed?") +
-  ggtitle("Comparison of U.S. State Responses to First COVID-19 Case",
-          subtitle="Negative Numbers Indicate Policy Was Implemented After First COVID-19 Case")
-
-ggsave("check_scatter.png",width=8,height=6)
+# combined %>% 
+#   ungroup %>% 
+#   filter(month_day==max(month_day)) %>% 
+#   distinct(cases,state,lockdown_outbreak,emer_outbreak,state_pop) %>% 
+#   ggplot(aes(y=lockdown_outbreak,
+#              x=emer_outbreak)) +
+#   geom_point(aes(size=cases/state_pop),colour="red",alpha=0.5) +
+#   geom_text_repel(aes(label=state)) +
+#   theme(panel.grid = element_blank(),
+#         panel.background = element_blank()) + 
+#   xlab("How Many Days Before the First COVID Case Was a State of Emergency Declared?") +
+#   ylab("How Many Days Before the First COVID Case Was a Stay at Home Order Imposed?") +
+#   ggtitle("Comparison of U.S. State Responses to First COVID-19 Case",
+#           subtitle="Negative Numbers Indicate Policy Was Implemented After First COVID-19 Case")
+# 
+# ggsave("check_scatter.png",width=8,height=6)
 
 
 saveRDS(combined,"combined.rds")
@@ -460,22 +583,20 @@ saveRDS(combined,"combined.rds")
 # create case dataset
 
 cases_matrix <- select(combined,Difference,month_day,state) %>% 
-  group_by(month_day,state) %>% 
-  summarize(Difference=as.integer(mean(Difference))) %>% 
-  spread(key = "month_day",value="Difference")
+  group_by(state,month_day) %>% 
+  summarize(Difference=as.integer(mean(Difference)))
 
 saveRDS(cases_matrix,"cases_matrix.rds")
 
-cases_matrix_num <- as.matrix(select(cases_matrix,-state))
+cases_matrix_num <- as.matrix(select(ungroup(cases_matrix),-state,-month_day))
 
 # create tests dataset
 
 tests_matrix <- select(combined,tests,month_day,state) %>% 
-  group_by(month_day,state) %>% 
-  summarize(tests=as.integer(mean(tests))) %>% 
-  spread(key = "month_day",value="tests")
+  group_by(state,month_day) %>% 
+  summarize(tests=as.integer(mean(tests)))
 
-tests_matrix_num <- as.matrix(select(tests_matrix,-state))
+tests_matrix_num <- as.matrix(select(ungroup(tests_matrix),-state,-month_day))
 
 # need the outbreak matrix
 
@@ -498,44 +619,136 @@ just_data <- select(ungroup(combined),month_day,state,state_pop,trump,air="Air P
                       young="Population under 18 years",
                       smoking="Smoking",
                       gdp,
+                      masks="Health Resources",
+                      testing_cap="Health Testing",
+                      quarantine="Quarantine",
+                      business="Restriction and Regulation of Businesses",
+                    govt_services="Restriction and Regulation of Government Services",
+                    mass_gathering="Restrictions of Mass Gatherings",
+                    social_distance="Social Distancing",
+                    reg_prot,
+                    floyd_prot,
+                      approve,
+                    extremely_concerned,
+                    very_good,
+                    outbreak_time,
                       public_health="Public Health Funding",
-                      prop_foreign,
-                      emer_outbreak,lockdown_outbreak,lockdown) %>% arrange(state,month_day) %>% 
-  mutate(lockdown_outbreak=as.numeric(lockdown_outbreak),
-         int_lockdown=lockdown_outbreak*lockdown,
-         emer_outbreak=as.numeric(emer_outbreak))
+                      prop_foreign) %>% arrange(state,month_day) %>% 
+  mutate(outbreak_time=scale(outbreak_time),
+         int_lockdown=quarantine*outbreak_time,
+         int_business=business*outbreak_time,
+         int_social=social_distance*outbreak_time,
+         int_govt=govt_services*outbreak_time,
+         int_gather=mass_gathering*outbreak_time)
 
-covs <- select(ungroup(just_data),-state,-state_pop,-month_day) %>% as.matrix
+covs <- select(ungroup(just_data),-state,-state_pop,-month_day,-outbreak_time,
+               -int_lockdown,
+               -int_business,
+               -int_social,
+               -int_gather,
+               -int_govt,
+               -business,
+               -quarantine,
+               -govt_services,
+               -mass_gathering,
+               -social_distance) %>% as.matrix
 
 mobility <- select(ungroup(combined),month_day,state,retail:residential) %>% arrange(state,month_day)
 
 covs_mob <- select(ungroup(mobility),-state,-month_day) %>% as.matrix
 
-lockdown <- select(ungroup(just_data),state,month_day,emer_outbreak:int_lockdown) %>% arrange(state,month_day)
+lockdown <- select(ungroup(just_data),state,month_day,quarantine,business,
+                   mass_gathering,social_distance,govt_services,
+                   int_lockdown,
+                   int_business,
+                   int_social,
+                   int_gather,
+                   int_govt) %>% arrange(state,month_day)
 
 covs_lock <- select(ungroup(lockdown),-state,-month_day)
 
 
 # now give to Stan
 
-ortho_time <- poly(scale(1:ncol(cases_matrix_num)),degree=3)
+time_outbreak_center <- matrix(combined$outbreak_time,byrow = T,
+                               nrow=length(unique(combined$state)),
+                                                   ncol=length(unique(combined$month_day)))
 
-time_outbreak_center <- matrix(scale(c(time_outbreak_matrix),scale = F),nrow=nrow(time_outbreak_matrix),
-                                                   ncol=ncol(time_outbreak_matrix))
+ortho_time <- poly(scale(1:max(time_outbreak_center)),degree=3)
 
-real_data <- list(time_all=ncol(cases_matrix_num),
-                 num_country=nrow(cases_matrix_num),
+time_global <- group_by(combined,month_day) %>% 
+  summarize(time_global=sum(outbreak_time>1))
+
+# include serology data
+
+serology <- tibble(state_id=c("Washington",
+                              "New York",
+                              "Florida",
+                              "Missouri",
+                              "Utah",
+                              "Connecticut"),
+                   inf_pr=c(48300/4274336,
+                                 641800/9261183,
+                                 117400/6345945,
+                                 161900/6109434,
+                                 47400/2174312,
+                                 176700/3576923),
+                   case_pr=c(4300/4274336,
+                                 53800/9261183,
+                                 10500/6345945,
+                                 6800/6109434,
+                                 4500/2174312,
+                                 29300/3576923),
+                   survey_size=c(3265,
+                                 2482,
+                                 1742,
+                                 1882,
+                                 1132,
+                                 1431),
+                   inflation=inf_pr/case_pr,
+                   date_begin=ymd(c("2020-03-23",
+                                "2020-03-23",
+                                "2020-04-06",
+                                "2020-04-20",
+                                "2020-04-20",
+                                "2020-04-26")),
+                   date_end=ymd(c("2020-04-01",
+                              "2020-04-01",
+                              "2020-04-10",
+                              "2020-04-26",
+                              "2020-05-03",
+                              "2020-05-03")))
+
+# convert to numbers from dates/factors
+
+lev_state <- levels(factor(combined$state))
+lev_date <- levels(factor(combined$month_day))
+
+serology <- mutate(serology,
+                   state_id=as.numeric(factor(state_id,levels=lev_state)),
+                   date_begin=as.numeric(factor(date_begin,levels=lev_date)),
+                   date_end=as.numeric(factor(date_end,levels=lev_date)))
+
+real_data <- list(time_all=length(unique(combined$month_day)),
+                 num_country=length(unique(combined$state)),
+                 cc=rep(1:length(unique(combined$state)),each=length(unique(combined$month_day))),
+                 R=nrow(serology), # number of CDC samples
                  S=ncol(covs),
                  G=ncol(covs_mob),
                  L=ncol(covs_lock),
-                 country_pop=floor(unique(just_data$state_pop)/100),
-                 cases=cases_matrix_num,
+                 country_id=as.numeric(factor(combined$state)),
+                 date_id=as.numeric(factor(combined$date)),
+                 sero=as.matrix(serology),
+                 maxO=nrow(ortho_time),
+                 country_pop=floor(just_data$state_pop/100),
+                 cases=cases_matrix_num[,1],
                  ortho_time=ortho_time,
                  phi_scale=.01,
-                 count_outbreak=as.numeric(scale(apply(outbreak_matrix,2,sum),scale = F)),
-                 tests=tests_matrix_num,
-                 time_outbreak=time_outbreak_matrix,
-                 time_outbreak_center=time_outbreak_center,
+                 cases_per_cap=combined$cases_per_cap,
+                 count_outbreak=rep(scale(time_global$time_global),
+                                    times=length(unique(combined$state))),
+                 tests=tests_matrix_num[,1],
+                 time_outbreak=time_outbreak_center,
                  suppress=covs,
                  mobility=covs_mob,
                  lockdown=covs_lock)
@@ -544,81 +757,84 @@ saveRDS(real_data,"real_data.rds")
 
 init_vals <- function() {
   list(phi_raw=c(100,100),
-       world_infect=0.5,
+       world_infect=0,
        finding=0.5,
+       suppress_effect_raw=rep(0,real_data$S),
+       lockdown_effect_raw=rep(0,real_data$L),
+       mob_effect_raw=rep(0,real_data$G),
        country_test_raw=rep(.5,real_data$num_country),
        alpha=c(-1,-1,-1))
 }
 
 
 
-if(run_model) {
-  # loop over states
-      
-  #us_fit <- sampling(pan_model,data=real_data,chains=3,cores=3,iter=800,warmup=500,init=0)
-
-
-  
-  #saveRDS(us_fit,"../data/us_fit.rds")
-  us_fit <- readRDS("../data/us_fit.rds")
-} else {
-  us_fit <- readRDS("../data/us_fit.rds")
-}
+# if(run_model) {
+#   # loop over states
+#       
+#   #us_fit <- sampling(pan_model,data=real_data,chains=3,cores=3,iter=800,warmup=500,init=0)
+# 
+# 
+#   
+#   #saveRDS(us_fit,"../data/us_fit.rds")
+#   us_fit <- readRDS("../data/us_fit.rds")
+# } else {
+#   us_fit <- readRDS("../data/us_fit.rds")
+# }
 
 
 ```
 
 ```{r infectstate,fig.cap="5% to 95% HPD Uncertainty Intervals of Partially-Identified Infection Rates by U.S. State with Total Average"}
-all_est_state <- as.data.frame(us_fit,"num_infected_high") %>% 
-  mutate(iter=1:n()) %>% 
-  gather(key="variable",value="estimate",-iter) %>% 
-  group_by(variable) %>% 
-  mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-         time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
-         time_point=ymd(min(combined$month_day)) + days(time_point-1))
-
-all_est_state <- left_join(all_est_state,tibble(state_num=1:nrow(cases_matrix),
-                                                state=cases_matrix$state,
-                                                state_pop=real_data$country_pop,
-                                                suppress_measures=covs[1:nrow(cases_matrix),"emer_outbreak"],by="state_num"))
-
-# merge in total case count
-
-case_count <- gather(cases_matrix,key="time_point",value="cases",-state) %>% 
-  mutate(time_point=ymd(time_point)) %>% 
-  group_by(state) %>% 
-  arrange(state,time_point) %>% 
-  mutate(cum_sum_cases=cumsum(cases)) 
-
-us_case_count <- group_by(case_count,time_point) %>% 
-  summarize(all_cum_sum=sum(cum_sum_cases))
-
-all_est_state <- left_join(all_est_state,us_case_count,by="time_point")
-
-
-all_est_state %>% 
-  mutate(estimate=estimate) %>% 
-  group_by(state_num,time_point,suppress_measures) %>% 
-    summarize(med_est=quantile(estimate,.5),
-            high_est=quantile(estimate,.95),
-            low_est=quantile(estimate,.05)) %>% 
-  ggplot(aes(y=med_est,x=time_point)) +
-  #geom_line(aes(group=state_num,colour=suppress_measures),alpha=0.5) +
-  geom_ribbon(aes(ymin=low_est,
-  ymax=high_est,
-  group=state_num,
-  fill=suppress_measures),alpha=0.5) +
-  stat_smooth(colour="black") +
-  theme_minimal() +
-  scale_color_distiller(palette="RdBu",direction=-1) +
-  ylab("Latent Infection Scale") +
-  labs(caption="5% - 95% HPD Intervals are colored by\nwhen a state declared a state of emergency (standardized count of days).\nAs the total number of infected people is unknown,\nthis chart measures the relative marginal infection rates between states.") +
-  xlab("Days Since Outbreak Start") +
-  geom_hline(yintercept = 0,linetype=3) +
-  guides(fill=guide_colorbar(title="Timing of State Emergency Declaration")) +
-  theme(panel.grid = element_blank(),
-        legend.position = "bottom")
-ggsave("uncertain_state_rates.png")
+# all_est_state <- as.data.frame(us_fit,"num_infected_high") %>% 
+#   mutate(iter=1:n()) %>% 
+#   gather(key="variable",value="estimate",-iter) %>% 
+#   group_by(variable) %>% 
+#   mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
+#          time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
+#          time_point=ymd(min(combined$month_day)) + days(time_point-1))
+# 
+# all_est_state <- left_join(all_est_state,tibble(state_num=1:nrow(cases_matrix),
+#                                                 state=cases_matrix$state,
+#                                                 state_pop=real_data$country_pop,
+#                                                 suppress_measures=covs[1:nrow(cases_matrix),"emer_outbreak"],by="state_num"))
+# 
+# # merge in total case count
+# 
+# case_count <- gather(cases_matrix,key="time_point",value="cases",-state) %>% 
+#   mutate(time_point=ymd(time_point)) %>% 
+#   group_by(state) %>% 
+#   arrange(state,time_point) %>% 
+#   mutate(cum_sum_cases=cumsum(cases)) 
+# 
+# us_case_count <- group_by(case_count,time_point) %>% 
+#   summarize(all_cum_sum=sum(cum_sum_cases))
+# 
+# all_est_state <- left_join(all_est_state,us_case_count,by="time_point")
+# 
+# 
+# all_est_state %>% 
+#   mutate(estimate=estimate) %>% 
+#   group_by(state_num,time_point,suppress_measures) %>% 
+#     summarize(med_est=quantile(estimate,.5),
+#             high_est=quantile(estimate,.95),
+#             low_est=quantile(estimate,.05)) %>% 
+#   ggplot(aes(y=med_est,x=time_point)) +
+#   #geom_line(aes(group=state_num,colour=suppress_measures),alpha=0.5) +
+#   geom_ribbon(aes(ymin=low_est,
+#   ymax=high_est,
+#   group=state_num,
+#   fill=suppress_measures),alpha=0.5) +
+#   stat_smooth(colour="black") +
+#   theme_minimal() +
+#   scale_color_distiller(palette="RdBu",direction=-1) +
+#   ylab("Latent Infection Scale") +
+#   labs(caption="5% - 95% HPD Intervals are colored by\nwhen a state declared a state of emergency (standardized count of days).\nAs the total number of infected people is unknown,\nthis chart measures the relative marginal infection rates between states.") +
+#   xlab("Days Since Outbreak Start") +
+#   geom_hline(yintercept = 0,linetype=3) +
+#   guides(fill=guide_colorbar(title="Timing of State Emergency Declaration")) +
+#   theme(panel.grid = element_blank(),
+#         legend.position = "bottom")
+# ggsave("uncertain_state_rates.png")
 
 ```
 
@@ -644,64 +860,64 @@ Figure \@ref(fig:infectstate) shows the 5% - 95% high posterior density (HPD) in
 
 ```{r suppress2,echo=F,include=F}
 
-suppress_effect <- as.data.frame(us_fit,"suppress_effect") %>% 
-  mutate(iter=1:n()) %>% 
-  gather(key="parameter",value="estimate",-iter) %>% 
-  mutate(variable=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?")))
-
-num_infected <- as.data.frame(us_fit,"num_infected_high") %>% 
-  mutate(iter=1:n()) %>% 
-  gather(key="variable",value="estimate",-iter) %>% 
-  group_by(variable) %>% 
-  mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-         time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
-         time_point=ymd(min(combined$month_day)) + days(time_point-1))
-
-# iterate this bugger
-
-p_infected <- group_by(num_infected,iter) %>% 
-  summarize(est=mean(dlogis(estimate)))
-
-# don't need to iterate over time anymore, at least for this analysis
-if(run_model) {
-    over_all <- parallel::mclapply(sample(1:max(num_infected$iter),100), function(q) {
-    over_supp <- lapply(1:max(suppress_effect$variable), function(s) {
-      # over_time_level <- lapply(seq(min(time_outbreak_center),max(time_outbreak_center),length.out=100), function(i) {
-        this_eff <- p_infected$est[q] * suppress_effect$estimate[suppress_effect$variable==s & suppress_effect$iter==q] 
-                                         # suppress_effect$estimate[suppress_effect$supp_type==2 & suppress_effect$variable==s & suppress_effect$iter==q]*i)
-      
-      tibble(estimate=this_eff,
-             # time_scale_point=i,
-             iter=q,
-             variable=s)
-      # }) %>% bind_rows
-      
-    }) %>% bind_rows
-    
-    return(over_supp)
-  },mc.cores=3) %>% bind_rows
-    
-    saveRDS(over_all,"../data/over_all_nonid.rds")
-    
-} else {
-  over_all <- readRDS("../data/over_all_nonid.rds")
-}
-
-
-
-
-# over_all_time <- group_by(over_all,variable,time_scale_point) %>% 
+# suppress_effect <- as.data.frame(us_fit,"suppress_effect") %>% 
+#   mutate(iter=1:n()) %>% 
+#   gather(key="parameter",value="estimate",-iter) %>% 
+#   mutate(variable=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?")))
+# 
+# num_infected <- as.data.frame(us_fit,"num_infected_high") %>% 
+#   mutate(iter=1:n()) %>% 
+#   gather(key="variable",value="estimate",-iter) %>% 
+#   group_by(variable) %>% 
+#   mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
+#          time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
+#          time_point=ymd(min(combined$month_day)) + days(time_point-1))
+# 
+# # iterate this bugger
+# 
+# p_infected <- group_by(num_infected,iter) %>% 
+#   summarize(est=mean(dlogis(estimate)))
+# 
+# # don't need to iterate over time anymore, at least for this analysis
+# if(run_model) {
+#     over_all <- parallel::mclapply(sample(1:max(num_infected$iter),100), function(q) {
+#     over_supp <- lapply(1:max(suppress_effect$variable), function(s) {
+#       # over_time_level <- lapply(seq(min(time_outbreak_center),max(time_outbreak_center),length.out=100), function(i) {
+#         this_eff <- p_infected$est[q] * suppress_effect$estimate[suppress_effect$variable==s & suppress_effect$iter==q] 
+#                                          # suppress_effect$estimate[suppress_effect$supp_type==2 & suppress_effect$variable==s & suppress_effect$iter==q]*i)
+#       
+#       tibble(estimate=this_eff,
+#              # time_scale_point=i,
+#              iter=q,
+#              variable=s)
+#       # }) %>% bind_rows
+#       
+#     }) %>% bind_rows
+#     
+#     return(over_supp)
+#   },mc.cores=3) %>% bind_rows
+#     
+#     saveRDS(over_all,"../data/over_all_nonid.rds")
+#     
+# } else {
+#   over_all <- readRDS("../data/over_all_nonid.rds")
+# }
+# 
+# 
+# 
+# 
+# # over_all_time <- group_by(over_all,variable,time_scale_point) %>% 
+# #   summarize(med_est=median(estimate),
+# #             high_est=quantile(estimate,.95),
+# #             low_est=quantile(estimate,.05)) %>% 
+# #   mutate(model="Partially\nIdentified")
+# 
+# 
+# over_all_sum <- group_by(over_all,variable) %>% 
 #   summarize(med_est=median(estimate),
 #             high_est=quantile(estimate,.95),
 #             low_est=quantile(estimate,.05)) %>% 
 #   mutate(model="Partially\nIdentified")
-
-
-over_all_sum <- group_by(over_all,variable) %>% 
-  summarize(med_est=median(estimate),
-            high_est=quantile(estimate,.95),
-            low_est=quantile(estimate,.05)) %>% 
-  mutate(model="Partially\nIdentified")
   
   
 
@@ -721,52 +937,52 @@ over_all_sum <- group_by(over_all,variable) %>%
 #                       prop_foreign="% Foreign-Born",
 #                       public_health="Public Health\nFunding"))
 
-over_all_sum <- left_join(over_all_sum,tibble(variable=1:ncol(covs),
-                                        label=colnames(covs))) %>% 
-  mutate(label=recode(label,
-                      air="Air\nQuality",
-                      providers="No.\nProviders",
-                      gdp="GDP",
-                      heart="Cardiovascular\nDeaths",
-                      emer_outbreak="Date\nEmergency",
-                      lockdown_outbreak="Date\nLockdown",
-                      lockdown="Lockdown\nDuration",
-                      int_lockdown="LockdownXDate Lockdown",
-                      young="% Population\n<18",
-                      smoking="% Smokers",
-                      trump="Trump\nVote Share",
-                      prop_foreign="% Foreign-Born",
-                      public_health="Public Health\nFunding"))
-
-p1 <- over_all_sum %>%
-  ggplot(aes(y=med_est,x=reorder(label,med_est))) +
-  geom_pointrange(aes(ymin=low_est,ymax=high_est),alpha=0.8) +
-  theme_minimal() +
-  xlab("")  +
-  ylab("Effect on Proportion Infected") +
-  geom_hline(yintercept=0,linetype=2) +
-  ggtitle("Constant Effect on\nProportion Infected") +
-  facet_wrap(~label,scales="free") +
-  theme(panel.grid=element_blank(),
-        plot.title = element_text(size=10,hjust=0.5)) +
-  coord_flip()
-
-# p2 <- over_all_time %>%
-#  ggplot(aes(y=med_est,x=time_scale_point)) +
-#     xlab("Time Since Outbreak Began")  +
-#   ylab("Effect on Proportion Infected") +
-#   geom_ribbon(aes(ymin=low_est,ymax=high_est),alpha=0.5,fill="red") +
-#   geom_line(linetype=2) +
-#   ggtitle("Time-Varying Effect on\nProportion Infected") +
+# over_all_sum <- left_join(over_all_sum,tibble(variable=1:ncol(covs),
+#                                         label=colnames(covs))) %>% 
+#   mutate(label=recode(label,
+#                       air="Air\nQuality",
+#                       providers="No.\nProviders",
+#                       gdp="GDP",
+#                       heart="Cardiovascular\nDeaths",
+#                       emer_outbreak="Date\nEmergency",
+#                       lockdown_outbreak="Date\nLockdown",
+#                       lockdown="Lockdown\nDuration",
+#                       int_lockdown="LockdownXDate Lockdown",
+#                       young="% Population\n<18",
+#                       smoking="% Smokers",
+#                       trump="Trump\nVote Share",
+#                       prop_foreign="% Foreign-Born",
+#                       public_health="Public Health\nFunding"))
+# 
+# p1 <- over_all_sum %>%
+#   ggplot(aes(y=med_est,x=reorder(label,med_est))) +
+#   geom_pointrange(aes(ymin=low_est,ymax=high_est),alpha=0.8) +
 #   theme_minimal() +
-#   geom_hline(yintercept=0,linetype=3) +
+#   xlab("")  +
+#   ylab("Effect on Proportion Infected") +
+#   geom_hline(yintercept=0,linetype=2) +
+#   ggtitle("Constant Effect on\nProportion Infected") +
+#   facet_wrap(~label,scales="free") +
 #   theme(panel.grid=element_blank(),
 #         plot.title = element_text(size=10,hjust=0.5)) +
-#   facet_wrap(~label,scales="free_y")
-
-p1
-
-ggsave("marginal_noid.png")
+#   coord_flip()
+# 
+# # p2 <- over_all_time %>%
+# #  ggplot(aes(y=med_est,x=time_scale_point)) +
+# #     xlab("Time Since Outbreak Began")  +
+# #   ylab("Effect on Proportion Infected") +
+# #   geom_ribbon(aes(ymin=low_est,ymax=high_est),alpha=0.5,fill="red") +
+# #   geom_line(linetype=2) +
+# #   ggtitle("Time-Varying Effect on\nProportion Infected") +
+# #   theme_minimal() +
+# #   geom_hline(yintercept=0,linetype=3) +
+# #   theme(panel.grid=element_blank(),
+# #         plot.title = element_text(size=10,hjust=0.5)) +
+# #   facet_wrap(~label,scales="free_y")
+# 
+# p1
+# 
+# ggsave("marginal_noid.png")
 
 ```
 
@@ -777,7 +993,8 @@ if(run_model) {
   pan_model_scale <- stan_model("corona_tscs_betab_scale.stan")
   
   us_fit_scale <- sampling(pan_model_scale,data=real_data,chains=3,cores=3,iter=800,warmup=500,
-                           init=0,control=list(max_treedepth=12))
+                           init=init_vals,
+                           control=list(max_treedepth=10))
   
   saveRDS(us_fit_scale,"../data/us_fit_scale.rds")
 } else {
@@ -832,67 +1049,53 @@ out_data <- mcmc_intervals_data(obs_model,regex_pars=":") %>%
 
 
 ```{r infectscaled,fig.cap="Approximate Total Number of COVID-19 Infected Individuals in the U.S. as of April 20th",fig.height=5}
-all_est_state <- as.data.frame(us_fit_scale,"num_infected_high") %>% 
-  mutate(iter=1:n()) %>% 
-  gather(key="variable",value="estimate",-iter) %>% 
-  group_by(variable) %>% 
-  mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-         time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
-         time_point=ymd(min(combined$month_day)) + days(time_point-1))
 
-all_est_state <- left_join(all_est_state,tibble(state_num=1:nrow(cases_matrix),
-                                                state=cases_matrix$state,
-                                                state_pop=real_data$country_pop,
-                                    suppress_measures=real_data$suppress[1:nrow(cases_matrix),"emer_outbreak"],by="state_num"))
-
-# merge in total case count
-
-case_count <- gather(cases_matrix,key="time_point",value="cases",-state) %>% 
-  mutate(time_point=ymd(time_point)) %>% 
+combined <- mutate(ungroup(combined),key=1:n()) %>% 
   group_by(state) %>% 
-  arrange(state,time_point) %>% 
-  mutate(cum_sum_cases=cumsum(cases)) 
-
-# merge in deaths/recovered
-
-case_count <- left_join(case_count,select(combined,deaths,recovered,month_day,state),
-                        c("time_point"="month_day","state")) %>% 
-  mutate(recovered=coalesce(recovered,0),
+  arrange(state,month_day) %>% 
+  mutate(cum_sum_cases=cumsum(Difference),
+         recovered=coalesce(recovered,0),
          deaths=coalesce(deaths,0),
          cum_sum_cases = cum_sum_cases - deaths - recovered,
          lag_case=ifelse(dplyr::lag(cum_sum_cases,n=14)<0 & !is.na(dplyr::lag(cum_sum_cases,n=20)),0,
                          coalesce(dplyr::lag(cum_sum_cases,n=20),0)),
          cum_sum_cases = cum_sum_cases - lag_case)
 
-us_case_count <- group_by(case_count,time_point) %>% 
+all_est_state <- as.data.frame(us_fit_scale,"prop_infected") %>% 
+  mutate(iter=1:n()) %>% 
+  gather(key="variable",value="estimate",-iter) %>%
+  mutate(key=as.numeric(str_extract(variable,"[0-9]+"))) %>% 
+  left_join(select(combined,deaths,recovered,month_day,state,key,cum_sum_cases,state_pop),by="key")
+
+# merge in deaths/recovered
+
+us_case_count <- group_by(combined,month_day) %>% 
   summarize(all_cum_sum=sum(cum_sum_cases),
             all_rec=sum(recovered),
             all_death=sum(deaths))
 
-all_est_state <- left_join(all_est_state,us_case_count,by="time_point")
+all_est_state <- left_join(all_est_state,us_case_count,by="month_day")
 
 calc_sum <- all_est_state %>% 
   ungroup %>% 
   mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
-  group_by(state_num,iter) %>% 
-  arrange(state_num,time_point) %>% 
-  #mutate(cum_est=cumsum(estimate)) %>% 
-  group_by(time_point,iter,all_cum_sum,all_rec,all_death) %>%
-  summarize(us_total=sum(estimate)) %>%
-  # summarize(us_total=estimate) %>% 
-  # group_by(iter) %>% 
-  # arrange(iter,time_point) %>% 
-  # mutate(us_total=us_total - coalesce(dplyr::lag(us_total,n=14),0)) %>% 
-  #summarize(us_total=sum(cum_est)) %>% 
-  group_by(time_point,all_cum_sum) %>% 
+  group_by(state,iter) %>% 
+  arrange(state,month_day) %>% 
+  mutate(cum_est=estimate) %>% 
+  group_by(month_day,iter,all_cum_sum,all_rec,all_death) %>%
+  summarize(us_total=sum(cum_est)) %>%
+  group_by(iter) %>%
+  arrange(iter,month_day) %>%
+  #mutate(us_total=us_total - coalesce(dplyr::lag(us_total,n=14),0)) %>%
+  group_by(month_day,all_cum_sum) %>% 
   summarize(med_est=quantile(us_total,.5),
             high_est=quantile(us_total,.95),
             low_est=quantile(us_total,.05)) 
 
-max_est <- as.integer(round(calc_sum$med_est[calc_sum$time_point==max(calc_sum$time_point)]))
-high_max_est <- as.integer(round(calc_sum$high_est[calc_sum$time_point==max(calc_sum$time_point)]))
-low_max_est <- as.integer(round(calc_sum$low_est[calc_sum$time_point==max(calc_sum$time_point)]))
-max_obs <- calc_sum$all_cum_sum[calc_sum$time_point==max(calc_sum$time_point)]
+max_est <- as.integer(round(calc_sum$med_est[calc_sum$month_day==max(calc_sum$month_day)]))
+high_max_est <- as.integer(round(calc_sum$high_est[calc_sum$month_day==max(calc_sum$month_day)]))
+low_max_est <- as.integer(round(calc_sum$low_est[calc_sum$month_day==max(calc_sum$month_day)]))
+max_obs <- calc_sum$all_cum_sum[calc_sum$month_day==max(calc_sum$month_day)]
 
 options(scipen=999)
 
@@ -912,13 +1115,13 @@ expert_survey <- read_csv("../data/consensusForecastsDB.csv") %>%
   summarize(med_est=bin[abs(cumprob-0.5)==min(abs(cumprob-0.5))],
             low_est=bin[abs(cumprob-0.1)==min(abs(cumprob-.1))],
             high_est=bin[abs(cumprob-0.9)==min(abs(cumprob-.9))]) %>% 
-  rename(time_point="surveyIssued")
+  rename(month_day="surveyIssued")
 
 
 # need to add in cumulative case counts
 
 calc_sum %>% 
-  ggplot(aes(y=med_est,x=time_point)) +
+  ggplot(aes(y=med_est,x=month_day)) +
   geom_ribbon(aes(ymin=low_est,
   ymax=high_est),
   fill="blue",
@@ -938,14 +1141,14 @@ calc_sum %>%
                                                          formatC(high_max_est,big.mark=",",format = "f",digits=0)),
                    paste0("Total Reported Cases:\n",formatC(max_obs,big.mark=",")))) +
   annotate("text",x=ymd(c("2020-03-01","2020-03-12",
-                          as.character(expert_survey$time_point))),
+                          as.character(expert_survey$month_day))),
            y=c(300000,180000,expert_survey$high_est*1.01),
            vjust=0,
            fontface="bold",
            size=2,
            label=c("Li et al. March 8th",
                    "Perkins et al. March 26th",
-                   paste0("Expert Survey\n",expert_survey$time_point)),alpha=0.8) +
+                   paste0("Expert Survey\n",expert_survey$month_day)),alpha=0.8) +
   # previously published annotations
   annotate("pointrange",x=ymd("2020-03-01"),y=9001,ymin=2299,ymax=20403,alpha=0.5) +
   annotate("pointrange",x=ymd("2020-03-12"),y=22876,ymin=7451,ymax=53044,alpha=0.5) +
@@ -967,33 +1170,18 @@ As described in the modeling section, the model does not provide estimates that 
 ```{r stateplot,fig.cap="Average Cumulative Count of Infected People by U.S. State as of April 20th",fig.height=5,echo=F}
 require(ggrepel)
 
-# need different figures for case-level deaths + recovered
-
-all_est_state <- as.data.frame(us_fit_scale,"num_infected_high") %>% 
-  mutate(iter=1:n()) %>% 
-  gather(key="variable",value="estimate",-iter) %>% 
-  group_by(variable) %>% 
-  mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-         time_point=as.numeric(str_extract(variable,"[0-9]+(?=\\])")),
-         time_point=ymd(min(combined$month_day)) + days(time_point-1))
-
-all_est_state <- left_join(all_est_state,tibble(state_num=1:nrow(cases_matrix),
-                                                state=cases_matrix$state,
-                                                state_pop=real_data$country_pop,
-                                    suppress_measures=real_data$suppress[1:nrow(cases_matrix),"emer_outbreak"],by="state_num"))
-
-all_est_state <- left_join(all_est_state,case_count,by=c("state","time_point"))
+# need different figures for case-level deaths + recovere
 
 calc_sum_state <- all_est_state %>% 
   ungroup %>% 
   mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
   #mutate(estimate=(plogis(estimate))*((state_pop))) %>%
   group_by(state,iter) %>% 
-  arrange(state,iter,time_point) %>% 
+  arrange(state,iter,month_day) %>% 
   mutate(cum_est=cumsum(estimate) - recovered - deaths, 
   cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=19),0)) %>% 
   #cum_sum_cases = cum_sum_cases - coalesce(dplyr::lag(cum_sum_cases,n=14),0)) %>% 
-  group_by(time_point,state,suppress_measures,cum_sum_cases) %>% 
+  group_by(month_day,state,cum_sum_cases) %>% 
   summarize(med_est=quantile(cum_est,.5),
             high_est=quantile(cum_est,.95),
             low_est=quantile(cum_est,.05)) 
@@ -1004,7 +1192,7 @@ saveRDS(calc_sum_state,"calc_sum_state.rds")
 
 # get top 5 plus random 5 
 
-top_5 <- filter(calc_sum_state,time_point==max(calc_sum_state$time_point)) %>% 
+top_5 <- filter(calc_sum_state,month_day==max(calc_sum_state$month_day)) %>% 
   arrange(desc(med_est)) %>% 
   ungroup %>% 
   slice(c(1:5,sample(6:length(unique(calc_sum_state$state)),5))) %>% 
@@ -1013,7 +1201,7 @@ top_5 <- filter(calc_sum_state,time_point==max(calc_sum_state$time_point)) %>%
                                                          formatC(high_est,big.mark=",",format = "f",digits=0)))
 
 all <- calc_sum_state %>% 
-  ggplot(aes(y=med_est,x=time_point)) +
+  ggplot(aes(y=med_est,x=month_day)) +
   geom_line(aes(group=state,colour=med_est)) +
   # geom_ribbon(aes(ymin=low_est,
   # ymax=high_est,
@@ -1022,7 +1210,7 @@ all <- calc_sum_state %>%
   theme_minimal() +
   scale_color_distiller(palette="Reds",direction=1) +
   ylab("Current Number Infected") +
-  geom_text_repel(data=top_5,aes(x=time_point,y=med_est,label=label),
+  geom_text_repel(data=top_5,aes(x=month_day,y=med_est,label=label),
                   size=3,fontface="bold",segment.colour = NA) +
   scale_y_continuous(labels=scales::comma) +
   xlab("Days Since Outbreak Start") + 
@@ -1036,11 +1224,11 @@ calc_sum_state <- all_est_state %>%
   ungroup %>% 
   mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
   group_by(state,iter) %>% 
-  arrange(state,time_point) %>% 
+  arrange(state,month_day) %>% 
   mutate(cum_est=cumsum(estimate) - recovered - deaths,
          cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=19),0),
   cum_sum_cases = cum_sum_cases / (state_pop)) %>% 
-  group_by(time_point,state,suppress_measures,cum_sum_cases) %>% 
+  group_by(month_day,state,cum_sum_cases) %>% 
   summarize(med_est=quantile(cum_est,.5),
             high_est=quantile(cum_est,.95),
             low_est=quantile(cum_est,.05)) 
@@ -1051,7 +1239,7 @@ saveRDS(calc_sum_state,"percap.rds")
 
 # get top 5 plus random 5 
 
-top_5 <- filter(calc_sum_state,time_point==max(calc_sum_state$time_point)) %>% 
+top_5 <- filter(calc_sum_state,month_day==max(calc_sum_state$month_day)) %>% 
   arrange(desc(med_est)) %>% 
   ungroup %>% 
   slice(c(1:5,sample(6:length(unique(calc_sum_state$state)),5))) %>% 
@@ -1061,7 +1249,7 @@ top_5 <- filter(calc_sum_state,time_point==max(calc_sum_state$time_point)) %>%
 
 
 per_cap <- calc_sum_state %>% 
-  ggplot(aes(y=med_est,x=time_point)) +
+  ggplot(aes(y=med_est,x=month_day)) +
   geom_line(aes(group=state,colour=med_est)) +
   # geom_ribbon(aes(ymin=low_est,
   # ymax=high_est,
@@ -1071,7 +1259,7 @@ per_cap <- calc_sum_state %>%
   scale_color_distiller(palette="Reds",direction=1) +
   ylab("Percent Population Infected") +
   labs(caption="Some lines are labeled with uncertainty of estimates (5% - 95% Interval).\nThese estimates are based on the assumption that as few as\n10% of cases may be reported based on SIR/SEIR models. Does not exclude people\nwho may have recovered or died.") +
-  geom_text_repel(data=top_5,aes(x=time_point,y=med_est,label=label),
+  geom_text_repel(data=top_5,aes(x=month_day,y=med_est,label=label),
                   size=3,fontface="bold",segment.colour = NA) +
   scale_y_continuous(labels=scales::percent) +
   xlab("Days Since Outbreak Start") + 
@@ -1099,12 +1287,12 @@ It is important to note, however, that lockdowns are associated with increases i
 
 mob_effect <- rstan::extract(us_fit_scale,"mob_effect")[[1]]
 lock_effect <- rstan::extract(us_fit_scale,"suppress_hier_const")[[1]]
-direct_effect <- rstan::extract(us_fit_scale,"suppress_effect")[[1]]
+direct_effect <- rstan::extract(us_fit_scale,"lockdown_effect")[[1]]
 
-p_infected <- select(num_infected,iter,state_num,time_point,estimate) %>% 
+p_infected <- select(all_est_state,iter,state,month_day,estimate) %>% 
   spread(key="iter",value="estimate") %>% 
   ungroup %>% 
-  select(-state_num,-time_point,-variable) %>% 
+  select(-state,-month_day) %>% 
   as.matrix %>% 
   dlogis
 
@@ -1112,22 +1300,37 @@ p_infected <- select(num_infected,iter,state_num,time_point,estimate) %>%
 
 if(run_model) {
   
-    num_infected_deriv <- mutate(num_infected,estimate=dlogis(estimate))
+    num_infected_deriv <- mutate(all_est_state,estimate=dlogis(estimate))
+    
+    # all the covariates we are looking at
+    
+    lock_covs <- c("quarantine","business","mass_gathering","social_distance","govt_services")
+    int_locks <- c("int_lockdown","int_business","int_social","int_gather","int_govt")
+    
+    colnames(direct_effect) <- c(lock_covs,int_locks)
+    
+    dimnames(lock_effect)[[3]] <- c(lock_covs,int_locks)
     
     over_med <- lapply(1:ncol(covs_mob), function(m) {
+      
+      over_cov <- purrr::map2(lock_covs, int_locks,function(l,li) {
 
-      over_mod <- lapply(seq(min(combined$lockdown_outbreak),max(combined$lockdown_outbreak),
+        over_mod <- lapply(seq(min(just_data[[li]]),max(just_data[[li]]),
                              length.out=10), function(d) {
 
-          tibble(direct_eff=rowMeans((direct_effect[,12] + direct_effect[,13]*d)*p_infected),
-                  indirect_eff=rowMeans((mob_effect[,m]*(lock_effect[,m,3] + lock_effect[,m,4]*d)*p_infected)),
+          tibble(direct_eff=rowMeans((direct_effect[,l] + direct_effect[,li]*d)*p_infected),
+                  indirect_eff=rowMeans((mob_effect[,m]*(lock_effect[,m,l] + lock_effect[,m,li]*d)*p_infected)),
                  total_eff=direct_eff + indirect_eff,
                  prop_med=indirect_eff/total_eff) %>% 
             mutate(mobility=colnames(covs_mob)[m],
-                   lockdown="lockdown",
+                   lockdown=l,
                    day=d)
           
         }) %>% bind_rows
+        
+      }) %>% bind_rows
+
+      
     }) %>% bind_rows
     
     saveRDS(over_med,"../data/mediator_eff.rds")
@@ -1148,7 +1351,6 @@ over_med_agg <- over_med %>%
             high_total=quantile(total_eff,.95),
             low_total=quantile(total_eff,.05)) %>% 
   ungroup %>% 
-  select(-lockdown) %>% 
   mutate(mobility=recode(mobility,grocery="Grocery",
                          parks="Parks",
                          residential="Residential",
@@ -1156,7 +1358,7 @@ over_med_agg <- over_med %>%
                          retail="Retail",
                          workplaces="Workplaces",
                          residential="Residential")) %>% 
-  gather(key="type",value="estimate",-mobility,-day) %>% 
+  gather(key="type",value="estimate",-mobility,-day,-lockdown) %>% 
   separate(type,into=c("est_type","variable")) %>% 
   spread(key="est_type",value="estimate")
 
@@ -1168,7 +1370,8 @@ direct <- over_med_agg %>%
   geom_hline(yintercept = 0) +
   ylab("Marginal % Change in Infected Rate") +
   xlab("Days After First COVID-19 Case Until Lockdown Imposed") +
-  scale_y_continuous(labels=scales::percent) 
+  scale_y_continuous(labels=scales::percent) +
+  facet_wrap(~lockdown)
 
 indirect <- over_med_agg %>% 
   filter(variable=="indirect") %>% 
@@ -1176,7 +1379,7 @@ indirect <- over_med_agg %>%
   geom_ribbon(aes(ymin=low,ymax=high),fill="blue",alpha=0.5) +
   geom_line(linetype=2) +
   geom_hline(yintercept = 0) +
-    facet_wrap(~mobility) +
+    facet_wrap(~mobility+lockdown) +
   xlab("") +
   ylab("") +
   scale_y_continuous(labels=scales::percent)
@@ -1187,7 +1390,7 @@ total <- over_med_agg %>%
   geom_ribbon(aes(ymin=low,ymax=high),fill="blue",alpha=0.5) +
   geom_line(linetype=2) +
   geom_hline(yintercept = 0) +
-  facet_wrap(~mobility) + 
+  facet_wrap(~mobility+lockdown) + 
 scale_y_continuous(labels=scales::percent)
 
 direct + indirect  +
@@ -1206,16 +1409,15 @@ However, it is important to note that state-level Trump vote share is associated
 suppress_effect <- as.data.frame(us_fit_scale,"suppress_effect") %>% 
   mutate(iter=1:n()) %>% 
   gather(key="parameter",value="estimate",-iter) %>% 
-  mutate(variable=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?"))) %>% 
-  filter(variable<10)
+  mutate(variable=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?")))
 
 # num_infected <- as.data.frame(us_fit_scale,"num_infected_high") %>% 
 #   mutate(iter=1:n()) %>% 
 #   gather(key="variable",value="estimate",-iter) %>% 
 #   group_by(variable) %>% 
-#   mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-#          time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
-#          time_point=ymd(min(combined$month_day)) + days(time_point-1))
+#   mutate(state=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
+#          month_day=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
+#          month_day=ymd(min(combined$month_day)) + days(month_day-1))
 # 
 # # iterate this bugger
 # 
@@ -1227,7 +1429,7 @@ if(run_model) {
   
     over_all2 <- lapply(1:max(suppress_effect$variable), function(s) {
       
-        this_eff <- (suppress_effect$estimate[suppress_effect$variable==s]*p_infected*sd(covs[,s]))/100 
+        this_eff <- (suppress_effect$estimate[suppress_effect$variable==s]*p_infected)/100 
         this_eff <- rowMeans(this_eff)
       tibble(estimate=this_eff,
              variable=s)
@@ -1496,10 +1698,10 @@ In addition to the estimation of covariates, the model provides further useful i
 test_var <- as.data.frame(us_fit_scale,"country_test_raw") %>%
   mutate(iter=1:n()) %>%
   gather(key="variable",value="estimate",-iter) %>%
-  mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")))
+  mutate(state=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")))
 
-this_infect <- filter(ungroup(num_infected),time_point==max(time_point)) %>% 
-  left_join(tibble(state_num=1:nrow(cases_matrix),
+this_infect <- filter(ungroup(num_infected),month_day==max(month_day)) %>% 
+  left_join(tibble(state=1:nrow(cases_matrix),
                                                 state=cases_matrix$state,
                                                 state_pop=real_data$country_pop)) %>% 
   mutate(estimate2=qlogis(plogis(estimate)+.01))
@@ -1508,7 +1710,7 @@ this_test_max <- ungroup(combined) %>%
   group_by(state) %>% 
   summarize(max_test=max((tests/(state_pop/100))))
 
-test_var <- left_join(test_var,tibble(state_num=1:nrow(cases_matrix),
+test_var <- left_join(test_var,tibble(state=1:nrow(cases_matrix),
                                                 state=cases_matrix$state,
                                                 state_pop=real_data$country_pop)) %>% 
   left_join(this_test_max,"state")

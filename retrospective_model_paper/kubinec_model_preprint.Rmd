@@ -66,8 +66,6 @@ system2("git",args=c("-C ~/covid-19-data","pull"))
 
 run_model <- T
 
-#pan_model <- stan_model("corona_tscs_betab.stan")
-
 ```
 
 
@@ -75,11 +73,11 @@ run_model <- T
 
 
 
-As more and more data has become available on observed case counts of the SARS-CoV2 coronavirus, there have been increasing attempts to infer how contextual factors like government policies, partisanship, and temperature affect the disease's spread [@carleton2020;@sajadi2020;@dudel2020;@tansim2020;@flaxman2020;@brze2020]. The temptation to make inferences from the observed data, however, can result in misleading conclusions. For example, some policy makers have publicly questioned whether the predictions of epidemiological models are far worse than the observed case count.^[See article available at https://www.realclearpolitics.com/video/2020/03/26/dr_birx_coronavirus_data_d] By contrast, in this paper we show that the unobserved infection rate is a confounding variable affecting any estimates of covariates on the observed counts of COVID-19 cases and tests. For this reason, in this paper we present a retrospective Bayesian model that can adjust for this bias by estimating the unseen infection rate up to an unidentified constant. Furthermore, by incorporating informative priors from the susceptible-infected-recovered (SIR)/susceptible-exposed-infected-recovered (SEIR) papers on SARS-CoV2  [@peak2020;@riou2020;@verity2020;@perkins2020;@lourenco2020;@li2020;@ferguson2020], it is possible to put an informative prior on the unobserved infection rate and estimate both recent disease trends and the effect of covariates on the historical spread of the disease.
+As more and more data has become available on observed case counts of the SARS-CoV2 coronavirus, there have been increasing attempts to infer how contextual factors like government policies, partisanship, and temperature affect the disease's spread [@carleton2020;@sajadi2020;@dudel2020;@tansim2020;@flaxman2020;@brze2020]. The temptation to make inferences from the observed data, however, can result in misleading conclusions. For example, some policy makers have publicly questioned whether the predictions of epidemiological models are far worse than the observed case count.^[See article available at https://www.realclearpolitics.com/video/2020/03/26/dr_birx_coronavirus_data_d] By contrast, in this paper we show that the unobserved infection rate is a confounding variable affecting any estimates of covariates on the observed counts of COVID-19 cases and tests. For this reason, in this paper we present a retrospective Bayesian model that can adjust for this bias by estimating the unseen infection rate up to an unidentified constant. Furthermore, by incorporating informative priors based on serological surveys of infection prevalence, it is possible to put an informative prior on the unobserved infection rate and estimate both recent disease trends and the effect of covariates on the historical spread of the disease.
 
-We also show how the model can be applied by measuring the association between U.S. state-level factors and the disease as of May 24, 2020, including the the duration and timing of stay-at-home orders and Google mobility data. We find that, when controlling for stay-at-home orders, increasing vote share for Donald Trump in the 2016 elections by 10 percentage points is associated with an increase of the marginal infection rate of 0.004% (HPD ). In addition, the number of cardiovascular deaths and air particle PM$_2.5$ concentrations positively predict infection rates, while higher rates of smoking, number of health providers, youth and foreign-born residents are negatively associated with infection rates.
+We also show how the model can be applied by measuring the association between U.S. state-level factors and the disease as of July 10, 2020, including the the duration and timing of stay-at-home orders, Google mobility data and protest activity. We find that, when controlling for stay-at-home orders, increasing vote share for Donald Trump in the 2016 elections by 10 percentage points is associated with an increase of the marginal infection rate of 0.004% (HPD ). In addition, the number of cardiovascular deaths and air particle PM$_2.5$ concentrations positively predict infection rates, while higher rates of smoking, number of health providers, youth and foreign-born residents are negatively associated with infection rates. We find that protests for racial justice had a small positive effect on infection rates.
 
-To examine the effect of lockdowns, we implement mediation analysis to enable us to see the direct effect of lockdowns on the infection rate versus the indirect of lockdowns via Google mobility data on the infection rate. We include the number of days after the first reported in-state COVID-19 case as an additional moderator. Our analysis shows that the controlled direct effect of lockdowns is heavily conditioned by how long the lockdown was imposed following the first COVID-19 case, with later lockdowns far less effective than earlier lockdowns.
+To examine the effect of lockdowns and social-distancing mesaures, we further implement mediation analysis to enable us to see the direct effect of lockdowns on the infection rate versus the indirect of lockdowns via Google mobility data on the infection rate. We include the number of days after the first reported in-state COVID-19 case as an additional moderator. Our analysis shows that the controlled direct effect of lockdowns is heavily conditioned by how long the lockdown was imposed following the first COVID-19 case, with later lockdowns far less effective than earlier lockdowns.
 
 The mediation analysis further shows that the effect of lockdowns through decreasing retail and workplace traffic is strongly depressing of infection rates. Furthemore, the indirect effects are not moderated by the date the lockdown was imposed, suggesting that later lockdowns have been less effective because they have been less able to control mobility. Paradoxically, the effect of lockdowns through transit mobility has been positive, though it is not clear why this may be the case.
 
@@ -213,12 +211,6 @@ Furthermore, by incorporating insights from SIR/SEIR models we can also identify
 
 We note that an advantage of this framework is providing a way to measured the count of infected adjusting for known biases in the number of tests. By comparing numbers of tests per capita and growth rates in cases across regions, the model is able to backwards infer a likely number of infected individuals in a given area. As such it exploits both within-area and between-area variance to adjust for the biases of imperfect testing.
 
-<!-- The Bayesian model presented in the supplementary materials provides a full explanation of how to model the infection rate's influence on both cases and tests simultaneously. We further show in the supplementary materials that two restrictions are necessary to identify the sign and rank of the effect of covariates $X_{ct}$ on $I_{ct}$: the paths $I_{ct} \rightarrow q_{ct}$ and $I_{ct} \rightarrow a_{ct}$ must be strictly positive so that an increasing infection rate will have a non-decreasing effect on cases and tests. Given these restrictions and weakly informative priors on the parameters, it is possible to know whether $X_{ct}$ is associated with increasing or decreasing $I_{ct}$, though not with respect to the actual number of infected people, only in terms of the covariate's sign or rank relative to other covariates. -->
-
-
-
-<!-- Furthermore, we show in the supplementary materials that if further prior information can be put on the ratio between the true number of infected individuals $I_{ct}$ and the number of tests $q_{ct}$, it is possible to transform inferences from the model to approximate counts of infected people up to the present. Thankfully, this information is available through epidemiological models of the disease, which offer inferences on the number of un-diagnosed cases [@li2020;@peak2020]. Based on these estimates, we can put an informative prior in the model that the number of tests is likely to be at least 10% of the total number of infected individuals, reaching as high as 10 times the number of infected.   With this prior information from disease simulations, it is possible to obtain an empirical estimate of infected rates and covariate effects that are more useful to the general public than solely observed tests and cases, as we demonstrate in the next section. -->
-
 We can extend this model further by considering the mediation of covariates $X_{ct}$ by adding a mediator $M_{ct}$ to the causal diagram, as in Figure \@ref(fig:tikzfig2). Because the mediator operates on the latent variable, it can allow us to separate the direct from indirect effects of the covariate on the infection rate. Adding this step into the model only requires an additional likelihood for the mediator-covariate relationship as in @Yuan2009. With the joint posterior estimates, it is straightforward to decompose the effect of $X_{ct}$ into indirect and direct effects employing the total derivative of the infection rate from @winship1983. 
 
 \begin{figure}
@@ -241,13 +233,29 @@ as well as include $M_{ct}$ as a linear predictor in \@ref(eq:binom).
 
 The only data required to fit the model, in addition to the covariates of interest, are observed cases and tests for COVID-19 by day. In this section, we fit the model to numbers of COVID-19 case counts on US states and territories provided by [The New York Times](https://github.com/nytimes/covid-19-data). By doing so, we can use the differences in trajectories across states to help identify the effect of state-level covariates on the infection rate. We supplement these observed case counts with testing data by day from the [COVID-19 Tracking Project](https://github.com/COVID19Tracking/covid-tracking-data). The testing data starts at March 4th, so we impute the testing data back in time by assuming that the average case/tests ratio stays the same to the origin of the outbreak. Furthermore, as there are discrepancies where the reported number of tests in some states like New Jersey is less than the total number of cases, we impute the number of tests via the case/test ratio for the sample as a whole.
 
-To analyze the effect of suppression policies, we proxy for preparedness to fight the epidemic by including the number of days after the first COVID-19 case that states of emergencies were declared across U.S. states.^[See this site for dates and relevant sources: https://en.wikipedia.org/wiki/U.S._state_and_local_government_response_to_the_2020_coronavirus_pandemic] We also add in the dates that stay-at-home (lockdown) orders were imposed after the first COVID-19 case in a given state. We interact the date of lockdowns with a linear counter for each day of the lockdown to measure the increasing effect of lockdowns over time, and we then interact the linear counter with the number of days after the first COVID-19 case that the lockdown was imposed. 
+To analyze the effect of suppression policies, we use data on counts of social distancing policies, restrictions on mass gatherings, restrictions on businesses, restrictions on government services, and stay-at-home orders from the CoronaNet Government Response dataset [@cheng2020]. For each type of policy, we include a variable representing the count of policies in that category effective for a particular day for each state. We separately include counts of policies concerning face masks, which also varies over time, though we do not consider these policies to be suppression policies as such.
 
-To better understand the mediating effects of the lockdown, we include Google mobility data^[See https://www.google.com/covid19/mobility/] for retail, residential, parks, workplaces, transit and retail establishments. These estimates are by day and aggregated to the state level. They are measured in terms of an index that is initialized with a value of 100 at the index start on February 15th, 2020. To test for mediation, we include these as predictors of the infection rate, and separately fit a linear model (Normal distribution) with each mobility covariate as an outcome and the lockdown covariates as predictors. 
+To better understand over-time factors that may also affect COVID-19, we include polling data from Civiqs and Yougov at the state level. From Civiqs we include state-level polling averages by day for the percentage of respondents favoring Trump, percentage reporting the economy is "very good", and the percentage reporting that they are "extremely concerned" about the coronavirus. From YouTube we use a poll from May 8th reporting average number of respondents who said they used masks by U.S. state. As this poll does not vary over time, we include it as a predictor for the entire time series. 
 
-We further add in state-level data on Donald Trump's vote share for the 2016 election from the MIT Election Lab, a 2019 estimate of state GDP from the Bureau of Economic Analysis, the 2018 percentage of foreign born residents from the U.S. Census Bureau, and 2019 state-level average data on air pollution,^[Defined as average exposure of the general public to particulate matter of 2.5 microns or less (PM$_{2.5}$) measured in micrograms per cubic meter (3-year estimate).] cardiovascular deaths per capita, percentage of residents under age 18, number of dedicated health care providers, public health funding, and smoking rates provided by the United Health Foundation [@unhf2019]. All variables are mean-centered. 
+To better understand the mediating effects of suppression policies, we include Google mobility data^[See https://www.google.com/covid19/mobility/] for retail, residential, parks, workplaces, transit and retail establishments. These estimates are by day and aggregated to the state level. They are measured in terms of an index that is initialized with a value of 100 at the index start on February 15th, 2020. To test for mediation, we include these as predictors of the infection rate, and separately fit a linear model (Normal distribution) with each mobility covariate as an outcome and the suppression covariates as predictors. 
 
-In this section we first fit a partially-identified model without any information about the true number of infected people to demonstrate that it is possible to obtain an estimate of the infection trend, though with substantial uncertainty. We then show how we can use insight from SIR/SEIR models to add in informative prior information on the likely number of infected people and translate the estimates into probable infection rates. We then show that these estimates in fact closely track the predictions of SIR/SEIR models for the U.S. population from March 2020, providing external validity for the method and for these predictions.
+All time-varying covariates--polling, protests and mobility data--are lagged by 14 days to account for the likely delay in events showing up in reported cases.
+
+We further add in non-varying state-level data on Donald Trump's vote share for the 2016 election from the MIT Election Lab, a 2019 estimate of state GDP from the Bureau of Economic Analysis, the 2018 percentage of foreign born residents from the U.S. Census Bureau, and 2019 state-level average data on air pollution,^[Defined as average exposure of the general public to particulate matter of 2.5 microns or less (PM$_{2.5}$) measured in micrograms per cubic meter (3-year estimate).] cardiovascular deaths per capita, percentage of residents under age 18, number of dedicated health care providers, public health funding, and smoking rates provided by the United Health Foundation [@unhf2019]. All variables are standardized to permit comparability. 
+
+In this section we fit the model with informative prior information derived from CDC serological surveys from April and May on the likely number of infected people in several U.S. states so that we can translate the estimates into probable infection rates. This serological data is shown in Table \@ref(tab:cdc).
+
+Table: (\#tab:cdc) Geographic Serological Surveys from the Centers for Disease Control
+
+ Date of Survey    Location                    Sample Size   Infection Prevalence (%)
+----------------  --------------------------- ------------- --------------------------
+  April 1, 2020     Western Washington State   3,265            1.13
+  April 1, 2020     New York City              2,482            6.93
+ April 10, 2020     South Florida              1,742            1.85
+ April 26, 2020     Missouri                   1,882            2.65
+ May 3, 2020        Utah                       1,132            2.18
+ May 3, 2020        Connecticut                1,431            4.94
+
 
 
 
@@ -322,8 +330,8 @@ nyt_data <- read_csv("~/covid-19-data/us-states.csv") %>%
   group_by(state) %>% 
     arrange(state,date) %>% 
   mutate(cases=floor(c(cases[1:6],roll_mean(cases,n=7))),
-         Difference=cases - dplyr::lag(cases),
-         Difference=coalesce(Difference,0)) %>% 
+         #Difference=cases - dplyr::lag(cases),
+         Difference=coalesce(cases,0)) %>% 
   left_join(merge_names,by="state")
 
 tests <- read_csv("~/covid-tracking-data/data/states_daily_4pm_et.csv") %>% 
@@ -332,12 +340,13 @@ tests <- read_csv("~/covid-tracking-data/data/states_daily_4pm_et.csv") %>%
   group_by(state) %>% 
   # first do 3-day moving average
   mutate(total=floor(c(total[1:6],roll_mean(total,n=7)))) %>% 
-  mutate(tests_diff=total-dplyr::lag(total),
-         cases_diff=positive-dplyr::lag(positive),
-         cases_diff=coalesce(cases_diff,positive),
-         cases_diff=ifelse(cases_diff<0,0,cases_diff),
-         tests_diff=coalesce(tests_diff,total),
-         tests_diff=ifelse(tests_diff<0,0,tests_diff)) %>% 
+  # mutate(tests_diff=total-dplyr::lag(total),
+  #        cases_diff=positive-dplyr::lag(positive),
+  #        cases_diff=coalesce(cases_diff,positive),
+  #        cases_diff=ifelse(cases_diff<0,0,cases_diff),
+  #        tests_diff=coalesce(tests_diff,total),
+  #        tests_diff=ifelse(tests_diff<0,0,tests_diff)) %>% 
+  mutate(tests_diff=total) %>% 
   select(month_day,tests="tests_diff",total,state.abb="state",recovered)
 
 # merge cases and tests
@@ -505,10 +514,10 @@ combined <- group_by(combined,state) %>%
   mutate(outbreak_time=cumsum(outbreak)) %>% 
   ungroup %>%
   group_by(month_day) %>% 
-  mutate(world_infect=sum(outbreak_time>1)) %>% 
+  mutate(world_infect=sum(Difference)) %>% 
   group_by(state) %>% 
   arrange(state,month_day) %>% 
-  mutate(cases_per_cap=Difference/(state_pop/100),
+  mutate(cases_per_cap=Difference/(state_pop),
          cases_per_cap=ifelse(cases_per_cap==0,.00000001,cases_per_cap)) %>% 
   mutate_at(c("grocery",
               "parks",
@@ -535,6 +544,7 @@ combined <- group_by(combined,state) %>%
               "workplaces",
               "trump",
               "gdp",
+              "world_infect",
               "Dedicated Health Care Provider",
               "Smoking",
               "Population under 18 years",
@@ -717,7 +727,13 @@ serology <- tibble(state_id=c("Washington",
                               "2020-04-10",
                               "2020-04-26",
                               "2020-05-03",
-                              "2020-05-03")))
+                              "2020-05-03")),
+                   pop_size=c(4274336,
+                                 9261183,
+                                 6345945,
+                                 6109434,
+                                 2174312,
+                                 3576923))
 
 # convert to numbers from dates/factors
 
@@ -738,9 +754,11 @@ real_data <- list(time_all=length(unique(combined$month_day)),
                  L=ncol(covs_lock),
                  country_id=as.numeric(factor(combined$state)),
                  date_id=as.numeric(factor(combined$date)),
-                 sero=as.matrix(serology),
+                 sero=as.matrix(select(serology,-state_id,-date_end)),
+                 sero_time=serology$date_end,
+                 sero_country=serology$state_id,
                  maxO=nrow(ortho_time),
-                 country_pop=floor(just_data$state_pop/100),
+                 country_pop=floor(just_data$state_pop),
                  cases=cases_matrix_num[,1],
                  ortho_time=ortho_time,
                  phi_scale=.01,
@@ -763,228 +781,12 @@ init_vals <- function() {
        lockdown_effect_raw=rep(0,real_data$L),
        mob_effect_raw=rep(0,real_data$G),
        country_test_raw=rep(.5,real_data$num_country),
-       alpha=c(-1,-1,-1))
+       alpha=c(-5,-6,-5))
 }
 
 
-
-# if(run_model) {
-#   # loop over states
-#       
-#   #us_fit <- sampling(pan_model,data=real_data,chains=3,cores=3,iter=800,warmup=500,init=0)
-# 
-# 
-#   
-#   #saveRDS(us_fit,"../data/us_fit.rds")
-#   us_fit <- readRDS("../data/us_fit.rds")
-# } else {
-#   us_fit <- readRDS("../data/us_fit.rds")
-# }
-
-
 ```
 
-```{r infectstate,fig.cap="5% to 95% HPD Uncertainty Intervals of Partially-Identified Infection Rates by U.S. State with Total Average"}
-# all_est_state <- as.data.frame(us_fit,"num_infected_high") %>% 
-#   mutate(iter=1:n()) %>% 
-#   gather(key="variable",value="estimate",-iter) %>% 
-#   group_by(variable) %>% 
-#   mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-#          time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
-#          time_point=ymd(min(combined$month_day)) + days(time_point-1))
-# 
-# all_est_state <- left_join(all_est_state,tibble(state_num=1:nrow(cases_matrix),
-#                                                 state=cases_matrix$state,
-#                                                 state_pop=real_data$country_pop,
-#                                                 suppress_measures=covs[1:nrow(cases_matrix),"emer_outbreak"],by="state_num"))
-# 
-# # merge in total case count
-# 
-# case_count <- gather(cases_matrix,key="time_point",value="cases",-state) %>% 
-#   mutate(time_point=ymd(time_point)) %>% 
-#   group_by(state) %>% 
-#   arrange(state,time_point) %>% 
-#   mutate(cum_sum_cases=cumsum(cases)) 
-# 
-# us_case_count <- group_by(case_count,time_point) %>% 
-#   summarize(all_cum_sum=sum(cum_sum_cases))
-# 
-# all_est_state <- left_join(all_est_state,us_case_count,by="time_point")
-# 
-# 
-# all_est_state %>% 
-#   mutate(estimate=estimate) %>% 
-#   group_by(state_num,time_point,suppress_measures) %>% 
-#     summarize(med_est=quantile(estimate,.5),
-#             high_est=quantile(estimate,.95),
-#             low_est=quantile(estimate,.05)) %>% 
-#   ggplot(aes(y=med_est,x=time_point)) +
-#   #geom_line(aes(group=state_num,colour=suppress_measures),alpha=0.5) +
-#   geom_ribbon(aes(ymin=low_est,
-#   ymax=high_est,
-#   group=state_num,
-#   fill=suppress_measures),alpha=0.5) +
-#   stat_smooth(colour="black") +
-#   theme_minimal() +
-#   scale_color_distiller(palette="RdBu",direction=-1) +
-#   ylab("Latent Infection Scale") +
-#   labs(caption="5% - 95% HPD Intervals are colored by\nwhen a state declared a state of emergency (standardized count of days).\nAs the total number of infected people is unknown,\nthis chart measures the relative marginal infection rates between states.") +
-#   xlab("Days Since Outbreak Start") +
-#   geom_hline(yintercept = 0,linetype=3) +
-#   guides(fill=guide_colorbar(title="Timing of State Emergency Declaration")) +
-#   theme(panel.grid = element_blank(),
-#         legend.position = "bottom")
-# ggsave("uncertain_state_rates.png")
-
-```
-
-```{r rankcountries1}
-
-# rank1 <- all_est_state %>%
-#   group_by(state,iter) %>%
-#   summarize(estimate=mean(estimate)) %>%
-#   ungroup %>%
-#   group_by(iter) %>%
-#   mutate(rank_state=51 - rank(estimate),
-#          model="Partially Identified") %>%
-#   group_by(state,model) %>%
-#     summarize(med_est=mean(rank_state),
-#             high_est=quantile(rank_state,.95),
-#             low_est=quantile(rank_state,.05))
-
-
-```
-
-Figure \@ref(fig:infectstate) shows the 5% - 95% high posterior density (HPD) intervals of the latent infection rate by state since January 1st. The intervals are shaded by the relative time when a state declared a state of emergency, which reveals that state of emergency declarations are correlated with higher infection rates. As can be seen, there is a sharp discontinuity in the plot around March 1st when infection rates began to increase. Because the latent scale is not identified, the figure is only showing how the infection rates have evolved from zero to the true but unknown top infection rate. 
-
-
-```{r suppress2,echo=F,include=F}
-
-# suppress_effect <- as.data.frame(us_fit,"suppress_effect") %>% 
-#   mutate(iter=1:n()) %>% 
-#   gather(key="parameter",value="estimate",-iter) %>% 
-#   mutate(variable=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?")))
-# 
-# num_infected <- as.data.frame(us_fit,"num_infected_high") %>% 
-#   mutate(iter=1:n()) %>% 
-#   gather(key="variable",value="estimate",-iter) %>% 
-#   group_by(variable) %>% 
-#   mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-#          time_point=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
-#          time_point=ymd(min(combined$month_day)) + days(time_point-1))
-# 
-# # iterate this bugger
-# 
-# p_infected <- group_by(num_infected,iter) %>% 
-#   summarize(est=mean(dlogis(estimate)))
-# 
-# # don't need to iterate over time anymore, at least for this analysis
-# if(run_model) {
-#     over_all <- parallel::mclapply(sample(1:max(num_infected$iter),100), function(q) {
-#     over_supp <- lapply(1:max(suppress_effect$variable), function(s) {
-#       # over_time_level <- lapply(seq(min(time_outbreak_center),max(time_outbreak_center),length.out=100), function(i) {
-#         this_eff <- p_infected$est[q] * suppress_effect$estimate[suppress_effect$variable==s & suppress_effect$iter==q] 
-#                                          # suppress_effect$estimate[suppress_effect$supp_type==2 & suppress_effect$variable==s & suppress_effect$iter==q]*i)
-#       
-#       tibble(estimate=this_eff,
-#              # time_scale_point=i,
-#              iter=q,
-#              variable=s)
-#       # }) %>% bind_rows
-#       
-#     }) %>% bind_rows
-#     
-#     return(over_supp)
-#   },mc.cores=3) %>% bind_rows
-#     
-#     saveRDS(over_all,"../data/over_all_nonid.rds")
-#     
-# } else {
-#   over_all <- readRDS("../data/over_all_nonid.rds")
-# }
-# 
-# 
-# 
-# 
-# # over_all_time <- group_by(over_all,variable,time_scale_point) %>% 
-# #   summarize(med_est=median(estimate),
-# #             high_est=quantile(estimate,.95),
-# #             low_est=quantile(estimate,.05)) %>% 
-# #   mutate(model="Partially\nIdentified")
-# 
-# 
-# over_all_sum <- group_by(over_all,variable) %>% 
-#   summarize(med_est=median(estimate),
-#             high_est=quantile(estimate,.95),
-#             low_est=quantile(estimate,.05)) %>% 
-#   mutate(model="Partially\nIdentified")
-  
-  
-
-# calculate marginal effects
-
-# over_all_time <- left_join(over_all_time,tibble(variable=1:ncol(covs),
-#                                         label=colnames(covs))) %>% 
-#   mutate(label=recode(label,
-#                       air="Air\nQuality",
-#                       providers="No.\nProviders",
-#                       gdp="GDP",
-#                       heart="Cardiovascular\nDeaths",
-#                       day_emergency="Date\nEmergency",
-#                       young="% Population\n<18",
-#                       smoking="% Smokers",
-#                       trump="Trump\nVote Share",
-#                       prop_foreign="% Foreign-Born",
-#                       public_health="Public Health\nFunding"))
-
-# over_all_sum <- left_join(over_all_sum,tibble(variable=1:ncol(covs),
-#                                         label=colnames(covs))) %>% 
-#   mutate(label=recode(label,
-#                       air="Air\nQuality",
-#                       providers="No.\nProviders",
-#                       gdp="GDP",
-#                       heart="Cardiovascular\nDeaths",
-#                       emer_outbreak="Date\nEmergency",
-#                       lockdown_outbreak="Date\nLockdown",
-#                       lockdown="Lockdown\nDuration",
-#                       int_lockdown="LockdownXDate Lockdown",
-#                       young="% Population\n<18",
-#                       smoking="% Smokers",
-#                       trump="Trump\nVote Share",
-#                       prop_foreign="% Foreign-Born",
-#                       public_health="Public Health\nFunding"))
-# 
-# p1 <- over_all_sum %>%
-#   ggplot(aes(y=med_est,x=reorder(label,med_est))) +
-#   geom_pointrange(aes(ymin=low_est,ymax=high_est),alpha=0.8) +
-#   theme_minimal() +
-#   xlab("")  +
-#   ylab("Effect on Proportion Infected") +
-#   geom_hline(yintercept=0,linetype=2) +
-#   ggtitle("Constant Effect on\nProportion Infected") +
-#   facet_wrap(~label,scales="free") +
-#   theme(panel.grid=element_blank(),
-#         plot.title = element_text(size=10,hjust=0.5)) +
-#   coord_flip()
-# 
-# # p2 <- over_all_time %>%
-# #  ggplot(aes(y=med_est,x=time_scale_point)) +
-# #     xlab("Time Since Outbreak Began")  +
-# #   ylab("Effect on Proportion Infected") +
-# #   geom_ribbon(aes(ymin=low_est,ymax=high_est),alpha=0.5,fill="red") +
-# #   geom_line(linetype=2) +
-# #   ggtitle("Time-Varying Effect on\nProportion Infected") +
-# #   theme_minimal() +
-# #   geom_hline(yintercept=0,linetype=3) +
-# #   theme(panel.grid=element_blank(),
-# #         plot.title = element_text(size=10,hjust=0.5)) +
-# #   facet_wrap(~label,scales="free_y")
-# 
-# p1
-# 
-# ggsave("marginal_noid.png")
-
-```
 
 ```{r run_over_id_model_scale,include=F}
 
@@ -992,8 +794,15 @@ Figure \@ref(fig:infectstate) shows the 5% - 95% high posterior density (HPD) in
 if(run_model) {
   pan_model_scale <- stan_model("corona_tscs_betab_scale.stan")
   
-  us_fit_scale <- sampling(pan_model_scale,data=real_data,chains=3,cores=3,iter=800,warmup=500,
-                           init=init_vals,
+  # load some good init values
+  
+  this_init <- readRDS("this_init.rds")
+  
+  this_init <- list(this_init,this_init,this_init)
+  
+  us_fit_scale <- sampling(pan_model_scale,data=real_data,chains=3,
+                           cores=3,iter=500,warmup=300,
+                           init=this_init,
                            control=list(max_treedepth=10))
   
   saveRDS(us_fit_scale,"../data/us_fit_scale.rds")
@@ -1053,7 +862,7 @@ out_data <- mcmc_intervals_data(obs_model,regex_pars=":") %>%
 combined <- mutate(ungroup(combined),key=1:n()) %>% 
   group_by(state) %>% 
   arrange(state,month_day) %>% 
-  mutate(cum_sum_cases=cumsum(Difference),
+  mutate(cum_sum_cases=Difference,
          recovered=coalesce(recovered,0),
          deaths=coalesce(deaths,0),
          cum_sum_cases = cum_sum_cases - deaths - recovered,
@@ -1078,7 +887,7 @@ all_est_state <- left_join(all_est_state,us_case_count,by="month_day")
 
 calc_sum <- all_est_state %>% 
   ungroup %>% 
-  mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
+  mutate(estimate=(plogis(estimate))*(state_pop)) %>% 
   group_by(state,iter) %>% 
   arrange(state,month_day) %>% 
   mutate(cum_est=estimate) %>% 
@@ -1086,7 +895,7 @@ calc_sum <- all_est_state %>%
   summarize(us_total=sum(cum_est)) %>%
   group_by(iter) %>%
   arrange(iter,month_day) %>%
-  #mutate(us_total=us_total - coalesce(dplyr::lag(us_total,n=14),0)) %>%
+  mutate(us_total=us_total - coalesce(dplyr::lag(us_total,n=14),0)) %>%
   group_by(month_day,all_cum_sum) %>% 
   summarize(med_est=quantile(us_total,.5),
             high_est=quantile(us_total,.95),
@@ -1174,7 +983,7 @@ require(ggrepel)
 
 calc_sum_state <- all_est_state %>% 
   ungroup %>% 
-  mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
+  mutate(estimate=(plogis(estimate))*state_pop) %>% 
   #mutate(estimate=(plogis(estimate))*((state_pop))) %>%
   group_by(state,iter) %>% 
   arrange(state,iter,month_day) %>% 
@@ -1222,7 +1031,7 @@ all <- calc_sum_state %>%
 
 calc_sum_state <- all_est_state %>% 
   ungroup %>% 
-  mutate(estimate=(plogis(estimate)/100)*(state_pop*100)) %>% 
+  mutate(estimate=(plogis(estimate))*state_pop) %>% 
   group_by(state,iter) %>% 
   arrange(state,month_day) %>% 
   mutate(cum_est=cumsum(estimate) - recovered - deaths,
@@ -1411,20 +1220,6 @@ suppress_effect <- as.data.frame(us_fit_scale,"suppress_effect") %>%
   gather(key="parameter",value="estimate",-iter) %>% 
   mutate(variable=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?")))
 
-# num_infected <- as.data.frame(us_fit_scale,"num_infected_high") %>% 
-#   mutate(iter=1:n()) %>% 
-#   gather(key="variable",value="estimate",-iter) %>% 
-#   group_by(variable) %>% 
-#   mutate(state=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")),
-#          month_day=as.numeric(str_extract(variable,"[1-9][0-9]?0?(?=\\])")),
-#          month_day=ymd(min(combined$month_day)) + days(month_day-1))
-# 
-# # iterate this bugger
-# 
-# 
-# p_infected <- group_by(num_infected,iter) %>% 
-#   summarize(est=mean(dlogis(estimate)))
-
 if(run_model) {
   
     over_all2 <- lapply(1:max(suppress_effect$variable), function(s) {
@@ -1452,20 +1247,6 @@ over_all_sum2 <- group_by(over_all2,variable) %>%
   
 
 # calculate marginal effects
-
-# over_all_time2 <- left_join(over_all_time2,tibble(variable=1:ncol(covs),
-#                                         label=colnames(covs))) %>% 
-#   mutate(label=recode(label,
-#                       air="Air\nQuality",
-#                       providers="No.\nProviders",
-#                       gdp="GDP",
-#                       heart="Cardiovascular\nDeaths",
-#                       day_emergency="Date\nEmergency",
-#                       young="% Population\n<18",
-#                       smoking="% Smokers",
-#                       trump="Trump\nVote Share",
-#                       prop_foreign="% Foreign-Born",
-#                       public_health="Public Health\nFunding"))
 
 over_all_sum2 <- left_join(over_all_sum2,tibble(variable=1:ncol(covs),
                                         label=colnames(covs))) %>% 
@@ -1497,74 +1278,11 @@ p3 <- over_all_sum2 %>%
   scale_y_continuous(labels=scales::percent) +
   coord_flip() 
 
-# p4 <- over_all_time2 %>%
-#  ggplot(aes(y=med_est,x=time_scale_point)) +
-#     xlab("Time Since Outbreak Began")  +
-#   ylab("Effect on Proportion Infected") +
-#   labs("Intervals are 5% - 95% high posterior density (HPD) uncertainty intervals.") +
-#   geom_ribbon(aes(ymin=low_est,ymax=high_est),alpha=0.5,fill="red") +
-#   geom_line(linetype=2) +
-#   ggtitle("Time-varying Effect on\nProportion Infected") +
-#   theme_minimal() +
-#   geom_hline(yintercept=0,linetype=3) +
-#   theme(panel.grid=element_blank(),
-#         plot.title = element_text(size=10,hjust=0.5),
-#         strip.text=element_text(face="bold",size=9),
-#         axis.text.y=element_text(size=8)) +
-#   facet_wrap(~label,scales="free_y")
-
 p3 +  plot_annotation(caption="Marginal effects calculated as a 1-standard deviation change in a covariate on the\nlatent infection rate. 5% - 95% high posterior density intervals derived from\n100 Markov Chain Monte Carlo posterior draws.")
 
 ggsave("marginal_id.png")
 
 ```
-
-
-```{r compareids,fig.cap="Comparison Of Time-Varying Covariate Marginal Effects from Partially- and Fully-Identified Models",fig.height=8,fig.width=4}
-
-# combine_times <- bind_rows(over_all_time,over_all_time2)
-# 
-# fac1 <- combine_times %>%
-#   filter(model=="Partially\nIdentified") %>% 
-#  ggplot(aes(y=med_est,x=time_scale_point)) +
-#     xlab("")  +
-#   ylab("Effect on Proportion Infected") +
-#   geom_ribbon(aes(ymin=low_est,ymax=high_est),alpha=0.5,fill="red") +
-#   geom_line(linetype=2) +
-#   ggtitle("Partially\nIdentified") +
-#   theme_minimal() +
-#   geom_hline(yintercept=0,linetype=3) +
-#   theme(panel.grid=element_blank(),
-#         plot.title = element_text(size=10,hjust=0.5),
-#         strip.text=element_blank(),
-#         axis.text.y=element_text(size=8)) +
-#   facet_grid(vars(label),scales="free_y")
-# 
-# fac2 <- combine_times %>%
-#   filter(model=="Fully\nIdentified") %>% 
-#  ggplot(aes(y=med_est,x=time_scale_point)) +
-#     xlab("")  +
-#   ylab("") +
-#   labs("Intervals are 5% - 95% high posterior density (HPD) uncertainty intervals.") +
-#   geom_ribbon(aes(ymin=low_est,ymax=high_est),alpha=0.5,fill="red") +
-#   geom_line(linetype=2) +
-#   ggtitle("Fully\nIdentified") +
-#   theme_minimal() +
-#   geom_hline(yintercept=0,linetype=3) +
-#   theme(panel.grid=element_blank(),strip.text.y=element_text(face="bold",size=8,angle = 0),
-#         plot.title = element_text(size=10,hjust=0.5),
-#         axis.text.y=element_text(size=8)) +
-#   facet_grid(vars(label),scales="free_y")
-# 
-# fac1 + fac2 +
-#   plot_annotation(caption="Time Since Outbreak Began",
-#                   theme=theme(plot.caption=element_text(hjust=0.5)))
-
-#gridExtra::grid.arrange(fac1,fac2,ncol=2)
-```
-
-
-<!-- Figure \@ref(fig:rankcountries2) compares the identified and partially-identified models' infection rates by plotting the average posterior rank of infection for each state and each model. As can be seen, while there is stochastic noise, there is a very clear and strong relationship in terms of the ranks, with a linear fit very close to the 45-degree horizontal line indicating a 1:1 relationship. While the models' predictions differ, they are estimating the same latent quantity, albeit with noise. -->
 
 While the use of informative priors is very helpful for obtaining estimates that can be mapped back to actual number of infected persons, as we show in the supplementary information, we can in fact identify covariate effects (or at least their signs) without information about the ratio of tests to infected persons. To demonstrate this, we calculate time-varying marginal effects on the latent infected rate from both the partially-identified and fully-identified models and show them in Figure \@ref(fig:compareids). While there are certainly effect size and uncertainty differences between the models, the estimates are quite similar, and the signs are always in the same direction. For these reasons, we believe this model to be useful even in the case where there is no useful or credible information about the ratio of testing to infected.
 

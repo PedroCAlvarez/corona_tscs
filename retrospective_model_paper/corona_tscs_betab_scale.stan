@@ -1,87 +1,81 @@
 // Coronavirus tracking model 
-// Robert Kubinec
-// New York University Abu Dhabi
-// March 20, 2020
-functions{
-  vector setstep(vector col_var) {
-    
-    vector[rows(col_var)] diff_var = col_var + (max(fabs(col_var)) * sqrt(0.0000007)) - col_var;
-  
-    return diff_var;
-  }
-}
+// Robert Kubinec and Luiz Carvalho
+// New York University Abu Dhabi & Vertulio Vargas Foundation
+// July 15, 2020
 data {
     int time_all;
     int num_country;
-    int cases[num_country,time_all];
-    int tests[num_country,time_all];
+    int cc[num_country*time_all]; // country counter
+    int cases[num_country*time_all];
+    int tests[num_country*time_all];
     int time_outbreak[num_country,time_all];
     int S; // number of suppression measures
     int G; // google mobility data (by type of mobility)
     int L; // just lockdown data (for hierarchical predictor)
-    matrix[time_all,3] ortho_time;
+    int R; // number of seroprevalence essays
+    int maxO; // maximum number of post-outbreak time points (could be greater than T due to left-censoring)
+    matrix[maxO,3] ortho_time;
     matrix[num_country*time_all,S] suppress; // time-varying suppression measures
     matrix[num_country*time_all,G] mobility; // time-varying mobility measures
     matrix[num_country*time_all,L] lockdown; // hierachical lockdown predictors
-    vector[time_all] count_outbreak;
-    matrix[num_country,time_all] time_outbreak_center;
-    int country_pop[num_country];
+    vector[time_all*num_country] count_outbreak;
+    vector[time_all*num_country] cases_per_cap;
+    int sero_time[R]; // counters for which state/time points have CDC sero surveys
+    int sero_country[R];
+    matrix[R,8] sero; // sero-prevalence datas
+    int country_pop[num_country*time_all];
     real phi_scale; // prior on how much change there could be in infection rate over time
 }
 transformed data {
-  matrix[num_country,time_all] time_outbreak_trans1; // convert raw time numbers to ortho-normal polynomials
-  matrix[num_country,time_all] time_outbreak_trans2; // convert raw time numbers to ortho-normal polynomials
-  matrix[num_country,time_all] time_outbreak_trans3; // convert raw time numbers to ortho-normal polynomials
-  matrix[num_country,3] time_array[time_all]; 
-  matrix[num_country,S] suppress_array[time_all];
-  matrix[num_country,G] mobility_array[time_all];
-  matrix[num_country,L] lock_array[time_all];
-  matrix[num_country,time_all] test_max;
-  matrix[num_country,time_all] cases_per_capita; // need for prior adjustment
+  matrix[num_country*time_all,3] time_outbreak_trans; // convert raw time numbers to ortho-normal polynomials
+  vector[num_country*time_all] test_max;
+  vector[num_country*time_all] cases_per_capita; // need for prior adjustment
   
-  // need to convert to real for division
+  matrix[num_country*time_all, S] Q_supp;
+  matrix[S, S] R_supp;
+  matrix[S, S] R_supp_inverse;
   
-  for(t in 1:time_all) {
-    cases_per_capita[,t] = to_vector(cases[,t]) ./ to_vector(country_pop);
-  }
+  matrix[num_country*time_all, G] Q_mob;
+  matrix[G, G] R_mob;
+  matrix[G, G] R_mob_inverse;
   
-  // can't have any zeroes as this will screw up the prior adjustment
+  matrix[num_country*time_all, L] Q_lock;
+  matrix[L, L] R_lock;
+  matrix[L, L] R_lock_inverse;
   
-  for(t in 1:time_all) {
-    for(n in 1:num_country) {
-      if(cases_per_capita[n,t] == 0) {
-        cases_per_capita[n,t] = 0.000000001;
-      } else {
-        cases_per_capita[n,t] = cases_per_capita[n,t];
-      }
-      
-    }
-  }
+  // thin and scale the QR decomposition
+  Q_supp = qr_Q(suppress)[, 1:S] * sqrt(num_country*time_all - 1);
+  R_supp = qr_R(suppress)[1:S, ] / sqrt(num_country*time_all - 1);
+  R_supp_inverse = inverse(R_supp);
   
-  //print(cases_per_capita);
+  Q_mob = qr_Q(mobility)[, 1:G] * sqrt(num_country*time_all - 1);
+  R_mob = qr_R(mobility)[1:G, ] / sqrt(num_country*time_all - 1);
+  R_mob_inverse = inverse(R_mob);
   
-  
+  Q_lock = qr_Q(lockdown)[, 1:L] * sqrt(num_country*time_all - 1);
+  R_lock = qr_R(lockdown)[1:L, ] / sqrt(num_country*time_all - 1);
+  R_lock_inverse = inverse(R_lock);
   
   // make some arrays of counts of the outbreak
   
   for(t in 1:time_all) {
     for(n in 1:num_country) {
       if(time_outbreak[n,t]>0) {
-        time_outbreak_trans1[n,t] = ortho_time[time_outbreak[n,t],1];
-        time_outbreak_trans2[n,t] = ortho_time[time_outbreak[n,t],2];
-        time_outbreak_trans3[n,t] = ortho_time[time_outbreak[n,t],3];
+        time_outbreak_trans[(t-1)*num_country + n,1] = ortho_time[time_outbreak[n,t],1];
+        time_outbreak_trans[(t-1)*num_country + n,2] = ortho_time[time_outbreak[n,t],2];
+        time_outbreak_trans[(t-1)*num_country + n,3] = ortho_time[time_outbreak[n,t],3];
       } else {
-        time_outbreak_trans1[n,t] = 0;
-        time_outbreak_trans2[n,t] = 0;
-        time_outbreak_trans3[n,t] = 0;
+        time_outbreak_trans[(t-1)*num_country + n,1] = 0;
+        time_outbreak_trans[(t-1)*num_country + n,2] = 0;
+        time_outbreak_trans[(t-1)*num_country + n,3] = 0;
       }
       if(t==1) {
-        test_max[n,t] = tests[n,t];
+        test_max[(t-1)*num_country + n] = tests[(t-1)*num_country + n];
       } else {
-        if(test_max[n,t-1]>tests[n,t]) {
-          test_max[n,t] = test_max[n,t-1];
+        if(test_max[(t-2)*num_country + n]>tests[(t-1)*num_country + n]) {
+          test_max[(t-1)*num_country + n] = test_max[(t-2)*num_country + n];
         } else {
-          test_max[n,t] = tests[n,t];
+          test_max[(t-1)*num_country + n] = tests[(t-1)*num_country + n];
         }
       }
     }
@@ -90,45 +84,26 @@ transformed data {
   // standardized time max
   
   for(n in 1:num_country) {
-    test_max[n,] = (test_max[n,] / country_pop[n]);
-  }
-  
-  // make a new array of time indices
-  
-  for(t in 1:time_all) {
-    time_array[t] = append_col(time_outbreak_trans1[,t],
-                                append_col(time_outbreak_trans2[,t],
-                                            time_outbreak_trans3[,t]));
-  }
-  
-  // make arrays of covariates
-  
-  for(t in 1:time_all) {
-    for(n in 1:num_country) {
-      for(s in 1:S) {
-        suppress_array[t,n,s] = suppress[(t-1)*num_country + n,s];
-      }
-      for(g in 1:G) {
-        mobility_array[t,n,g] = mobility[(t-1)*num_country + n,g];
-      }
-      for(l in 1:L) {
-        lock_array[t,n,l] = lockdown[(t-1)*num_country + n,l];
-      }
-    }
+    test_max = test_max ./ to_vector(country_pop);
   }
   
 }
 parameters {
-  matrix[num_country,3] poly; // polinomial function of time
+  vector[num_country] poly1; // polinomial function of time
+  vector[num_country] poly2; // polinomial function of time
+  vector[num_country] poly3; // polinomial function of time
   real<lower=0> finding; // difficulty of identifying infected cases 
+  //vector<lower=0,upper=1>[R] survey_prop; // variable that stores survey proportions from CDC data
   real<lower=0> world_infect; // infection rate based on number of travelers
-  row_vector[S] suppress_effect; // suppression effect of govt. measures, cannot increase virus transmission rate
-  row_vector[L] suppress_hier_const[G];
-  row_vector[G] mob_effect;
-  real test_max_par;
+  vector[S] suppress_effect_raw; // suppression effect of govt. measures, cannot increase virus transmission rate
+  vector[L] lockdown_effect_raw;
+  vector[L] suppress_hier_const[G];
+  vector[3] mu_poly; // hierarchical mean for poly coefficients
+  vector[G] mob_effect_raw;
+  real<lower=0> test_max_par;
   vector<lower=0>[3] sigma_poly; // varying sigma polys
   vector[G] mob_alpha_const; // mobility hierarchical intercepts
-  real<lower=0> sigma_med;
+  vector<lower=0>[G] sigma_med;
   vector<lower=0>[num_country] country_test_raw; // unobserved rate at which countries are willing to test vs. number of infected
   // we assume that as infection rates increase, more tests will be conducted
   vector[3] alpha; // other intercepts
@@ -137,32 +112,47 @@ parameters {
 }
 transformed parameters {
 
-  matrix[num_country,time_all] num_infected_high; // modeled infection rates for domestic transmission
+  vector[num_country*time_all] prop_infected; // modeled infection rates for domestic transmission
+  vector[num_country] poly_nonc1; // non-centered poly parameters
+  vector[num_country] poly_nonc2; // non-centered poly parameters
+  vector[num_country] poly_nonc3; // non-centered poly parameters
+  real<lower=0> sigma_test; 
   
-  for(t in 1:time_all) {
-        
-      num_infected_high[,t] = alpha[2] + (time_array[t] .* poly) * rep_vector(1,3) + 
-                                        world_infect*count_outbreak[t] +
-                                        (suppress_effect*suppress_array[t]')' +
-                                        (mob_effect * mobility_array[t]')' ;
-  }
+  sigma_test = .1 * sigma_test_raw;
+  
+  // non-centering of polynomial time trends
+  
+  poly_nonc1 = mu_poly[1] + sigma_poly[1]*poly1;
+  poly_nonc2 = mu_poly[2] + sigma_poly[2]*poly2;
+  poly_nonc3 = mu_poly[3] + sigma_poly[3]*poly3;
 
-  
+  // latent infection rate (unobserved), on the logit scale (untransformed)
+  prop_infected = alpha[2] + time_outbreak_trans[,1] .* poly_nonc1[cc]  +
+                  time_outbreak_trans[,2] .* poly_nonc2[cc] +
+                  time_outbreak_trans[,3] .* poly_nonc3[cc] +
+                  world_infect*count_outbreak +
+                  Q_supp*suppress_effect_raw +
+                  Q_lock*lockdown_effect_raw +
+                  Q_mob*mob_effect_raw;
+
 }
 model {
   
-  for(c in 1:3) {
-    poly[,c] ~ normal(0,sigma_poly[c]);
-  }
+
+  poly1 ~ normal(0,1);
+  poly2 ~ normal(0,1);
+  poly3 ~ normal(0,1);
+
   
   sigma_poly ~ exponential(.1);
-  world_infect ~ normal(0,1);
+  mu_poly ~ normal(0,10);
+  world_infect ~ normal(0,3);
+  lockdown_effect_raw ~ normal(0,5);
   alpha ~ normal(0,10); // this can reach extremely low values
   
-  //mob_alpha_time ~ normal(0,5);
   phi ~ exponential(phi_scale);
-  mob_effect ~ normal(0,5);
-  suppress_effect ~ normal(0,5);
+  mob_effect_raw ~ normal(0,5);
+  suppress_effect_raw ~ normal(0,5);
   test_max_par ~ normal(0,5);
   
   for(g in 1:G) {
@@ -177,75 +167,51 @@ model {
   sigma_med ~ exponential(.1);
   country_test_raw ~ exponential(sigma_test_raw); // more likely near the middle than the ends
   
-  // first model probability of infection
-  
+  for(g in 1:G)
+    to_vector(mobility[,g]) ~ normal(mob_alpha_const[g] + lockdown*suppress_hier_const[g],sigma_med[g]);
+    
   //next model the true infection rate as a function of time since outbreak
-  for (t in 2:time_all) {
-    
-    vector[num_country] mix_prop = inv_logit(num_infected_high[,t]);
+
+    {
     // locations for cases and tests
-    vector[num_country] mu_cases = inv_logit(alpha[3] + finding*num_infected_high[,t]);
-    vector[num_country] mu_tests = inv_logit(alpha[1] + country_test_raw .* num_infected_high[,t] +
-                                              test_max_par*test_max[,t]);
-    
-    // mediator
-    
-    // for(g in 1:G) 
-    //   to_vector(mobility_array[t,,g]) ~ normal(mob_alpha_const[g] + (suppress_hier_const[g]*lock_array[t]')',sigma_med);
 
-    tests[,t] ~ beta_binomial(country_pop,mu_tests*phi[1],(1-mu_tests) * phi[1]);
-    cases[,t] ~ beta_binomial(tests[,t],mu_cases *phi[2],(1-mu_cases) * phi[2]);
+    vector[num_country*time_all] mu_cases = inv_logit(alpha[3] + finding*prop_infected);
+    vector[num_country*time_all] mu_tests = inv_logit(alpha[1] + country_test_raw[cc].* prop_infected +
+                                              test_max_par*test_max);
+    vector[num_country*time_all] mix_prop = inv_logit(prop_infected);
     
-    (log(cases_per_capita[,t]) - log(mix_prop)) ~ normal(-2.3,.5);
-    // 
-    // jacobian adjustment
-    target += log(mix_prop .* (1-mix_prop)) - log(mix_prop) ;
-
+    tests ~ beta_binomial(country_pop,mu_tests*phi[1],(1-mu_tests) * phi[1]);
+    cases ~ beta_binomial(tests,mu_cases *phi[2],(1-mu_cases) * phi[2]);
+    
+    // loop over serology surveys to add informative prior information
+    for(r in 1:R) {
+          int n = sero_country[r];
+          int t = sero_time[r];
+          real cum_infect = mix_prop[((n-1)*time_all + t)];
+          
+          // Beta prior = uncertainty proportional to sero essay sample size at time point t
+          cum_infect ~ beta(.5 + sero[r,1].*sero[r,3],.5 + sero[r,3] - (sero[r,3].*sero[r,1]));
+          
+          // jacobian adjustment
+          
+          target += log1m(cum_infect);     
+    }
   
-  }
-
-  
+    }
+    
 }
+
 generated quantities {
   
-  //   vector[S] suppress_margin;
-  //   matrix[time_all,rows(suppress)] suppress_margin_time;
-  // 
-  // for(s in 1:S) {
-  //   
-  //   //matrix[rows(suppress),cols(suppress)] suppress_high = suppress;
-  //   //matrix[rows(suppress),cols(suppress)] suppress_low = suppress;
-  //   //matrix[rows(suppress),rows(count_outbreak)] y_high;
-  //   //matrix[rows(suppress),rows(count_outbreak)] y_low;
-  //   //matrix[rows(suppress),rows(count_outbreak)] suppress_margin_time;
-  //   
-  //   
-  //   //suppress_high[,s] = suppress[,s] + setstep(suppress[,s]);
-  //   //suppress_low[,s] = suppress[,s] - setstep(suppress[,s]);
-  //   
-  //   
-  //   for(t in 1:time_all) {
-  //     
-  //       // y_high[,t] =  alpha[2] + country_int + 
-  //       //                                 time_array[t]*poly + 
-  //       //                                 world_infect*count_outbreak[t] +
-  //       //                                 (suppress_effect[1]*suppress_high')' +
-  //       //                                 ((suppress_effect[2]*suppress_high') .* time_outbreak_center[,t]')';
-  //       //                                 
-  //       // y_low[,t] = alpha[2] + country_int + 
-  //       //                                 time_array[t]*poly + 
-  //       //                                 world_infect*count_outbreak[t] +
-  //       //                                 (suppress_effect[1]*suppress_low')' +
-  //       //                                 ((suppress_effect[2]*suppress_low') .* time_outbreak_center[,t]')';
-  //                                       
-  //                                       
-  //       suppress_margin_time[t,s] = mean(inv_logit(num_infected_high[,t]) .* (suppress_effect[1,s] + suppress_effect[2,s] * time_outbreak_center[,t]));
-  //       //                                 
-  //   }
-  //   
-  //   suppress_margin[s] = mean(inv_logit(to_vector(suppress_margin_time)));
-  // }
+  // convert QR estimates back to actual numbers
   
+  vector[S] suppress_effect; // suppression effect of govt. measures, cannot increase virus transmission rate
+  vector[L] lockdown_effect;
+  vector[G] mob_effect;
+  
+  suppress_effect = R_supp_inverse * suppress_effect_raw;
+  lockdown_effect = R_lock_inverse * lockdown_effect_raw;
+  mob_effect = R_mob_inverse * mob_effect_raw;
   
 }
 

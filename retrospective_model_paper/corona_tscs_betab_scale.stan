@@ -22,7 +22,7 @@ data {
     vector[time_all*num_country] cases_per_cap;
     int sero_time[R]; // counters for which state/time points have CDC sero surveys
     int sero_country[R];
-    matrix[R,8] sero; // sero-prevalence datas
+    matrix[R,6] sero; // sero-prevalence datas
     int country_pop[num_country*time_all];
     real phi_scale; // prior on how much change there could be in infection rate over time
 }
@@ -130,7 +130,7 @@ transformed parameters {
   prop_infected = alpha[2] + time_outbreak_trans[,1] .* poly_nonc1[cc]  +
                   time_outbreak_trans[,2] .* poly_nonc2[cc] +
                   time_outbreak_trans[,3] .* poly_nonc3[cc] +
-                  world_infect*count_outbreak +
+                  //world_infect*count_outbreak +
                   Q_supp*suppress_effect_raw +
                   Q_lock*lockdown_effect_raw +
                   Q_mob*mob_effect_raw;
@@ -194,7 +194,7 @@ model {
           
           // jacobian adjustment
           
-          target += log1m(cum_infect);     
+          target += log(cum_infect) + log1m(cum_infect);     
     }
   
     }

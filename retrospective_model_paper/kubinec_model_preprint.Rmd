@@ -66,6 +66,14 @@ system2("git",args=c("-C ~/covid-19-data","pull"))
 
 run_model <- T
 
+# whether to use fresher coronanet policy data
+
+new_policy <- F
+
+# whether to pull new cases/tests from NYT/COVID project
+
+new_cases <- F
+
 ```
 
 
@@ -324,15 +332,18 @@ goog_mobile <- read_csv("https://www.gstatic.com/covid19/mobility/Global_Mobilit
 
 goog_mobile <- missRanger(goog_mobile,pmm.k=5L)
 
-nyt_data <- read_csv("~/covid-19-data/us-states.csv") %>% 
+if(new_cases) {
+  
+  nyt_data <- read_csv("~/covid-19-data/us-states.csv") %>% 
   complete(date,state,fill=list(cases=0,deaths=0,fips=0)) %>% 
   mutate(month_day=ymd(date)) %>% 
   group_by(state) %>% 
     arrange(state,date) %>% 
   mutate(cases=floor(c(cases[1:6],roll_mean(cases,n=7))),
-         #Difference=cases - dplyr::lag(cases),
          Difference=coalesce(cases,0)) %>% 
   left_join(merge_names,by="state")
+  
+  saveRDS(nyt_data,"nyt_data.rds")
 
 tests <- read_csv("~/covid-tracking-data/data/states_daily_4pm_et.csv") %>% 
   mutate(month_day=ymd(date)) %>% 
@@ -340,14 +351,19 @@ tests <- read_csv("~/covid-tracking-data/data/states_daily_4pm_et.csv") %>%
   group_by(state) %>% 
   # first do 3-day moving average
   mutate(total=floor(c(total[1:6],roll_mean(total,n=7)))) %>% 
-  # mutate(tests_diff=total-dplyr::lag(total),
-  #        cases_diff=positive-dplyr::lag(positive),
-  #        cases_diff=coalesce(cases_diff,positive),
-  #        cases_diff=ifelse(cases_diff<0,0,cases_diff),
-  #        tests_diff=coalesce(tests_diff,total),
-  #        tests_diff=ifelse(tests_diff<0,0,tests_diff)) %>% 
   mutate(tests_diff=total) %>% 
   select(month_day,tests="tests_diff",total,state.abb="state",recovered)
+
+  saveRDS(tests,"tests.rds")
+
+} else {
+  
+  nyt_data <- readRDS("nyt_data.rds")
+  tests <- readRDS("tests.rds")
+  
+}
+
+
 
 # merge cases and tests
 
@@ -357,18 +373,25 @@ combined <- left_join(nyt_data,tests,by=c("state.abb","month_day")) %>%
 
 # add protest data
 # need to impute
-prot_data <- read_csv("../data/simulation/protest/count_love/count_love_data.csv") %>% 
-  select(event=`Event (legacy; see tags)`,
-         articles=`Total Articles`,
-         state=`State Name`,
-         state_code=`State Code`,everything()) %>% 
-  mutate(floyd=as.numeric(grepl(x=Tags,pattern="racial justice") & Date>ymd("2020-05-25"))) %>% 
+prot_data <- read_csv("../data/simulation/protest/Protest_Data_Final_Merged.csv") %>% 
+  mutate(state=recode(state,
+                      NewYork="New York",
+                      SouthDakota="South Dakota",
+                      NewJersey="New Jersey",
+                      Connecticuticut="Connecticut",
+                      DistrictofColumbia="District of Columbia",
+                      NewHampshire="New Hampshire",
+                      NewMexico="New Mexico",
+                      NorthCarolina="North Carolina",
+                      NorthDakota="North Dakota",
+                      PuertoRico="Puerto Rico",
+                      RhodeIsland="Rhode Island",
+                      SouthCarolina="South Carolina",
+                      SouthDakota="South Dakota",
+                      WestVirginia="West Virginia")) %>% 
   missRanger(pmm.k=10L) %>% 
-  group_by(state,Date,floyd) %>% 
-  summarize(sum_prot=sum(Attendees)) %>% 
-  spread(key="floyd",value="sum_prot",fill = 0) %>% 
-  select(reg_prot="0",
-         floyd_prot="1")
+  group_by(state,date) %>% 
+  summarize(sum_prot=sum(avgsize))
 
 # protests by day
 
@@ -379,13 +402,15 @@ prot_data <- read_csv("../data/simulation/protest/count_love/count_love_data.csv
 
 # add polling data 
 
-approval <- read_csv("../data/simulation/Civiqs/civiqs_approve_president_trump_states_2020-06-24.csv") %>%   select(date,state,approve)
-concern <- read_csv("../data/simulation/Civiqs/civiqs_coronavirus_concern_states_2020-06-24.csv") %>% 
-  select(state,date,extremely_concerned)
-# response <- read_csv("../data/simulation/Civiqs/civiqs_response_local_states_2020-06-24.csv") %>% 
-  
-economy <- read_csv("../data/simulation/Civiqs/civiqs_economy_us_now_states_2020-06-24.csv") %>% 
-  select(date,state,very_good)
+source("luca_scraping_code.R")
+
+approval <- read_csv("../data/simulation/Civiqs/approve_president_trump.csv") %>%   select(date,state="state_col",trendline_approve)
+concern <- read_csv("../data/simulation/Civiqs/coronavirus_concern.csv") %>% 
+  select(state="state_col",date,trendline_extremely_concerned)
+economy <- read_csv("../data/simulation/Civiqs/economy_family_retro.csv") %>% 
+  select(date,state="state_col",trendline_gotten_worse)
+local_gov_response <- read_csv("../data/simulation/Civiqs/coronavirus_response_local.csv") %>% 
+  select(date,state="state_col",trendline_not_very_satisfied)
 
 masks <- read_csv("../data/simulation/masks/masks_yougov.csv") %>% 
   select(state="X.1",
@@ -393,7 +418,8 @@ masks <- read_csv("../data/simulation/masks/masks_yougov.csv") %>%
 
 # add suppression data
 
-coronanet <- read_csv("../data/CoronaNet/coronanet_release.csv") %>% 
+if(new_policy) {
+  coronanet <- read_csv("../data/CoronaNet/coronanet_release.csv") %>% 
   filter(country=="United States of America",
          type %in% c("Health Testing","Lockdown","Quarantine","Restriction and Regulation of Government Services",
                      "Restriction and Regulation of Businesses",
@@ -411,6 +437,13 @@ coronanet <- group_by(coronanet,country,province,policy_id) %>%
   ungroup %>% 
   mutate(type_sub_cat=coalesce(type_sub_cat,"General"),
          type=recode(type,Lockdown="Quarantine"))
+
+  write_csv(coronanet,"coronanet_data.csv")
+} else {
+  coronanet <- read_csv("coronanet_data.csv")
+}
+
+
 
 # do a summing exercise over policy types in terms of what is still available at a given day
 count_pol <- parallel::mclapply(unique(coronanet$province), function(p) {
@@ -473,7 +506,8 @@ combined <- left_join(combined, count_pol_sum,by=c("state"="province","month_day
 
 combined <- left_join(combined,approval,by=c("state","month_day"="date")) %>% 
   left_join(concern,by=c("state","month_day"="date")) %>% 
-  left_join(economy,by=c("state","month_day"="date"))
+  left_join(economy,by=c("state","month_day"="date")) %>% 
+  left_join(local_gov_response,by=c("state","month_day"="date"))
 
 # add in other datasets 
 
@@ -481,12 +515,10 @@ combined <- left_join(combined,health,by="state")
 combined <- left_join(combined,select(state_gdp,state,gdp),by="state")
 combined <- left_join(combined,select(vote_share,state,trump))
 combined <- left_join(combined,select(goog_mobile,state,month_day="date",retail:residential))
-combined <- left_join(combined,select(prot_data,state,Date,reg_prot,floyd_prot),by=c(month_day="Date",
+combined <- left_join(combined,select(prot_data,state,date,sum_prot),by=c(month_day="date",
                                                                            "state")) %>% 
-  mutate(reg_prot=coalesce(reg_prot,0),
-         reg_prot=reg_prot/state_pop,
-         floyd_prot=coalesce(floyd_prot,0),
-         floyd_prot=floyd_prot/state_pop)
+  mutate(sum_prot=sum_prot/state_pop,
+         sum_prot=coalesce(sum_prot,0))
 combined <- left_join(combined,select(masks,state,mask_wear),by="state")
 
 # impute data
@@ -532,9 +564,11 @@ combined <- group_by(combined,state) %>%
               "Quarantine",
               "Restriction and Regulation of Government Services",
               "Social Distancing",
-              "approve",
-              "extremely_concerned",
-              "very_good"), ~dplyr::lag(.,n=14)) %>% 
+              "sum_prot",
+              "trendline_approve",
+              "trendline_gotten_worse",
+              "trendline_extremely_concerned",
+              "trendline_not_very_satisfied"), ~dplyr::lag(.,n=14)) %>% 
     ungroup %>% 
   mutate_at(c("grocery",
               "parks",
@@ -544,18 +578,17 @@ combined <- group_by(combined,state) %>%
               "workplaces",
               "trump",
               "gdp",
-              "world_infect",
               "Dedicated Health Care Provider",
               "Smoking",
               "Population under 18 years",
               "Air Pollution",
-              "floyd_prot",
-              "reg_prot",
+              "sum_prot",
               "Cardiovascular Deaths",
               "Public Health Funding",
-              "approve",
-              "extremely_concerned",
-              "very_good",
+              "trendline_approve",
+              "trendline_gotten_worse",
+              "trendline_extremely_concerned",
+              "trendline_not_very_satisfied",
               "Health Resources",
               "Health Testing",
               "mask_wear",
@@ -565,7 +598,18 @@ combined <- group_by(combined,state) %>%
               "Restriction and Regulation of Government Services",
               "Social Distancing"), ~as.numeric(scale(.))) %>% 
   mutate_at(c("lin_counter"),~scale(.,scale=F)) %>% 
-  filter(!is.na(grocery),!is.na(extremely_concerned),!is.na(very_good))
+  filter(!is.na(grocery),!is.na(trendline_extremely_concerned),!is.na(trendline_gotten_worse))
+
+# need to calculate world infection parameter (use lag to adjust)
+
+world_infect <- select(ungroup(combined),world_infect,month_day) %>% distinct 
+
+world_infect <- arrange(world_infect,month_day) %>% 
+  mutate(world_infect=world_infect - coalesce(dplyr::lag(world_infect,n=19),0),
+         world_infect=as.numeric(scale(world_infect)))
+
+combined <- left_join(select(combined,-world_infect),world_infect,by="month_day")
+
   #filter(state %in% c("New York","California","Alabama","Florida","Vermont","New Mexico"))
 
 # look at how days after lockdown versus days after emergency compare
@@ -629,6 +673,7 @@ just_data <- select(ungroup(combined),month_day,state,state_pop,trump,air="Air P
                       young="Population under 18 years",
                       smoking="Smoking",
                       gdp,
+                    world_infect,
                       masks="Health Resources",
                       testing_cap="Health Testing",
                       quarantine="Quarantine",
@@ -636,11 +681,11 @@ just_data <- select(ungroup(combined),month_day,state,state_pop,trump,air="Air P
                     govt_services="Restriction and Regulation of Government Services",
                     mass_gathering="Restrictions of Mass Gatherings",
                     social_distance="Social Distancing",
-                    reg_prot,
-                    floyd_prot,
-                      approve,
-                    extremely_concerned,
-                    very_good,
+                    sum_prot,
+                    mask_wear,
+                      trendline_approve,
+                    trendline_extremely_concerned,
+                    trendline_gotten_worse,
                     outbreak_time,
                       public_health="Public Health Funding",
                       prop_foreign) %>% arrange(state,month_day) %>% 
@@ -697,15 +742,15 @@ serology <- tibble(state_id=c("Washington",
                               "Missouri",
                               "Utah",
                               "Connecticut"),
-                   inf_pr=c(48300/4274336,
-                                 641800/9261183,
-                                 117400/6345945,
+                   inf_pr=c(51737.16/7535591,
+                                 724589.8/19542209,
+                                 164046.9/21299325,
                                  161900/6109434,
                                  47400/2174312,
                                  176700/3576923),
-                   case_pr=c(4300/4274336,
-                                 53800/9261183,
-                                 10500/6345945,
+                   case_pr=c(4606/7535591,
+                                 60740/19542209,
+                                 14672/21299325,
                                  6800/6109434,
                                  4500/2174312,
                                  29300/3576923),
@@ -735,6 +780,10 @@ serology <- tibble(state_id=c("Washington",
                                  2174312,
                                  3576923))
 
+# cut effective sample size by half
+
+serology <- mutate(serology,survey_size=floor(survey_size/2))
+
 # convert to numbers from dates/factors
 
 lev_state <- levels(factor(combined$state))
@@ -763,8 +812,7 @@ real_data <- list(time_all=length(unique(combined$month_day)),
                  ortho_time=ortho_time,
                  phi_scale=.01,
                  cases_per_cap=combined$cases_per_cap,
-                 count_outbreak=rep(scale(time_global$time_global),
-                                    times=length(unique(combined$state))),
+                 count_outbreak=combined$world_infect,
                  tests=tests_matrix_num[,1],
                  time_outbreak=time_outbreak_center,
                  suppress=covs,
@@ -801,9 +849,9 @@ if(run_model) {
   this_init <- list(this_init,this_init,this_init)
   
   us_fit_scale <- sampling(pan_model_scale,data=real_data,chains=3,
-                           cores=3,iter=500,warmup=300,
-                           init=this_init,
-                           control=list(max_treedepth=10))
+                           cores=3,iter=800,warmup=500,
+                           init=0,
+                           control=list(max_treedepth=12))
   
   saveRDS(us_fit_scale,"../data/us_fit_scale.rds")
 } else {
@@ -987,7 +1035,7 @@ calc_sum_state <- all_est_state %>%
   #mutate(estimate=(plogis(estimate))*((state_pop))) %>%
   group_by(state,iter) %>% 
   arrange(state,iter,month_day) %>% 
-  mutate(cum_est=cumsum(estimate) - recovered - deaths, 
+  mutate(cum_est=estimate - recovered - deaths, 
   cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=19),0)) %>% 
   #cum_sum_cases = cum_sum_cases - coalesce(dplyr::lag(cum_sum_cases,n=14),0)) %>% 
   group_by(month_day,state,cum_sum_cases) %>% 
@@ -1034,9 +1082,10 @@ calc_sum_state <- all_est_state %>%
   mutate(estimate=(plogis(estimate))*state_pop) %>% 
   group_by(state,iter) %>% 
   arrange(state,month_day) %>% 
-  mutate(cum_est=cumsum(estimate) - recovered - deaths,
-         cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=19),0),
-  cum_sum_cases = cum_sum_cases / (state_pop)) %>% 
+  #mutate(cum_est=estimate - recovered - deaths,
+         #cum_est=cum_est-coalesce(dplyr::lag(cum_est,n=19),0),
+         mutate(cum_est=estimate/state_pop,
+         cum_est=ifelse(cum_est<0,0,cum_est)) %>% 
   group_by(month_day,state,cum_sum_cases) %>% 
   summarize(med_est=quantile(cum_est,.5),
             high_est=quantile(cum_est,.95),
@@ -1049,6 +1098,7 @@ saveRDS(calc_sum_state,"percap.rds")
 # get top 5 plus random 5 
 
 top_5 <- filter(calc_sum_state,month_day==max(calc_sum_state$month_day)) %>% 
+  ungroup %>% 
   arrange(desc(med_est)) %>% 
   ungroup %>% 
   slice(c(1:5,sample(6:length(unique(calc_sum_state$state)),5))) %>% 

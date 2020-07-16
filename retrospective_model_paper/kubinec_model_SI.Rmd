@@ -604,4 +604,69 @@ We also add a log Jacobian adjustment to the posterior density to reflect the fa
 
 The Jacobian adjustment is the derivative of the non-linear functions with respect to the underlying parameters, which in this case are the natural log and the inverse logit function.
 
+# Comparison to Observational Model
+
+```{r naivemodel,include=F}
+
+# calculate the same info but only with observed data
+
+if(run_model) {
+  obs_model <- stan_glm(cbind(combined$Difference,floor(combined$state_pop/100) - combined$Difference) ~ poly(outbreak_time,3) +
+                     emer_outbreak +
+                        `Cardiovascular Deaths` +
+                        `Air Pollution` +
+                        `Dedicated Health Care Provider` +
+                        `Smoking` +
+                        `Population under 18 years` +
+                     prop_foreign +
+                        `Public Health Funding` +
+                        gdp +
+                        trump +
+                       retail +
+                       grocery +
+                       parks +
+                       transit +
+                       workplaces +
+                       residential +
+                     world_infect +
+                       lockdown*lockdown_outbreak,
+                      data=combined,
+                 QR=TRUE,
+                      family="binomial",
+                 chains=1,cores=1)
+
+saveRDS(obs_model,"../data/obs_model.rds")
+} else {
+  obs_model <- readRDS("../data/obs_model.rds")
+}
+
+
+
+out_data <- mcmc_intervals_data(obs_model,regex_pars=":") %>%
+  filter(!grepl(x=parameter,pattern="I"))
+
+```
+
+
+```{r comptests,fig.cap="Comparison of GDP Per Capita and COVID-19 Tests per 10,000 Residents by State"}
+
+check_tests <- group_by(combined,state,`Public Health Funding`) %>% summarize(mean_tests=(mean(tests,na.rm=T)/state_pop[1])*10000) %>% 
+  filter(state!="District of Columbia")
+
+check_tests %>% 
+  ggplot(aes(y=`Public Health Funding`,x=mean_tests)) +
+    stat_smooth(method="lm",alpha=0.2) +
+  geom_text_repel(aes(label=state),alpha=0.8,segment.size=0) +
+  theme_minimal() +
+  labs("Plot shows some states like New York and Massachusetts have high average income and also\nvery high testing rates.") +
+  theme(panel.grid = element_blank()) +
+  ylab("Public Health Funding") +
+  xlab("Tests per 10,000 state residents")
+
+ggsave("gdp_tests.png")
+
+
+```
+
+
 # References

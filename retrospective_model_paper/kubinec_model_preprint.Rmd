@@ -64,7 +64,7 @@ system2("git",args=c("-C ~/covid-19-data","pull"))
 
 # whether to run model (it will take a few hours) or load saved model from disk
 
-run_model <- T
+run_model <- F
 
 # whether to use fresher coronanet policy data
 
@@ -851,7 +851,7 @@ if(run_model) {
   us_fit_scale <- sampling(pan_model_scale,data=real_data,chains=3,
                            cores=3,iter=800,warmup=500,
                            init=0,
-                           control=list(max_treedepth=12))
+                           control=list(max_treedepth=10))
   
   saveRDS(us_fit_scale,"../data/us_fit_scale.rds")
 } else {
@@ -860,49 +860,6 @@ if(run_model) {
 
 
 ```
-
-
-```{r naivemodel,include=F}
-
-# calculate the same info but only with observed data
-
-if(run_model) {
-  obs_model <- stan_glm(cbind(combined$Difference,floor(combined$state_pop/100) - combined$Difference) ~ poly(outbreak_time,3) +
-                     emer_outbreak + 
-                        `Cardiovascular Deaths` +
-                        `Air Pollution` +
-                        `Dedicated Health Care Provider` +
-                        `Smoking` +
-                        `Population under 18 years` +
-                     prop_foreign +
-                        `Public Health Funding` +
-                        gdp +
-                        trump +
-                       retail + 
-                       grocery + 
-                       parks + 
-                       transit + 
-                       workplaces + 
-                       residential +
-                     world_infect + 
-                       lockdown*lockdown_outbreak,
-                      data=combined,
-                 QR=TRUE,
-                      family="binomial",
-                 chains=1,cores=1)
-
-saveRDS(obs_model,"../data/obs_model.rds")
-} else {
-  obs_model <- readRDS("../data/obs_model.rds")
-}
-
-
-
-out_data <- mcmc_intervals_data(obs_model,regex_pars=":") %>% 
-  filter(!grepl(x=parameter,pattern="I"))
-
-```
-
 
 
 ```{r infectscaled,fig.cap="Approximate Total Number of COVID-19 Infected Individuals in the U.S. as of April 20th",fig.height=5}
@@ -1344,117 +1301,98 @@ For example, the coefficient for public health shows an implausibly large positi
 
 ```{r compmarg,fig.cap="Comparison of Effects from Latent and Observed Data Models"}
 
-plot_data1 <- mcmc_intervals_data(us_fit,regex_pars ="effect") %>%
-  mutate(variable=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?"))) %>% 
-  filter(variable<10)
-
-# join back to labels
-
-plot_data1 <- left_join(plot_data1,tibble(variable=1:ncol(covs),
-                                        label=colnames(covs))) %>%
-  mutate(label=recode(label,
-                      air="Air\nQuality",
-                      providers="No.\nProviders",
-                      gdp="GDP",
-                      heart="Cardiovascular\nDeaths",
-                      emer_outbreak="Date\nEmergency",
-                      young="% Population\n<18",
-                      smoking="% Smokers",
-                      trump="Trump\nVote Share",
-                      prop_foreign="% Foreign-Born",
-                      public_health="Public Health\nFunding"))
-
-plot_data2 <- mcmc_intervals_data(us_fit_scale,regex_pars ="suppress\\_effect") %>%
-  mutate(variable=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?"))) %>% 
-  filter(variable<10)
-
-# join back to labels
-
-plot_data2 <- left_join(plot_data2,tibble(variable=1:ncol(covs),
-                                        label=colnames(covs))) %>%
-  mutate(label=recode(label,
-                      air="Air\nQuality",
-                      providers="No.\nProviders",
-                      gdp="GDP",
-                      heart="Cardiovascular\nDeaths",
-                      emer_outbreak="Date\nEmergency",
-                      young="% Population\n<18",
-                      smoking="% Smokers",
-                      trump="Trump\nVote Share",
-                      prop_foreign="% Foreign-Born",
-                      public_health="Public Health\nFunding"))
-
-plot_data3 <- mcmc_intervals_data(obs_model,pars=c("emer_outbreak",
-                                                   "trump",
-                                                   "`Air Pollution`",
-                                                   "`Cardiovascular Deaths`",
-                                                   "`Dedicated Health Care Provider`",
-                                                   "`Population under 18 years`",
-                                                   "Smoking",
-                                                   "gdp",
-                                                   "prop_foreign")) %>%
-  mutate(variable=c(1:9))
-
-# join back to labels
-
-plot_data3 <- left_join(plot_data3,tibble(variable=1:ncol(covs),
-                                        label=colnames(covs))) %>%
-  mutate(label=recode(label,
-                      air="Air\nQuality",
-                      providers="No.\nProviders",
-                      gdp="GDP",
-                      heart="Cardiovascular\nDeaths",
-                      emer_outbreak="Date\nEmergency",
-                      young="% Population\n<18",
-                      smoking="% Smokers",
-                      trump="Trump\nVote Share",
-                      prop_foreign="% Foreign-Born",
-                      public_health="Public Health\nFunding"))
-
-plot_data <- bind_rows(list(`Latent\nInfection Rate`=plot_data2,
-                            `Observed\nCases`=plot_data3),
-                       .id="model")
-
-p1 <- plot_data %>%
-  ggplot(aes(y=m,x=reorder(label,m))) +
-  geom_pointrange(aes(ymin=ll,ymax=hh,colour=model),alpha=0.8,position=position_dodge(width=0.5),size=.5) +
-  theme_minimal() +
-  xlab("")  +
-  ylab("Parameter Estimate\n(Logit Scale)") +
-  geom_hline(yintercept=0,linetype=2) +
-  scale_color_brewer(type="qual") +
-  ggtitle("Constant Coefficients") +
-  theme(panel.grid=element_blank(),
-        plot.title = element_text(size=10,hjust=0.5),
-        legend.position = "top") +
-    guides(color=guide_legend(title="")) +
-  coord_flip()
-
-p1 +  plot_annotation(caption="Both models were fit with the same covariates and specification, and\nusing the same  Markov Chain Monte Carlo samplers. Parameter values are on the logit scale.\nIntervals are 5% - 95% high posterior density intervals.")
-
-ggsave("effect_compare.png")
-
-```
-
-```{r comptests,fig.cap="Comparison of GDP Per Capita and COVID-19 Tests per 10,000 Residents by State"}
-
-check_tests <- group_by(combined,state,`Public Health Funding`) %>% summarize(mean_tests=(mean(tests,na.rm=T)/state_pop[1])*10000) %>% 
-  filter(state!="District of Columbia")
-
-check_tests %>% 
-  ggplot(aes(y=`Public Health Funding`,x=mean_tests)) +
-    stat_smooth(method="lm",alpha=0.2) +
-  geom_text_repel(aes(label=state),alpha=0.8,segment.size=0) +
-  theme_minimal() +
-  labs("Plot shows some states like New York and Massachusetts have high average income and also\nvery high testing rates.") +
-  theme(panel.grid = element_blank()) +
-  ylab("Public Health Funding") +
-  xlab("Tests per 10,000 state residents")
-
-ggsave("gdp_tests.png")
-
+# plot_data1 <- mcmc_intervals_data(us_fit,regex_pars ="effect") %>%
+#   mutate(variable=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?"))) %>% 
+#   filter(variable<10)
+# 
+# # join back to labels
+# 
+# plot_data1 <- left_join(plot_data1,tibble(variable=1:ncol(covs),
+#                                         label=colnames(covs))) %>%
+#   mutate(label=recode(label,
+#                       air="Air\nQuality",
+#                       providers="No.\nProviders",
+#                       gdp="GDP",
+#                       heart="Cardiovascular\nDeaths",
+#                       emer_outbreak="Date\nEmergency",
+#                       young="% Population\n<18",
+#                       smoking="% Smokers",
+#                       trump="Trump\nVote Share",
+#                       prop_foreign="% Foreign-Born",
+#                       public_health="Public Health\nFunding"))
+# 
+# plot_data2 <- mcmc_intervals_data(us_fit_scale,regex_pars ="suppress\\_effect") %>%
+#   mutate(variable=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?"))) %>% 
+#   filter(variable<10)
+# 
+# # join back to labels
+# 
+# plot_data2 <- left_join(plot_data2,tibble(variable=1:ncol(covs),
+#                                         label=colnames(covs))) %>%
+#   mutate(label=recode(label,
+#                       air="Air\nQuality",
+#                       providers="No.\nProviders",
+#                       gdp="GDP",
+#                       heart="Cardiovascular\nDeaths",
+#                       emer_outbreak="Date\nEmergency",
+#                       young="% Population\n<18",
+#                       smoking="% Smokers",
+#                       trump="Trump\nVote Share",
+#                       prop_foreign="% Foreign-Born",
+#                       public_health="Public Health\nFunding"))
+# 
+# plot_data3 <- mcmc_intervals_data(obs_model,pars=c("emer_outbreak",
+#                                                    "trump",
+#                                                    "`Air Pollution`",
+#                                                    "`Cardiovascular Deaths`",
+#                                                    "`Dedicated Health Care Provider`",
+#                                                    "`Population under 18 years`",
+#                                                    "Smoking",
+#                                                    "gdp",
+#                                                    "prop_foreign")) %>%
+#   mutate(variable=c(1:9))
+# 
+# # join back to labels
+# 
+# plot_data3 <- left_join(plot_data3,tibble(variable=1:ncol(covs),
+#                                         label=colnames(covs))) %>%
+#   mutate(label=recode(label,
+#                       air="Air\nQuality",
+#                       providers="No.\nProviders",
+#                       gdp="GDP",
+#                       heart="Cardiovascular\nDeaths",
+#                       emer_outbreak="Date\nEmergency",
+#                       young="% Population\n<18",
+#                       smoking="% Smokers",
+#                       trump="Trump\nVote Share",
+#                       prop_foreign="% Foreign-Born",
+#                       public_health="Public Health\nFunding"))
+# 
+# plot_data <- bind_rows(list(`Latent\nInfection Rate`=plot_data2,
+#                             `Observed\nCases`=plot_data3),
+#                        .id="model")
+# 
+# p1 <- plot_data %>%
+#   ggplot(aes(y=m,x=reorder(label,m))) +
+#   geom_pointrange(aes(ymin=ll,ymax=hh,colour=model),alpha=0.8,position=position_dodge(width=0.5),size=.5) +
+#   theme_minimal() +
+#   xlab("")  +
+#   ylab("Parameter Estimate\n(Logit Scale)") +
+#   geom_hline(yintercept=0,linetype=2) +
+#   scale_color_brewer(type="qual") +
+#   ggtitle("Constant Coefficients") +
+#   theme(panel.grid=element_blank(),
+#         plot.title = element_text(size=10,hjust=0.5),
+#         legend.position = "top") +
+#     guides(color=guide_legend(title="")) +
+#   coord_flip()
+# 
+# p1 +  plot_annotation(caption="Both models were fit with the same covariates and specification, and\nusing the same  Markov Chain Monte Carlo samplers. Parameter values are on the logit scale.\nIntervals are 5% - 95% high posterior density intervals.")
+# 
+# ggsave("effect_compare.png")
 
 ```
+
 
 In addition to the estimation of covariates, the model provides further useful information by parameterizing the relationship between the unobserved infection rate and the number of tests conducted in a given state. These individual parameters are shown in Figure \@ref(fig:tpi). The scale of the y axis shows by how much tests will increase as a percentage of the population for a one percent increase in infection rates in each state as of May 24th. The plot shows that some states could increase their tests as a proportion of the population by roughly double this infection rate (New York, Rhode Island), while other states like Texas and Montana are increasing tests at a much slower rate than the growth rate in infections, a worrying sign.
 
@@ -1466,21 +1404,21 @@ In addition to the estimation of covariates, the model provides further useful i
 test_var <- as.data.frame(us_fit_scale,"country_test_raw") %>%
   mutate(iter=1:n()) %>%
   gather(key="variable",value="estimate",-iter) %>%
-  mutate(state=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")))
+  mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")))
 
-this_infect <- filter(ungroup(num_infected),month_day==max(month_day)) %>% 
-  left_join(tibble(state=1:nrow(cases_matrix),
-                                                state=cases_matrix$state,
-                                                state_pop=real_data$country_pop)) %>% 
+this_infect <- filter(ungroup(all_est_state),month_day==max(month_day)) %>% 
   mutate(estimate2=qlogis(plogis(estimate)+.01))
 
 this_test_max <- ungroup(combined) %>% 
   group_by(state) %>% 
-  summarize(max_test=max((tests/(state_pop/100))))
+  arrange(state,month_day) %>% 
+  mutate(max_test=roll_max(tests)/state_pop) %>% 
+  filter(month_day==max(month_day)) %>% 
+  select(state,max_test)
 
-test_var <- left_join(test_var,tibble(state=1:nrow(cases_matrix),
-                                                state=cases_matrix$state,
-                                                state_pop=real_data$country_pop)) %>% 
+test_var <- left_join(test_var,tibble(state_num=1:length(unique(combined$state)),
+                                                state=unique(combined$state),
+                                                state_pop=unique(combined$state_pop))) %>% 
   left_join(this_test_max,"state")
 
 alpha_test <- as.data.frame(us_fit_scale,pars="alpha[1]")
@@ -1490,7 +1428,7 @@ test_max_par <- as.data.frame(us_fit_scale,"test_max_par")
 # loop over infections
 
 over_states <- lapply(unique(test_var$state), function(s) {
-  tibble(estimate=plogis((alpha_test$`alpha[1]` + test_var$estimate[test_var$state==s] * this_infect$estimate2[this_infect$state==s]) + test_max_par$test_max_par*test_var$max_test[test_var$state==s]) - plogis((alpha_test$`alpha[1]` + test_var$estimate[test_var$state==s] * this_infect$estimate[this_infect$state==s] +
+  tibble(estimate=plogis(alpha_test$`alpha[1]` + test_var$estimate[test_var$state==s] * this_infect$estimate2[this_infect$state==s] + test_max_par$test_max_par*test_var$max_test[test_var$state==s]) - plogis((alpha_test$`alpha[1]` + test_var$estimate[test_var$state==s] * this_infect$estimate[this_infect$state==s] +
                                                                                                                                                                                                                     test_max_par$test_max_par*test_var$max_test[test_var$state==s])),
          state=s)
 }) %>% bind_rows

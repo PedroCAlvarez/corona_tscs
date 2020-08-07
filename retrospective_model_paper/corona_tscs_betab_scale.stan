@@ -74,7 +74,7 @@ parameters {
   vector<lower=0>[3] sigma_poly; // varying sigma polys
   vector[G] mob_alpha_const; // mobility hierarchical intercepts
   vector<lower=0>[G] sigma_med;
-  vector[num_country] country_test_raw; // unobserved rate at which countries are willing to test vs. number of infected
+  vector<lower=0>[num_country] country_test_raw; // unobserved rate at which countries are willing to test vs. number of infected
   vector[num_country] country_test_raw2;
   // we assume that as infection rates increase, more tests will be conducted
   vector[3] alpha; // other intercepts

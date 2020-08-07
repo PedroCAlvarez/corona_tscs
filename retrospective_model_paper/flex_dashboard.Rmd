@@ -38,6 +38,8 @@ percap <- readRDS("percap.rds") %>%
          label_cases=ifelse(month_day==max(month_day),
                       paste0(state,":",formatC(cum_sum_cases,big.mark=",",format = "f",digits=3)),NA))
 
+infl_data <- select(percap,inf_pr,state,month_day) %>% filter(!is.na(inf_pr))
+
 
 combined <- readRDS("combined.rds")
 
@@ -78,6 +80,7 @@ renderPlot({
   
   if(input$percap) {
     this_data <- percap
+    infl_data <- filter(infl_data,state %in% input$state)
   } else {
     this_data <- calc_sum_state
   }
@@ -106,6 +109,11 @@ renderPlot({
       geom_text_repel(aes(y=cum_sum_cases,label=label_cases),
                   size=3,fontface="bold",segment.colour = NA) 
   }
+  
+  if(input$percap) {
+     out_plot <-  out_plot + geom_point(data=infl_data,aes(y=inf_pr),colour="blue",size=5)
+  }
+  
   out_plot
 })
 

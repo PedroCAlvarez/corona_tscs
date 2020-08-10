@@ -1,6 +1,6 @@
 // Coronavirus tracking model 
 // Robert Kubinec and Luiz Carvalho
-// New York University Abu Dhabi & Vertulio Vargas Foundation
+// New York University Abu Dhabi & Getulio Vargas Foundation
 // July 15, 2020
 data {
     int time_all;

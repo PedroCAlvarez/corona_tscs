@@ -543,7 +543,7 @@ combined <- group_by(combined,state) %>%
   filter(state!="Puerto Rico")
 
 combined <- group_by(combined,state) %>% 
-  arrange(month_day) %>% 
+  arrange(state,month_day) %>% 
   mutate(outbreak=as.numeric(cases>1),
          lin_counter=(1:n())/n()) %>% 
   fill(outbreak,.direction="down") %>% 
@@ -613,7 +613,7 @@ combined <- group_by(combined,state) %>%
          test_max=c(test_max[1:6],roll_mean(test_max,n=7)),
          test_max=cummax(test_max)) %>% 
   ungroup %>% 
-         mutate(test_max=as.numeric(scale(test_max/state_pop)))
+         mutate(test_max=test_max / max(test_max,na.rm=T))
 
 min_mask <- min(combined$mask_wear)
 
@@ -718,6 +718,29 @@ serology <- tibble(state_id=c("Washington",
                               12205796,
                               3857479,
                               4644049))
+
+# add in additional data from excel sheets
+
+more_sero <- readxl::read_xlsx("cdc_sero.xlsx")
+
+more_sero <- mutate(more_sero,
+                    date_end=ymd(date_end),
+                    date_begin=ymd(date_begin)) %>% 
+  left_join(select(combined,month_day,cases,state_pop,state),
+            by=c("State"="state",
+                                                              "date_end"="month_day")) %>% 
+  mutate(inf_pr=(Infected / `Area Cases`)*(cases/state_pop),
+         case_pr=`Area Cases`/`Area Pop`,
+         inflation=inf_pr/case_pr) %>% 
+  select(inf_pr,case_pr,survey_size,inflation,date_begin,date_end,pop_size="Area Pop",state_id="State")
+
+serology <- bind_rows(serology,more_sero)
+
+# filter out some weird results
+
+serology <- filter(serology, !(state_id=="New York" & date_end==ymd("2020-05-06")),
+                   !(state_id=="Utah" & date_end==ymd("2020-06-05")),
+                   !(state_id=="Minnesota" & date_end==ymd("2020-06-07")))
 
 serology <- left_join(serology,mutate(select(ungroup(combined),month_day,state),key=1:n()),
                       by=c("date_end"="month_day","state_id"="state")) %>% 
@@ -856,10 +879,10 @@ real_data <- list(time_all=length(unique(combined$month_day)),
                  sero_row=serology$key,
                  country_pop=floor(combined$state_pop),
                  cases=cases_matrix_num[,1],
-                 phi_scale=.01,
+                 phi_scale=.003,
                  test_max=combined$test_max,
                  count_outbreak=time_outbreak,
-                 lin_counter=combined$lin_counter,
+                 lin_counter=poly(combined$lin_counter,2),
                  tests=tests_matrix_num[,1],
                  month_cases=combined$world_infect,
                  suppress=covs,
@@ -870,14 +893,14 @@ real_data <- list(time_all=length(unique(combined$month_day)),
 saveRDS(real_data,"real_data.rds")
 
 init_vals <- function() {
-  list(phi_raw=c(100,100),
+  list(phi_raw=c(1000,1000),
        world_infect=0.1,
        finding=20,
        suppress_effect_raw=rep(0,real_data$S),
        lockdown_effect_raw=rep(0,real_data$L),
        mob_effect_raw=rep(0,real_data$G),
-       country_test_raw=rep(40,real_data$num_country),
-       pcr_spec=-10.5,
+       country_test_raw=rep(1,real_data$num_country),
+       pcr_spec=-10,
        alpha_infect=-5,
        alpha_test=-10)
 }
@@ -888,18 +911,19 @@ init_vals <- function() {
 
 ```{r run_over_id_model_scale,include=F}
 
+trans <- TRUE
 
 if(run_model) {
-  pan_model_scale <- cmdstan_model("corona_tscs_betab_parallel.stan",
+  pan_model_scale <- cmdstan_model("corona_tscs_betab_parallel_trans.stan",
                                    cpp_options = list(stan_threads = TRUE))
   
    us_fit_scale_mod <- pan_model_scale$sample(data=real_data,chains=2,
                            iter_warmup=400,iter_sampling=200,
                            threads_per_chain = 8,
                            init=init_vals,
+                           max_treedepth = 15,
                            output_dir=".", validate_csv = FALSE,
-                           parallel_chains=2,
-                           adapt_delta=0.95)
+                           parallel_chains=2)
   
   us_fit_scale <- rstan::sflist2stanfit(lapply(us_fit_scale_mod$output_files(),
                                           rstan::read_stan_csv))
@@ -963,12 +987,53 @@ poly_time <- lapply(unique(real_data$cc), function(c) {
     real_data$count_outbreak[real_data$cc==c,3,drop=F] %*% t(non3[,c,drop=F])
 }) %>% do.call(rbind,.)
 
-prop_infected_mat <-  sapply(1:nrow(alpha_infect), function(i) rep(alpha_infect[i,],nrow(poly_time))) + 
+prior_mat <- new.env()
+
+prior_mat$prior_mat <- matrix(ncol=ncol(poly_time))
+
+alpha_infect_mat <- sapply(1:nrow(alpha_infect), function(i) rep(alpha_infect[i,],nrow(poly_time)))
+
+  prop_infected_mat_raw <- alpha_infect_mat + 
           poly_time +
           t(world_infect %*% real_data$month_cases) +
           real_data$suppress %*% t(suppress_effect_raw) +
           as.matrix(real_data$lockdown) %*% t(lockdown_effect_raw) +
           real_data$mobility %*% t(mob_effect_raw)
+
+if(trans) {
+  
+  # very complicated trying to reconstruct this positive-constrained variable
+  
+  prop_infected_mat <- lapply(1:real_data$num_country, function(s) {
+    
+    this_iter <- combined$key[real_data$cc==s]
+    
+    out_mat <- apply(prop_infected_mat_raw[this_iter,], 2, function(col) {
+      
+      col2 <- numeric(length=length(col))
+
+      for(i in 1:length(col)) {
+        
+        if(i==1) {
+          col2[i] = col[i]
+        } else {
+          col2[i] = col2[1] + sum(exp(col[2:i]))
+        }
+
+      }
+      
+        return(col2);
+      
+    })
+    
+  }) %>% do.call(rbind,.)
+  
+  prop_infected_mat <- t(as.matrix(us_fit_scale,"prop_infect_out"))
+  
+} else {
+  prop_infected_mat <- prop_infected_mat_raw
+} 
+
 
 prop_infected <- as_tibble(prop_infected_mat) %>% 
   mutate(key=1:n()) %>% 
@@ -977,6 +1042,10 @@ prop_infected <- as_tibble(prop_infected_mat) %>%
 # let's generate posterior-predictive data
 
 country_test <- as.matrix(us_fit_scale,"country_test_raw")
+mu_test <- as.matrix(us_fit_scale,"mu_test_raw")
+sigma_test <- as.matrix(us_fit_scale,"sigma_test_raw")
+
+country_nonc <- mu_test[,1] + country_test * sigma_test[,1]
 
 finding <- as.matrix(us_fit_scale,"finding")
 pcr_spec <- as.matrix(us_fit_scale,"pcr_spec")
@@ -1003,16 +1072,19 @@ prop_infected_trans <- as_tibble(prop_infect_trans) %>%
 
 test_inf <- lapply(unique(real_data$cc), function(c) {
 
-  prop_infected_mat_scale[real_data$cc==c,,drop=F] * country_test[,c] * real_data$lin_counter[real_data$cc==c] 
+  prop_infected_mat_scale[real_data$cc==c,,drop=F] * country_nonc[,c]
+    #real_data$lin_counter[real_data$cc==c] 
 }) %>% do.call(rbind,.)
 
 tests_pred <- lapply(1:ncol(test_inf), function(i) {
   
     # mu_tests <- plogis(alpha[i,1] + test_inf[,i] + combined$test_max * test_max_par[i,])
     
-        mu_tests <- plogis(alpha_test[i,] + test_inf[,i] +
-                               test_base[i,]*prop_infected_mat[,i] +
-                             test_lin[i,] * real_data$lin_counter)
+        mu_tests <- plogis(alpha_test[i,] + 
+                               #test_base[i,]*prop_infected_mat_scale[,i] +
+                             test_inf[,i] +
+                             test_max_par[i,]*real_data$test_max)
+                             #test_lin[i,] * real_data$lin_counter)
   
     tibble(out_pred=extraDistr::rbbinom(n=rep(1,length(mu_tests)),
                     real_data$country_pop,
@@ -1024,9 +1096,9 @@ tests_pred <- lapply(1:ncol(test_inf), function(i) {
   left_join(select(combined,key,tests,state,month_day),by=c("key"))
 
 cases_pred <- lapply(1:nrow(finding), function(i) {
-    
-    mu_cases <-  plogis(pcr_spec[i,] + finding[i,]*prop_infected_mat[,i])
-      
+
+    mu_cases <-  plogis(pcr_spec[i,] + finding[i,]*prop_infected_mat_scale[,i])
+
     tibble(out_pred=extraDistr::rbbinom(n=rep(1,length(mu_cases)),
                      real_data$country_pop,
                      mu_cases*phi[i,2],

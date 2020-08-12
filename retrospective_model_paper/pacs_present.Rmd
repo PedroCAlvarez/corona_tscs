@@ -1,22 +1,12 @@
 ---
 title: "The Causes and Effects of COVID-19 in the United States"
 author: 
-  - Robert Kubinec:
-      email: rmk7@nyu.edu
-      institute: nyuad
-      correspondence: true
-  - Luiz Max Carvalho:
-      institute: gvf
-institute:
-  - nyuad: New York University Abu Dhabi
-  - gvf: School of Applied Mathematics, Getulio Vargas Foundation
+  - "Robert Kubinec, Luiz Max Carvalho, Cindy Cheng, Joan Barcelo and Luca Messerschmidt"
+institution: New York University Abu Dhabi
 date: "August 14th, 2020"
 output: 
   ioslides_presentation:
     incremental: true
-    pandoc_args:
-      - '--lua-filter=scholarly-metadata.lua'
-      - '--lua-filter=author-info-blocks.lua'
 ---
 
 ```{r setup, include=FALSE}

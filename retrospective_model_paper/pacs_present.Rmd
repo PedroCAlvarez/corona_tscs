@@ -1,0 +1,60 @@
+---
+title: "The Causes and Effects of COVID-19 in the United States"
+author: 
+  - Robert Kubinec:
+      email: rmk7@nyu.edu
+      institute: nyuad
+      correspondence: true
+  - Luiz Max Carvalho:
+      institute: gvf
+institute:
+  - nyuad: New York University Abu Dhabi
+  - gvf: School of Applied Mathematics, Getulio Vargas Foundation
+date: "August 14th, 2020"
+output: 
+  ioslides_presentation:
+    incremental: true
+    pandoc_args:
+      - '--lua-filter=scholarly-metadata.lua'
+      - '--lua-filter=author-info-blocks.lua'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Background 
+
+- The explosion in research on COVID-19 has led to numerous studies trying to understand both the *causes of* COVID-19 and the *effects of* COVID-19 on social-scientific variables:
+  - Partisanship
+  - Wealth/inequality
+  - Public protest (aka "Floyd" protests)
+- It is difficult to employ traditional statistical methods to study COVID-19 due to well-known biases:
+  - Observed cases only a fraction of true infections. 
+  - Asymptomatic cases never tracked.
+  - Limited testing obscures scale of outbreak.
+  
+## Approach
+
+- We designed a Bayesian Stan-based model to use empirical information to identify the effects of covariates on the spread of COVID-19 among the 50 US states.
+
+- In contrast to existing approaches (SEIR/SIR), we do not attempt to forecast the disease, but rather to extrapolate from known data.
+
+- We use CDC serology surveys to identify a latent-variable model so that we can provide intelligible answers to social-scientific questions concerning COVID-19.
+
+## Some Math I
+
+## Some Math II
+
+## Some Math III
+
+## Data
+
+## Sampling
+
+- We use Hamiltonian Markov Chain Monte Carlo (Stan). We run 2 chains in parallel and employing within-chain parallelization.
+
+## Results
+
+## Conclusions
+

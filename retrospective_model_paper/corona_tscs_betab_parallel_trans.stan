@@ -174,9 +174,9 @@ functions {
         log_prob += normal_lpdf(country_test_raw[s]|0,1); // more likely near the middle than the ends
         log_prob += normal_lpdf(country_test_raw2[s]|0,1); // more likely near the middle than the ends
         
-        log_prob += normal_lpdf(poly1[s]|0,10);
-        log_prob += normal_lpdf(poly2[s]|0,5);
-        log_prob += normal_lpdf(poly3[s]|0,5);
+        log_prob += normal_lpdf(poly1[s]|0,1);
+        log_prob += normal_lpdf(poly2[s]|0,1);
+        log_prob += normal_lpdf(poly3[s]|0,1);
         
         // increasing constraint
         
@@ -187,10 +187,10 @@ functions {
         
         
     mu_tests = inv_logit(alpha_test + 
-    test_max_par*test_max[start2:end2] +
-                          country1 *  mix_prop_std);
-                          //  +
-                          // test_lin_counter * lin_counter[start2:end2,2] +
+    //test_max_par*test_max[start2:end2] +
+                          test_baseline *  mix_prop_std +
+                          country1 * mix_prop_std .* lin_counter[start2:end2,1] +
+                          test_lin_counter * lin_counter[start2:end2,1]);
                           // country2 * mix_prop_std .* lin_counter[start2:end2,2] +
                           // test_lin_counter2 * lin_counter[start2:end2,2]);
                           //country_test_raw[s] * prop_infected .* lin_counter[start2:end2] +
@@ -217,10 +217,11 @@ functions {
             // prior implies inflation rate (cases/true infected) is between 2 - 20
             //print("normal prior");
             //print(log_prob);
-            if(lin_counter[n-start2+1,1]<.35) {
-                //log_prob += lognormal_lpdf(inv_logit(prop_infected[n-start2+1])/((cases[n-start2+1]*1.0)/(country_pop[n-start2+1]*1.0))|2.8,.5);
+            if((n-start2)>60) {
+                log_prob += lognormal_lpdf(inv_logit(prop_infected[n-start2+1])/((cases[n-start2+1]*1.0)/(country_pop[n-start2+1]*1.0))|2.1,.4);
+                log_prob +=  log(prop_infected[n-start2+1] - prop_infected[n-start2]) - 2 * log(1 + prop_infected[n-start2+1] - prop_infected[n-start2]);
                 //print(log_prob);
-                //log_prob += prop_infected[n-start2+1] - 2 * log(1 + exp(prop_infected[n-start2+1]));
+                //log_prob += ;
             }
     
           }

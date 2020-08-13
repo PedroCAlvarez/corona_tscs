@@ -882,7 +882,7 @@ real_data <- list(time_all=length(unique(combined$month_day)),
                  phi_scale=.001,
                  test_max=combined$test_max,
                  count_outbreak=time_outbreak,
-                 lin_counter=poly(combined$lin_counter,2),
+                 lin_counter=cbind(combined$lin_counter,combined$lin_counter),
                  tests=tests_matrix_num[,1],
                  month_cases=combined$world_infect,
                  suppress=covs,
@@ -918,7 +918,7 @@ if(run_model) {
                                    cpp_options = list(stan_threads = TRUE))
   
    us_fit_scale_mod <- pan_model_scale$sample(data=real_data,chains=2,
-                           iter_warmup=500,iter_sampling=500,
+                           iter_warmup=400,iter_sampling=200,
                            threads_per_chain = 8,
                            init=init_vals,
                            max_treedepth = 13,
@@ -1072,8 +1072,7 @@ prop_infected_trans <- as_tibble(prop_infect_trans) %>%
 
 test_inf <- lapply(unique(real_data$cc), function(c) {
 
-  prop_infected_mat_scale[real_data$cc==c,,drop=F] * country_nonc[,c]
-    #real_data$lin_counter[real_data$cc==c] 
+  prop_infected_mat_scale[real_data$cc==c,,drop=F] * country_nonc[,c] * real_data$lin_counter[real_data$cc==c] 
 }) %>% do.call(rbind,.)
 
 tests_pred <- lapply(1:ncol(test_inf), function(i) {
@@ -1081,10 +1080,10 @@ tests_pred <- lapply(1:ncol(test_inf), function(i) {
     # mu_tests <- plogis(alpha[i,1] + test_inf[,i] + combined$test_max * test_max_par[i,])
     
         mu_tests <- plogis(alpha_test[i,] + 
-                               #test_base[i,]*prop_infected_mat_scale[,i] +
+                               test_base[i,]*prop_infected_mat_scale[,i] +
                              test_inf[,i] +
-                             test_max_par[i,]*real_data$test_max)
-                             #test_lin[i,] * real_data$lin_counter)
+                             test_max_par[i,]*real_data$test_max +
+                             test_lin[i,] * real_data$lin_counter)
   
     tibble(out_pred=extraDistr::rbbinom(n=rep(1,length(mu_tests)),
                     real_data$country_pop,
@@ -1681,22 +1680,30 @@ In addition to the estimation of covariates, the model provides further useful i
 
 # convert to marginal changes
 
-test_var <- as.data.frame(us_fit_scale,"country_test_raw") %>%
-  mutate(iter=1:n()) %>%
-  gather(key="variable",value="estimate",-iter) %>%
-  mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")))
+this_infect1 <- filter(ungroup(all_est_state),month_day==max(month_day)) %>% 
+  select(state,estimate) %>% 
+  group_by(state) %>% 
+  mutate(estimate=plogis(estimate),iter=1:n()) %>% 
+  spread(key="state",value="estimate") %>% 
+  ungroup %>% 
+  select(-iter) %>% 
+  as.matrix
 
-this_infect <- filter(ungroup(all_est_state),month_day==max(month_day)) %>% 
-  mutate(estimate2=plogis(estimate)+.001,
-         estimate=plogis(estimate))
+         
+ this_infect2 <- filter(ungroup(all_est_state),month_day==max(month_day)) %>% 
+  select(state,estimate) %>% 
+  group_by(state) %>% 
+  mutate(estimate=plogis(estimate)+.001,iter=1:n()) %>% 
+  spread(key="state",value="estimate") %>% 
+  ungroup %>% 
+  select(-iter) %>% 
+  as.matrix
 
 this_test_max <- ungroup(combined) %>% 
-  select(state,month_day,test_max)
+  select(state,month_day,test_max) %>% 
+  filter(month_day==max(month_day))
 
-test_var <- left_join(test_var,tibble(state_num=1:length(unique(combined$state)),
-                                                state=unique(combined$state),
-                                                state_pop=unique(combined$state_pop))) %>% 
-  left_join(this_test_max,"state")
+this_time <- max(combined$lin_counter)
 
 alpha_test <- as.data.frame(us_fit_scale,pars="alpha_test")
 
@@ -1704,17 +1711,25 @@ test_max_par <- as.data.frame(us_fit_scale,"test_max_par")
 
 # loop over infections
 
-over_states <- lapply(unique(test_var$state), function(s) {
-  tibble(estimate2=plogis(alpha_test$alpha_test + (mu_test[,1] + sigma_test[,1]*test_var$estimate[test_var$state==s]) * this_infect$estimate2[this_infect$state==s] + test_max_par$test_max_par*test_var$test_max[test_var$state==s]),
-         estimate1=plogis((alpha_test$alpha_test + (mu_test[,1] + sigma_test[,1]*test_var$estimate[test_var$state==s]) * this_infect$estimate[this_infect$state==s] +
-                                                                                                                                                                                                                    test_max_par$test_max_par*test_var$test_max[test_var$state==s])),
-         state=s)
+over_states <- lapply(1:real_data$num_country, function(s) {
+  tibble(estimate2=plogis(alpha_test$alpha_test + (mu_test[,1] + sigma_test[,1]*country_test[,s]) * this_infect2[,s] +
+                            test_base * this_infect2[,s] + test_lin +
+                            test_max_par$test_max_par*this_test_max$test_max[s]),
+         estimate1=plogis(alpha_test$alpha_test + (mu_test[,1] + sigma_test[,1]*country_test[,s]) * this_infect1[,s] +
+                                                         test_base * this_infect1[,s] + 
+                             test_lin + 
+                             test_max_par$test_max_par*this_test_max$test_max[s]),
+         state_num=s)
 }) %>% bind_rows
 
 saveRDS(over_states,"test_data.rds")
 
+state_id <- distinct(combined,state,state_pop) %>% 
+  ungroup %>% 
+  mutate(state_num=as.numeric(factor(state)))
+
 over_states %>%
-  left_join(distinct(combined,state,state_pop),by="state") %>%
+  left_join(state_id,by="state_num") %>%
   group_by(state) %>%
     summarize(med_est=quantile(estimate2*1000 - estimate1*1000,.5),
             high_est=quantile(estimate2*1000 - estimate1*1000,.95),

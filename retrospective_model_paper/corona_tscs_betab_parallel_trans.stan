@@ -187,10 +187,10 @@ functions {
         
         
     mu_tests = inv_logit(alpha_test + 
-    test_max_par*test_max[start2:end2] +
-                          country1 *  mix_prop_std);
-                          //  +
-                          // test_lin_counter * lin_counter[start2:end2,2] +
+    //test_max_par*test_max[start2:end2] +
+                          test_baseline *  mix_prop_std +
+                          country1 * mix_prop_std .* lin_counter[start2:end2,1] +
+                          test_lin_counter * lin_counter[start2:end2,1]);
                           // country2 * mix_prop_std .* lin_counter[start2:end2,2] +
                           // test_lin_counter2 * lin_counter[start2:end2,2]);
                           //country_test_raw[s] * prop_infected .* lin_counter[start2:end2] +

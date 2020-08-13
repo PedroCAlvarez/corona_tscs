@@ -174,9 +174,9 @@ functions {
         log_prob += normal_lpdf(country_test_raw[s]|0,1); // more likely near the middle than the ends
         log_prob += normal_lpdf(country_test_raw2[s]|0,1); // more likely near the middle than the ends
         
-        log_prob += normal_lpdf(poly1[s]|0,10);
-        log_prob += normal_lpdf(poly2[s]|0,5);
-        log_prob += normal_lpdf(poly3[s]|0,5);
+        log_prob += normal_lpdf(poly1[s]|0,1);
+        log_prob += normal_lpdf(poly2[s]|0,1);
+        log_prob += normal_lpdf(poly3[s]|0,1);
         
         // increasing constraint
         

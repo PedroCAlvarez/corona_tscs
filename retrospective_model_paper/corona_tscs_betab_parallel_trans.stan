@@ -217,10 +217,11 @@ functions {
             // prior implies inflation rate (cases/true infected) is between 2 - 20
             //print("normal prior");
             //print(log_prob);
-            if(lin_counter[n-start2+1,1]<.35) {
-                //log_prob += lognormal_lpdf(inv_logit(prop_infected[n-start2+1])/((cases[n-start2+1]*1.0)/(country_pop[n-start2+1]*1.0))|2.8,.5);
+            if((n-start2)>60) {
+                log_prob += lognormal_lpdf(inv_logit(prop_infected[n-start2+1])/((cases[n-start2+1]*1.0)/(country_pop[n-start2+1]*1.0))|2.1,.4);
+                log_prob +=  log(prop_infected[n-start2+1] - prop_infected[n-start2]) - 2 * log(1 + prop_infected[n-start2+1] - prop_infected[n-start2]);
                 //print(log_prob);
-                //log_prob += prop_infected[n-start2+1] - 2 * log(1 + exp(prop_infected[n-start2+1]));
+                //log_prob += ;
             }
     
           }

@@ -879,7 +879,7 @@ real_data <- list(time_all=length(unique(combined$month_day)),
                  sero_row=serology$key,
                  country_pop=floor(combined$state_pop),
                  cases=cases_matrix_num[,1],
-                 phi_scale=.003,
+                 phi_scale=.001,
                  test_max=combined$test_max,
                  count_outbreak=time_outbreak,
                  lin_counter=poly(combined$lin_counter,2),
@@ -918,10 +918,10 @@ if(run_model) {
                                    cpp_options = list(stan_threads = TRUE))
   
    us_fit_scale_mod <- pan_model_scale$sample(data=real_data,chains=2,
-                           iter_warmup=400,iter_sampling=200,
+                           iter_warmup=500,iter_sampling=500,
                            threads_per_chain = 8,
                            init=init_vals,
-                           max_treedepth = 15,
+                           max_treedepth = 13,
                            output_dir=".", validate_csv = FALSE,
                            parallel_chains=2)
   
@@ -1356,12 +1356,40 @@ mob_effect <- rstan::extract(us_fit_scale,"mob_effect")[[1]]
 lock_effect <- rstan::extract(us_fit_scale,"suppress_hier_const")[[1]]
 direct_effect <- rstan::extract(us_fit_scale,"lockdown_effect")[[1]]
 
-p_infected <- select(all_est_state,iter,state,month_day,estimate) %>% 
+revert <- function(x) {
+  # need to make this what it was originally
+  
+  y <- numeric(length=length(x))
+  y[1] <- x[1]
+  
+  for(i in 2:length(x)) {
+    y[i] <- log(x[i] - x[i-1])
+  }
+  
+  return(y)
+  
+}
+
+# derivative of inverse logit with respect to x
+
+p_infected1 <- select(all_est_state,iter,state,month_day,estimate) %>% 
   spread(key="iter",value="estimate") %>% 
   ungroup %>% 
   select(-state,-month_day) %>% 
   as.matrix %>% 
   dlogis
+
+# derivative of ordered transformation with respect to x
+
+p_infected2 <- select(all_est_state,iter,state,month_day,estimate) %>% 
+  group_by(state,iter) %>% 
+    arrange(iter,state,month_day) %>% 
+  mutate(estimate=revert(estimate)) %>% 
+  ungroup %>% 
+  spread(key="iter",value="estimate") %>% 
+  select(-state,-month_day) %>% 
+  as.matrix %>% 
+  exp
 
 # make a matrix of derivatives
 
@@ -1385,8 +1413,8 @@ if(run_model) {
         over_mod <- lapply(seq(min(just_data[[li]]),max(just_data[[li]]),
                              length.out=10), function(d) {
 
-          tibble(direct_eff=rowMeans((direct_effect[,l] + direct_effect[,li]*d)*p_infected),
-                  indirect_eff=rowMeans((mob_effect[,m]*(lock_effect[,m,l] + lock_effect[,m,li]*d)*p_infected)),
+          tibble(direct_eff=rowMeans((direct_effect[,l] + direct_effect[,li]*d)*p_infected1*p_infected2),
+                  indirect_eff=rowMeans((mob_effect[,m]*(lock_effect[,m,l] + lock_effect[,m,li]*d)*p_infected1*p_infected2)),
                  total_eff=direct_eff + indirect_eff,
                  prop_med=indirect_eff/total_eff) %>% 
             mutate(mobility=colnames(covs_mob)[m],
@@ -1438,7 +1466,7 @@ direct <- over_med_agg %>%
   ylab("Marginal % Change in Infected Rate") +
   xlab("Days After First COVID-19 Case Until Lockdown Imposed") +
   scale_y_continuous(labels=scales::percent) +
-  facet_wrap(~lockdown)
+  facet_wrap(~lockdown,scales="free_x")
 
 indirect <- over_med_agg %>% 
   filter(variable=="indirect") %>% 
@@ -1446,7 +1474,7 @@ indirect <- over_med_agg %>%
   geom_ribbon(aes(ymin=low,ymax=high),fill="blue",alpha=0.5) +
   geom_line(linetype=2) +
   geom_hline(yintercept = 0) +
-    facet_wrap(~mobility+lockdown) +
+    facet_wrap(~mobility+lockdown,scales="free_x") +
   xlab("") +
   ylab("") +
   scale_y_continuous(labels=scales::percent)
@@ -1464,6 +1492,7 @@ direct + indirect  +
       plot_annotation(tag_levels = "A",
                       caption="Results from mediation analysis using MCMC with Stan.\nPanel A shows controlled direct effect of lockdowns by number of days after first COVID-19 case lockdown imposed.\nPanel B shows indirect effect of lockdowns mediated through mobility data by number of days after first COVID-19 case lockdown imposed.") & theme(strip.placement = NULL)
 
+ggsave("direct_indirect.png",height=8)
 
 ```
 
@@ -1482,8 +1511,8 @@ if(run_model) {
   
     over_all2 <- lapply(1:max(suppress_effect$variable), function(s) {
       
-        this_eff <- (suppress_effect$estimate[suppress_effect$variable==s]*p_infected) 
-        this_eff <- colMeans(this_eff)
+        this_eff <- (suppress_effect$estimate[suppress_effect$variable==s]*t(p_infected1)*t(p_infected2)) 
+        this_eff <- rowMeans(this_eff)
       tibble(estimate=this_eff,
              variable=s)
       
@@ -1658,39 +1687,38 @@ test_var <- as.data.frame(us_fit_scale,"country_test_raw") %>%
   mutate(state_num=as.numeric(str_extract(variable,"(?<=\\[)[1-9][0-9]?0?")))
 
 this_infect <- filter(ungroup(all_est_state),month_day==max(month_day)) %>% 
-  mutate(estimate2=plogis(estimate)+.01)
+  mutate(estimate2=plogis(estimate)+.001,
+         estimate=plogis(estimate))
 
 this_test_max <- ungroup(combined) %>% 
-  group_by(state) %>% 
-  arrange(state,month_day) %>% 
-  mutate(max_test=roll_max(tests3)/state_pop) %>% 
-  filter(month_day==max(month_day)) %>% 
-  select(state,max_test)
+  select(state,month_day,test_max)
 
 test_var <- left_join(test_var,tibble(state_num=1:length(unique(combined$state)),
                                                 state=unique(combined$state),
                                                 state_pop=unique(combined$state_pop))) %>% 
   left_join(this_test_max,"state")
 
-alpha_test <- as.data.frame(us_fit_scale,pars="alpha[1]")
+alpha_test <- as.data.frame(us_fit_scale,pars="alpha_test")
 
 test_max_par <- as.data.frame(us_fit_scale,"test_max_par")
 
 # loop over infections
 
 over_states <- lapply(unique(test_var$state), function(s) {
-  tibble(estimate=plogis(alpha_test$`alpha[1]` + test_var$estimate[test_var$state==s] * this_infect$estimate2[this_infect$state==s] + test_max_par$test_max_par*test_var$max_test[test_var$state==s]) - plogis((alpha_test$`alpha[1]` + test_var$estimate[test_var$state==s] * this_infect$estimate[this_infect$state==s] +
-                                                                                                                                                                                                                    test_max_par$test_max_par*test_var$max_test[test_var$state==s])),
+  tibble(estimate2=plogis(alpha_test$alpha_test + (mu_test[,1] + sigma_test[,1]*test_var$estimate[test_var$state==s]) * this_infect$estimate2[this_infect$state==s] + test_max_par$test_max_par*test_var$test_max[test_var$state==s]),
+         estimate1=plogis((alpha_test$alpha_test + (mu_test[,1] + sigma_test[,1]*test_var$estimate[test_var$state==s]) * this_infect$estimate[this_infect$state==s] +
+                                                                                                                                                                                                                    test_max_par$test_max_par*test_var$test_max[test_var$state==s])),
          state=s)
 }) %>% bind_rows
 
 saveRDS(over_states,"test_data.rds")
 
 over_states %>%
+  left_join(distinct(combined,state,state_pop),by="state") %>%
   group_by(state) %>%
-    summarize(med_est=quantile(estimate,.5),
-            high_est=quantile(estimate,.95),
-            low_est=quantile(estimate,.05)) %>%
+    summarize(med_est=quantile(estimate2*1000 - estimate1*1000,.5),
+            high_est=quantile(estimate2*1000 - estimate1*1000,.95),
+            low_est=quantile(estimate2*1000 - estimate1*1000,.05)) %>% 
   ggplot(aes(y=med_est,x=reorder(state,med_est))) +
   geom_pointrange(aes(ymin=low_est,ymax=high_est)) +
   theme_minimal() +
@@ -1698,13 +1726,13 @@ over_states %>%
   coord_flip() +
   geom_hline(yintercept=.01) +
   xlab("") +
-  scale_y_continuous(labels=scales::percent) +
+  #scale_y_continuous(labels=scales::percent) +
   # scale_y_continuous(breaks=c(.96,.98,1,1.02,1.04,1.06),
   #                    labels = c("Ahead of\nCurve",".98","Keeping\nUp","1.02","1.04","Behind\nCurve")) +
   # annotate("text",y=c(.96,1.05),x=c("Georgia","North Dakota"),label=c("Testing More\nThan Infection Growth","Testing Less\nThan Infection Growth"),size=3) +
   # geom_hline(yintercept=1,linetype=2) +
-  labs(caption = "Scale of the estimates shows how increases in the infection rate increase\nthe number of tests in a given state. Higher numbers indicate fewer tests\nconducted for a unit increase in the infection rate (on the logit scale).") +
-  ylab("Additional Proportion Tested of Population for Every Percent Increase in Infected")
+  labs(caption = stringr::str_wrap("Figure shows the average number of additional people tested in a given state for an additional 1 person out of a thousand who becomes infected. Estimate is an average and thus may not be accurate for the most recent time period.")) +
+  ylab("How Many People Would Be Tested If 1 Additional Resident Was Infected (Per 1,000)")
 
 ggsave("testing.png",scale=1.1)
 

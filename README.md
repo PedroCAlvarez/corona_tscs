@@ -17,7 +17,7 @@ Counts”.
 
 On the [CoronaNet Update
 Tracker](https://docs.google.com/spreadsheets/d/1h5dqVxLghvXr2wwl74ZUeSIWRQLySrxWCjD65_MevUM/edit#gid=0),
-you can see track our policy updates by country and subnational unit.
+you can track our policy updates by country and subnational unit.
 
 The following plot shows our policy activity index, a set of scores
 produced by a dynamic measurement model from our data. It is also

@@ -15,7 +15,11 @@ subsequently a list of files relevant to “A Retrospective Bayesian Model
 for Measuring Covariate Effects on Observed COVID-19 Test and Case
 Counts”.
 
-The following plot shows our politcy activity index, a set of scores
+On the [CoronaNet Update
+Tracker](https://docs.google.com/spreadsheets/d/1h5dqVxLghvXr2wwl74ZUeSIWRQLySrxWCjD65_MevUM/edit#gid=0),
+you can track our policy updates by country and subnational unit.
+
+The following plot shows our policy activity index, a set of scores
 produced by a dynamic measurement model from our data. It is also
 included in the data release and is a helpful way to reduce the data to
 a single score. It also permits more straightforward inter-country
@@ -218,8 +222,7 @@ replaced with the corrected data).
     dataset) Electoral democracy index
 
 31. `news_WB` (most recent year available from Niehaus dataset) Daily
-    newspapers (per 1,000
-people)
+    newspapers (per 1,000 people)
 
 # A Retrospective Bayesian Model for Measuring Covariate Effects Data and Code
 

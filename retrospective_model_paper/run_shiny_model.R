@@ -204,8 +204,7 @@ if(new_policy) {
            type %in% c("Health Testing","Lockdown","Quarantine","Restriction and Regulation of Government Services",
                        "Restriction and Regulation of Businesses",
                        "Restrictions of Mass Gatherings",
-                       "Social Distancing","Health Resources")) %>% 
-    filter(type_sub_cat=="Masks" || type!="Health Resources")
+                       "Social Distancing","Health Resources"))
   
   # need to replace end date
   
@@ -1348,4 +1347,16 @@ trump2 <- over_vote_share %>%
         strip.background = element_blank()) +
   ylab("Cumulative Infected") +
   xlab("Trump Vote Share")
+
+rsconnect::deployApp(appDir="~/corona_tscs/retrospective_model_paper",
+                     appFiles = c("flex_dashboard.Rmd","calc_sum_state.rds",
+                                  "percap.rds",
+                                  "combined.rds",
+                                  "real_data.rds",
+                                  "test_data.rds",
+                                  "cases_matrix.rds"),
+                     account = "kubinec",
+                     forceUpdate = T,
+                     appName="covidboard",
+                     launch.browser = F)
 

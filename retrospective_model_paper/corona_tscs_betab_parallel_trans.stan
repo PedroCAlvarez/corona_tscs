@@ -213,6 +213,7 @@ functions {
             //print(log_prob);
             log_prob += normal_lpdf(prop_infected[n-start2+1]|logit(sero[q,1]),.01);
             log_prob += log(prop_infected[n-start2+1] - prop_infected[n-start2]);
+            //log_prob += log(prop_infected[n-start2+1] - prop_infected[n-start2]) - 2 * log(1 + prop_infected[n-start2+1] - prop_infected[n-start2]);
           } else {
             // prior implies inflation rate (cases/true infected) is between 2 - 20
             //print("normal prior");
@@ -291,7 +292,7 @@ parameters {
   vector[num_country] poly1; // polinomial function of time
   vector[num_country] poly2; // polinomial function of time
   vector[num_country] poly3; // polinomial function of time
-  real<lower=0> mu_test_raw;
+  real mu_test_raw;
   vector<lower=0,upper=1>[R] sero_est;
   real<lower=0> finding; // difficulty of identifying infected cases 
   //vector<lower=0,upper=1>[R] survey_prop; // variable that stores survey proportions from CDC data
@@ -327,7 +328,7 @@ model {
   
   sigma_poly ~ normal(0,5);
   mu_poly ~ normal(0,10);
-  mu_test_raw ~ normal(20,20);
+  mu_test_raw ~ normal(0,20);
   mu_test_raw2 ~ normal(-5,2);
   world_infect ~ normal(0,3);
   lockdown_effect_raw ~ normal(0,5);
@@ -350,7 +351,7 @@ model {
   sigma_test_raw2 ~ normal(0,.1);
   sigma_med ~ exponential(.1);
   //country_test_raw2 ~ normal(0,1);
-  sero_est ~ normal(0,1);
+  sero_est ~ beta(.5 + sero[,1] .* sero[,3],.5 + sero[,3] - (sero[,3] .* sero[,1]));
 
 target += reduce_sum_static(partial_sum, states,
                      grainsize,

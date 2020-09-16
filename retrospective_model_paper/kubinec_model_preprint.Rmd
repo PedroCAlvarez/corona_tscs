@@ -77,7 +77,7 @@ system2("git",args=c("-C ~/covid-19-data","pull"))
 
 # whether to run model (it will take a few hours) or load saved model from disk
 
-run_model <- F
+run_model <- T
 
 # whether to use fresher coronanet policy data
 
@@ -379,15 +379,17 @@ prot_data <- read_csv("../data/simulation/protest/Protest_Data_Final_Merged.csv"
 
 # add polling data 
 
-source("luca_scraping_code.R")
-
-approval <- read_csv("../data/simulation/Civiqs/approve_president_trump.csv") %>%   select(date,state="state_col",trendline_approve)
+if(new_cases) {
+  source("luca_scraping_code.R")
+} else {
+  approval <- read_csv("../data/simulation/Civiqs/approve_president_trump.csv") %>%   select(date,state="state_col",trendline_approve)
 concern <- read_csv("../data/simulation/Civiqs/coronavirus_concern.csv") %>% 
   select(state="state_col",date,trendline_extremely_concerned)
 economy <- read_csv("../data/simulation/Civiqs/economy_family_retro.csv") %>% 
   select(date,state="state_col",trendline_gotten_worse)
 local_gov_response <- read_csv("../data/simulation/Civiqs/coronavirus_response_local.csv") %>% 
   select(date,state="state_col",trendline_not_very_satisfied)
+}
 
 masks <- read_csv("../data/simulation/masks/masks_yougov.csv") %>% 
   select(state="X.1",
@@ -437,7 +439,9 @@ coronanet <- group_by(coronanet,country,province,policy_id) %>%
 
 
 # do a summing exercise over policy types in terms of what is still available at a given day
-count_pol <- parallel::mclapply(unique(coronanet$province), function(p) {
+
+if(run_model) {
+  count_pol <- parallel::mclapply(unique(coronanet$province), function(p) {
     
     # loop over policies
       these_pol <- unique(coronanet$policy_id[coronanet$province==p])
@@ -479,7 +483,15 @@ count_pol <- parallel::mclapply(unique(coronanet$province), function(p) {
       
     }) %>% bind_rows
   
-},mc.cores=16) %>% bind_rows
+  },mc.cores=16) %>% bind_rows
+  
+  saveRDS(count_pol,"count_pol.rds")
+  
+} else {
+  count_pol <- readRDS("count_pol.rds")
+}
+
+
 
 # need to remove negative policy counts
 

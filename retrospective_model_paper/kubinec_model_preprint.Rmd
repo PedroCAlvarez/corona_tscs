@@ -11,8 +11,6 @@ author:
       institute: tum
   - Joan Barceló:
       institute: nyuad
-  - Allison Spencer Hartnett:
-      institute: yale
   - Luca Messerschmidt:
       institute: tum
   - Derek Duba:
@@ -67,7 +65,7 @@ require(cmdstanr)
 
 set.seed(662817)
 
-knitr::opts_chunk$set(warning=F,message=F)
+knitr::opts_chunk$set(warning=F,message=F,dev="png")
 
 # NEED THESE GITHUB REPOS IN YOUR HOME FOLDER:
 
@@ -269,6 +267,13 @@ acs_data <- get_acs("state",variables=c("B01003_001","B05002_013"),year=2018,sur
   spread("variable","estimate") %>% 
   mutate(prop_foreign=foreign_born/state_pop)
 
+# population state density
+
+area <- read_csv("../data/pop_density.csv") %>% select(state_id,area)
+
+acs_data <- left_join(acs_data,area,by=c("NAME"="state_id")) %>% 
+  mutate(density=state_pop/area)
+
 
 # health data
 
@@ -344,7 +349,7 @@ combined <- left_join(nyt_data,tests,by=c("state.abb","month_day")) %>%
 
 # add protest data
 # need to impute
-prot_data <- read_csv("../data/simulation/protest/Protest_Data_Final_Merged.csv") %>% 
+prot_data <- read_csv("../data/simulation/protest/Protest_Data_Final_Merged.csv") %>%
   mutate(state=recode(state,
                       NewYork="New York",
                       SouthDakota="South Dakota",
@@ -359,10 +364,11 @@ prot_data <- read_csv("../data/simulation/protest/Protest_Data_Final_Merged.csv"
                       RhodeIsland="Rhode Island",
                       SouthCarolina="South Carolina",
                       SouthDakota="South Dakota",
-                      WestVirginia="West Virginia")) %>% 
-  missRanger(pmm.k=10L) %>% 
-  group_by(state,date) %>% 
+                      WestVirginia="West Virginia")) %>%
+  missRanger(pmm.k=10L) %>%
+  group_by(state,date) %>%
   summarize(sum_prot=sum(avgsize))
+
 
 # protests by day
 
@@ -583,6 +589,10 @@ combined <- group_by(combined,state) %>%
   ungroup %>% 
          mutate(test_max=test_max / max(test_max,na.rm=T))
 
+if(!new_cases && !new_policy) {
+  combined <- filter(combined, month_day<ymd("2020-07-15"))
+}
+
 min_mask <- min(combined$mask_wear)
 
 combined <- combined %>% 
@@ -765,6 +775,7 @@ just_data <- select(ungroup(combined),month_day,state,state_pop,trump,air="Air P
                       young="Population under 18 years",
                       smoking="Smoking",
                       gdp,
+                    density,
                     trump_int,
                       mask_pol="Mask Restrictions",
                       resources="Health Resources",
@@ -781,13 +792,23 @@ just_data <- select(ungroup(combined),month_day,state,state_pop,trump,air="Air P
                     trendline_gotten_worse,
                     outbreak_time,
                       public_health="Public Health Funding",
-                      prop_foreign) %>% 
+                      prop_foreign) 
+
+# need to save SDs/means of variables for safe-keeping
+
+sds_mean <- lapply(select(just_data,-month_day,-state_pop,-state), function(c) {
+  return(list(mean=mean(c),
+              sd=sd(c)))
+})
+
+just_data <- just_data %>% 
     mutate_at(vars(-month_day,-state_pop,-state), ~as.numeric(scale(.))) %>% arrange(state,month_day) %>% 
   mutate(int_lockdown=quarantine*outbreak_time,
          int_business=business*outbreak_time,
          int_social=social_distance*outbreak_time,
          int_govt=govt_services*outbreak_time,
-         int_gather=mass_gathering*outbreak_time)
+         int_gather=mass_gathering*outbreak_time,
+         trump_int=trump*trendline_approve)
 
 covs <- select(ungroup(just_data),-state,-state_pop,-month_day,-outbreak_time,
                -int_lockdown,
@@ -851,12 +872,14 @@ real_data <- list(time_all=length(unique(combined$month_day)),
                  country_pop=floor(combined$state_pop),
                  cases=cases_matrix_num[,1],
                  phi_scale=.001,
+                 fear=just_data$trendline_extremely_concerned,
                  test_max=combined$test_max,
                  count_outbreak=time_outbreak,
                  lin_counter=cbind(combined$lin_counter,combined$lin_counter),
                  tests=tests_matrix_num[,1],
                  month_cases=combined$world_infect,
                  suppress=covs,
+                 suppress2=covs[,-which(colnames(covs)=="trendline_extremely_concerned")],
                  mobility=covs_mob,
                  lockdown=covs_lock,
                  states=select(state,-state))
@@ -966,7 +989,7 @@ The only data required to fit the model, in addition to the covariates of intere
 trans <- TRUE
 
 if(run_model) {
-  pan_model_scale <- cmdstan_model("corona_tscs_betab_all_med.stan",
+  pan_model_scale <- cmdstan_model("corona_tscs_betab_all_med_fear.stan",
                                    cpp_options=list(stan_threads=TRUE))
   
    us_fit_scale_mod <- pan_model_scale$sample(data=real_data,chains=2,
@@ -1422,6 +1445,7 @@ all <- calc_sum_state %>%
   theme_minimal() +
   scale_color_distiller(palette="Reds",direction=1) +
   ylab("Total Infected") +
+  xlab("") +
   geom_text_repel(data=top_5,aes(x=month_day,y=med_est,label=label),
                   size=2.5,fontface="bold",segment.colour = NA) +
   scale_y_continuous(labels=scales::comma) +
@@ -1596,6 +1620,14 @@ revert <- function(x) {
   
 }
 
+# calculate within-state sums of marginal effects, then average
+state_means <- function(m) {
+  
+  m2 <- split.data.frame(t(m),combined$state)
+  m3 <- lapply(m2, colSums)
+  rowMeans(do.call(cbind,m3))
+}
+
 # derivative of inverse logit with respect to x
 
 p_infected1 <- select(all_est_state,iter,state,month_day,estimate) %>% 
@@ -1627,7 +1659,12 @@ mob_effect <- as.data.frame(us_fit_scale,"mob_effect") %>%
     over_all_mob <- lapply(1:max(mob_effect$variable), function(s) {
       
         this_eff <- (mob_effect$estimate[mob_effect$variable==s]*t(p_infected1)*t(p_infected2)) 
-        this_eff <- rowMeans(this_eff)
+        
+        # need to sum within states (state-level cumulative effect)
+        # then average 
+        
+        this_eff <- state_means(this_eff)
+        
       tibble(estimate=this_eff,
              variable=s)
       
@@ -1672,7 +1709,7 @@ p3 <- over_all_sum_mob %>%
   scale_y_continuous(labels=scales::percent) +
   coord_flip() 
 
-p3 +  plot_annotation(caption="Marginal effects calculated as a 1-standard deviation change in a covariate on the\nlatent infection rate. 5% - 95% high posterior density intervals derived from\n1000 Markov Chain Monte Carlo posterior draws.")
+p3 +  plot_annotation(caption="Marginal effects calculated as a 1-standard deviation change in a covariate on the\ncumulative latent infection rate. 5% - 95% high posterior density intervals derived from\n1000 Markov Chain Monte Carlo posterior draws.")
 
 ggsave("mobility.png")
 
@@ -1693,8 +1730,14 @@ suppress_mob_effect <- as.data.frame(us_fit_scale,"suppress_med") %>%
   mutate(mobility=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?")),
          variable=as.numeric(str_extract(parameter,"(?<=,)[1-9][0-9]?0?")))
 
+suppress_fear_effect <- as.data.frame(us_fit_scale,"suppress_med_fear") %>% 
+  mutate(iter=1:n()) %>% 
+  gather(key="parameter",value="estimate",-iter) %>% 
+  mutate(variable=as.numeric(str_extract(parameter,"(?<=\\[)[1-9][0-9]?0?")))
+
 mob_effect <- rstan::extract(us_fit_scale,"mob_effect")[[1]]
 lock_effect <- rstan::extract(us_fit_scale,"lockdown_med")[[1]]
+lock_effect_fear <- rstan::extract(us_fit_scale,"lockdown_med_fear")[[1]]
 direct_effect <- rstan::extract(us_fit_scale,"lockdown_effect")[[1]]
 
 
@@ -1711,17 +1754,51 @@ direct_effect <- rstan::extract(us_fit_scale,"lockdown_effect")[[1]]
 
         ide <- suppress_mob_effect$estimate[suppress_mob_effect$variable==s & suppress_mob_effect$mobility==m]  * mob_effect[,m]
       
-    }) 
+    })
       
-      tibble(direct=rowMeans(de*t(p_infected1)*t(p_infected2)),
-             total = rowMeans((de + Reduce('+', mob_mats))*t(p_infected1)*t(p_infected2)),
-             ide_All = rowMeans(Reduce('+', mob_mats)*t(p_infected1)*t(p_infected2)),
-             ide_Retail= rowMeans(mob_mats[[1]]*t(p_infected1)*t(p_infected2)),
-             ide_Grocery= rowMeans(mob_mats[[2]]*t(p_infected1)*t(p_infected2)),
-             ide_Parks= rowMeans(mob_mats[[3]]*t(p_infected1)*t(p_infected2)),
-             ide_Transit= rowMeans(mob_mats[[4]]*t(p_infected1)*t(p_infected2)),
-             ide_Workplaces= rowMeans(mob_mats[[5]]*t(p_infected1)*t(p_infected2)),
-             ide_Residential= rowMeans(mob_mats[[6]]*t(p_infected1)*t(p_infected2)),
+      # coronavirus fear effect
+      # need different index 
+      
+      fear_id <- which(colnames(real_data$suppress)=="trendline_extremely_concerned")
+      
+      if(fear_id==s) {
+        
+        fear <- rep(0,nrow(mob_effect))
+        
+        mob_mats_fear <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
+
+              ide <- rep(0,nrow(mob_effect))
+      
+        })
+        
+      } else {
+        
+        i <- which(colnames(real_data$suppress2)==colnames(real_data$suppress)[s])
+      
+      fear <- suppress_fear_effect$estimate[suppress_fear_effect$variable==i] * suppress_effect$estimate[suppress_effect$variable==fear_id]
+      
+      # fear -> mobility pathway
+      
+      mob_mats_fear <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
+
+        ide <- suppress_mob_effect$estimate[suppress_mob_effect$variable==fear_id & suppress_mob_effect$mobility==m] * mob_effect[,m] * suppress_fear_effect$estimate[suppress_fear_effect$variable==i]
+      
+    })
+      
+      }
+      
+      
+      
+      tibble(direct=state_means(de*t(p_infected1)*t(p_infected2)),
+             total = state_means((fear + de + Reduce('+', mob_mats) + Reduce('+', mob_mats_fear))*t(p_infected1)*t(p_infected2)),
+             ide_mobility = state_means(Reduce('+', mob_mats)*t(p_infected1)*t(p_infected2)),
+             ide_fear=state_means((fear + Reduce('+', mob_mats_fear))*t(p_infected1)*t(p_infected2)),
+             ide_Retail= state_means(mob_mats[[1]]*t(p_infected1)*t(p_infected2)),
+             ide_Grocery= state_means(mob_mats[[2]]*t(p_infected1)*t(p_infected2)),
+             ide_Parks= state_means(mob_mats[[3]]*t(p_infected1)*t(p_infected2)),
+             ide_Transit= state_means(mob_mats[[4]]*t(p_infected1)*t(p_infected2)),
+             ide_Workplaces= state_means(mob_mats[[5]]*t(p_infected1)*t(p_infected2)),
+             ide_Residential= state_means(mob_mats[[6]]*t(p_infected1)*t(p_infected2)),
              variable=s)
       
       }) %>% bind_rows
@@ -1737,9 +1814,12 @@ over_all_sum2 <- group_by(over_all2,variable) %>%
             med_direct_est=median(direct),
             high_direct_est=quantile(direct,.95),
             low_direct_est=quantile(direct,.05),
-            med_indirect_est=median(ide_All),
-            high_indirect_est=quantile(ide_All,.95),
-            low_indirect_est=quantile(ide_All,.05)) %>% 
+            med_indirectmob_est=median(ide_mobility),
+            high_indirectmob_est=quantile(ide_mobility,.95),
+            low_indirectmob_est=quantile(ide_mobility,.05),
+            med_indirectfear_est=median(ide_fear),
+            high_indirectfear_est=quantile(ide_fear,.95),
+            low_indirectfear_est=quantile(ide_fear,.05)) %>% 
   mutate(model="Fully\nIdentified")
   
   
@@ -1755,6 +1835,7 @@ over_all_sum2 <- left_join(over_all_sum2,tibble(variable=1:ncol(covs),
                       trump_int="Vote ShareXApproval",
                       trendline_extremely_concerned="COVID Poll",
                       sum_prot="Justice Protests",
+                      density="Pop. Density",
                       resources="Resource Policies",
                       mask_pol="Mask Policies",
                       testing_cap="Testing Policies",
@@ -1770,6 +1851,7 @@ over_all_sum2 <- left_join(over_all_sum2,tibble(variable=1:ncol(covs),
                       public_health="Public Health"))
 
 p1 <- over_all_sum2 %>%
+  filter(!(label %in% c("Trump Vote","Trump Approval","Vote ShareXApproval"))) %>% 
   ggplot(aes(y=med_est,x=reorder(label,med_est))) +
   geom_pointrange(aes(ymin=low_est,ymax=high_est),alpha=0.8,size=.1) +
   theme_minimal() +
@@ -1787,10 +1869,14 @@ p1 <- over_all_sum2 %>%
   ggtitle("Total Effect")
 
 p2 <- over_all_sum2 %>%
-  gather(key="type",value="estimate",matches("direct|indirect")) %>% 
-  mutate(typeII=ifelse(grepl(x=type,pattern="indirect"),"Indirect","Direct"),
-         typeIII=recode(typeII,Direct="D",Indirect="I"),
-         type=str_remove(type,'indirect|direct')) %>% 
+    filter(!(label %in% c("Trump Vote","Trump Approval","Vote ShareXApproval"))) %>% 
+  gather(key="type",value="estimate",matches("direct|indirectmob|indirectfear")) %>% 
+  mutate(typeII=case_when(grepl(x=type,pattern="indirectmob")~"Indirect\nMobility",
+                          grepl(x=type,pattern="indirectfear")~"Indirect\nCOVID Poll",
+                          grepl(x=type,pattern="direct")~"Direct"),
+         typeIII=recode(typeII,Direct="D",`Indirect\nMobility`="Im",
+                        `Indirect\nCOVID Poll`="Ic"),
+         type=str_remove(type,'indirectmob|direct|indirectfear')) %>% 
   spread(key="type",value = "estimate") %>% 
   ggplot(aes(y=med__est,x=reorder(label,med__est))) +
   geom_pointrange(aes(ymin=low__est,ymax=high__est,colour=typeII,shape=typeII),alpha=0.8) +
@@ -1809,21 +1895,6 @@ p2 <- over_all_sum2 %>%
   guides(color=guide_legend(title=""),
          shape=guide_legend(title="")) +
   ggtitle("Direct and Indirect Effects")
-
-p3 <- over_all_sum2 %>%
-  ggplot(aes(y=med_indirect_est,x=reorder(label,med_indirect_est))) +
-  geom_pointrange(aes(ymin=low_indirect_est,ymax=high_indirect_est),alpha=0.8,size=.1) +
-  theme_minimal() +
-  xlab("")  +
-  geom_hline(yintercept=0,linetype=2) +
-  geom_text(aes(label=scales::percent(med_indirect_est)),vjust=-1) +
-  theme(panel.grid=element_blank(),
-        plot.title = element_text(size=12,hjust=0.5),
-        strip.text=element_text(face="bold"),
-        axis.text=element_text(size=7)) +
-  scale_y_continuous(labels=scales::percent) +
-  coord_flip() +
-  ggtitle("Indirect Effect")
 
 p2 / p1 + plot_annotation(caption="Marginal effects calculated as a 1-standard deviation change in a covariate on the\nlatent infection rate. 5% - 95% high posterior density intervals derived from\n100 Markov Chain Monte Carlo posterior draws.",tag_levels = "A")
 
@@ -1858,33 +1929,49 @@ What we can say is that this finding points to very strong associations between 
                                   max(just_data$trump),
                                   length.out=100),
                               function(p) {
-      
+      print(p)
       # get direct effect for poll day p
       
-      de <- suppress_effect$estimate[suppress_effect$variable==14] +
-        suppress_effect$estimate[suppress_effect$variable==1] * p 
+      de <- suppress_effect$estimate[suppress_effect$variable==15] +
+        suppress_effect$estimate[suppress_effect$variable==9] * p 
       
       # loop over mobility
       
       mob_mats <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
         
-        ide <- (suppress_mob_effect$estimate[suppress_mob_effect$variable==14 & suppress_mob_effect$mobility==m] +
-                  suppress_mob_effect$estimate[suppress_mob_effect$variable==1 & suppress_mob_effect$mobility==m] * p) * mob_effect[,m]
+        ide <- (suppress_mob_effect$estimate[suppress_mob_effect$variable==15 & suppress_mob_effect$mobility==m] +
+                  suppress_mob_effect$estimate[suppress_mob_effect$variable==9 & suppress_mob_effect$mobility==m] * p) * mob_effect[,m]
       
     }) 
       
-      tibble(`Direct Effect`=rowMeans(de*t(p_infected1)*t(p_infected2)),
-             `Total Effect` = rowMeans((de + Reduce('+', mob_mats))*t(p_infected1)*t(p_infected2)),
-             `All Indirect` = rowMeans(Reduce('+', mob_mats)*t(p_infected1)*t(p_infected2)),
-             `Retail Indirect`= rowMeans(mob_mats[[1]]*t(p_infected1)*t(p_infected2)),
-             `Grocery Indirect`= rowMeans(mob_mats[[2]]*t(p_infected1)*t(p_infected2)),
-             `Parks Indirect`= rowMeans(mob_mats[[3]]*t(p_infected1)*t(p_infected2)),
-             `Transit Indirect`= rowMeans(mob_mats[[4]]*t(p_infected1)*t(p_infected2)),
-             `Workplaces Indirect`= rowMeans(mob_mats[[5]]*t(p_infected1)*t(p_infected2)),
-             `Residential Indirect`= rowMeans(mob_mats[[6]]*t(p_infected1)*t(p_infected2)),
+      fear_id <- which(colnames(real_data$suppress)=="trendline_extremely_concerned")
+      
+      fear <- (suppress_fear_effect$estimate[suppress_fear_effect$variable==15] +
+               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*p)  * suppress_effect$estimate[suppress_effect$variable==fear_id]
+      
+      # fear -> mobility pathway
+      
+      mob_mats_fear <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
+
+        ide <- suppress_mob_effect$estimate[suppress_mob_effect$variable==fear_id & suppress_mob_effect$mobility==m] * mob_effect[,m] * (suppress_fear_effect$estimate[suppress_fear_effect$variable==15] +
+               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*p)
+      
+    })
+      
+      tibble(`Direct Effect`=state_means(de*t(p_infected1)*t(p_infected2)),
+             `Total Effect` = state_means((de + fear + Reduce('+', mob_mats) +  Reduce('+', mob_mats_fear))*t(p_infected1)*t(p_infected2)),
+             `Indirect\nMobility` = state_means((Reduce('+', mob_mats) + Reduce('+', mob_mats_fear) + fear)*t(p_infected1)*t(p_infected2)),
+             `Indirect\nCOVID Poll`= state_means((Reduce('+', mob_mats_fear) + fear)*t(p_infected1)*t(p_infected2)),
+             `Retail Indirect`= state_means((mob_mats[[1]] + mob_mats_fear[[1]])*t(p_infected1)*t(p_infected2)),
+             `Grocery Indirect`= state_means((mob_mats[[2]] + mob_mats_fear[[2]])*t(p_infected1)*t(p_infected2)),
+             `Parks Indirect`= state_means((mob_mats[[3]] + mob_mats_fear[[3]])*t(p_infected1)*t(p_infected2)),
+             `Transit Indirect`= state_means((mob_mats[[4]] + mob_mats_fear[[4]])*t(p_infected1)*t(p_infected2)),
+             `Workplaces Indirect`= state_means((mob_mats[[5]] + mob_mats_fear[[5]])*t(p_infected1)*t(p_infected2)),
+             `Residential Indirect`= state_means((mob_mats[[6]] + mob_mats_fear[[6]])*t(p_infected1)*t(p_infected2)),
+             `Fear Direct`= state_means(fear*t(p_infected1)*t(p_infected2)),
              `2016 Trump Vote Share`=mean(combined$trump) + p*sd(combined$trump))
     
-      },mc.cores=16) %>% bind_rows
+      },mc.cores=8) %>% bind_rows
 
 trump1 <- over_vote_share %>% 
   gather(key="Type",value="estimate",-`2016 Trump Vote Share`) %>% 
@@ -1892,7 +1979,9 @@ trump1 <- over_vote_share %>%
   summarize(med_est=median(estimate),
          high_est=quantile(estimate,.95),
          low_est=quantile(estimate,.05)) %>% 
-  filter(Type %in% c("All Indirect","Direct Effect","Total Effect")) %>% 
+  filter(Type %in% c("Indirect\nMobility",
+                     "Indirect\nCOVID Poll",
+                     "Direct Effect","Total Effect")) %>% 
   ggplot(aes(y=med_est,x=`2016 Trump Vote Share`)) +
   geom_ribbon(aes(ymin=low_est,ymax=high_est),fill="blue",alpha=0.5) +
   geom_line(linetype=2,colour="white") +
@@ -1912,7 +2001,8 @@ trump2 <- over_vote_share %>%
   summarize(med_est=median(estimate),
          high_est=quantile(estimate,.95),
          low_est=quantile(estimate,.05)) %>% 
-  filter(!(Type %in% c("All Indirect","Direct Effect","Total Effect"))) %>% 
+  filter(!(Type %in% c("Indirect\nMobility",
+                     "Indirect\nCOVID Poll","Direct Effect","Total Effect"))) %>% 
   ggplot(aes(y=med_est,x=`2016 Trump Vote Share`)) +
   geom_ribbon(aes(ymin=low_est,ymax=high_est),fill="blue",alpha=0.5) +
   geom_line(linetype=2,colour="white") +
@@ -1941,6 +2031,7 @@ We can also use estimates of cell phone mobility on COVID-19 to understand how p
 mob_effect <- rstan::extract(us_fit_scale,"mob_effect")[[1]]
 lock_effect <- rstan::extract(us_fit_scale,"lockdown_med")[[1]]
 direct_effect <- rstan::extract(us_fit_scale,"lockdown_effect")[[1]]
+lock_effect_fear <- rstan::extract(us_fit_scale,"lockdown_med_fear")[[1]]
 
     # all the covariates we are looking at
     
@@ -1950,8 +2041,9 @@ direct_effect <- rstan::extract(us_fit_scale,"lockdown_effect")[[1]]
     colnames(direct_effect) <- c(lock_covs,int_locks)
     
     dimnames(lock_effect)[[3]] <- c(lock_covs,int_locks)
+    colnames(lock_effect_fear) <- c(lock_covs,int_locks)
     
-    scale_days <- 
+    fear_id <- which(colnames(real_data$suppress)=="trendline_extremely_concerned")
     
     over_med <- lapply(1:ncol(covs_mob), function(m) {
       
@@ -1964,11 +2056,13 @@ direct_effect <- rstan::extract(us_fit_scale,"lockdown_effect")[[1]]
             
           de <- (direct_effect[,l] + direct_effect[,li]*d)
           ide <- (mob_effect[,m]*(lock_effect[,m,l] + lock_effect[,m,li]*d))
+          fear <- suppress_effect$estimate[suppress_effect$variable==fear_id] * (lock_effect_fear[,l] + lock_effect_fear[,li]*d)
+          ide_fear <- (mob_effect[,m]*(lock_effect_fear[,l] + lock_effect_fear[,li]*d)) * suppress_mob_effect$estimate[suppress_mob_effect$variable==fear_id & suppress_mob_effect$mobility==m]
 
-          tibble(direct_eff=rowMeans(de*p_infected1*p_infected2),
-                  indirect_eff=rowMeans(ide*p_infected1*p_infected2),
-                 total_eff=rowMeans((de + ide)*p_infected1*p_infected2),
-                 prop_med=rowMeans((ide / (de + ide))*p_infected1*p_infected2)) %>% 
+          tibble(direct_eff=state_means(de*p_infected1*p_infected2),
+                  indirect_eff=state_means((ide + ide_fear)*p_infected1*p_infected2),
+                 total_eff=state_means((de + ide + ide_fear + fear)*p_infected1*p_infected2),
+                 prop_med=state_means(((ide + ide_fear + fear) / (de + ide + ide_fear + fear))*p_infected1*p_infected2)) %>% 
             mutate(mobility=colnames(covs_mob)[m],
                    lockdown=l,
                    day=d*unique(combined$max_time))

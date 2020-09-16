@@ -1,12 +1,12 @@
 ---
-title: "Understanding Total Number of COVID-19 Infections in the United States"
-author: Robert Kubinec and Luiz Max Carvalho
+title: "Estimating the Total Number of SARS-CoV-2 Infections in the United States"
+author: "[<span style='color: white;'>CoronaNet Research Project</span>](https://www.coronanet-project.org/){target='_blank'}"
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: fill
-urlcolor: black
-linkcolor: black
+    urlcolor: black
+    linkcolor: black
 runtime: shiny
 ---
 
@@ -28,15 +28,26 @@ calc_sum_state <- readRDS("calc_sum_state.rds") %>%
                       paste0(state,":",formatC(low_est,big.mark=",",format = "f",digits=0)," - ",
                                                          formatC(high_est,big.mark=",",format = "f",digits=0)),NA),
          label_cases=ifelse(month_day==max(month_day),
-                      paste0(state,":",formatC(cum_sum_cases,big.mark=",",format = "f",digits=0)),NA))
+                      paste0(state,":",formatC(cum_sum_cases,big.mark=",",format = "f",digits=0)),NA),
+         label_pres=ifelse(month_day==max(month_day),
+                      paste0(state,":",formatC(low_est_pres,big.mark=",",format = "f",digits=0)," - ",
+                                                         formatC(high_est_pres,big.mark=",",format = "f",digits=0)),NA),
+         label_cases_pres=ifelse(month_day==max(month_day),
+                      paste0(state,":",formatC(present_cases,big.mark=",",format = "f",digits=0)),NA))
 
 percap <- readRDS("percap.rds") %>% 
   ungroup %>% 
-  mutate(label=ifelse(month_day==max(month_day),
+  mutate(cum_sum_cases=case_pr,
+         label=ifelse(month_day==max(month_day),
                       paste0(state,":",formatC(low_est,big.mark=",",format = "f",digits=3)," - ",
-                                                         formatC(high_est,big.mark=",",format = "f",digits=3)),NA),
+                                                         formatC(high_est,big.mark=",",format = "f",digits=3),"%"),NA),
          label_cases=ifelse(month_day==max(month_day),
-                      paste0(state,":",formatC(cum_sum_cases,big.mark=",",format = "f",digits=3)),NA))
+                      paste0(state,":",formatC(cum_sum_cases,big.mark=",",format = "f",digits=3),"%"),NA),
+         label_pres=ifelse(month_day==max(month_day),
+                      paste0(state,":",formatC(low_est_pres,big.mark=",",format = "f",digits=3)," - ",
+                                                         formatC(high_est_pres,big.mark=",",format = "f",digits=3),"%"),NA),
+         label_cases_pres=ifelse(month_day==max(month_day),
+                      paste0(state,":",formatC(present_cases,big.mark=",",format = "f",digits=3),"%"),NA))
 
 infl_data <- select(percap,inf_pr,state,month_day) %>% filter(!is.na(inf_pr))
 
@@ -47,27 +58,44 @@ cases_matrix <- readRDS("cases_matrix.rds")
 
 real_data <- readRDS("real_data.rds")
 
+state_id <- distinct(combined,state,state_pop) %>% 
+  ungroup %>% 
+  mutate(state_num=as.numeric(factor(state)))
+
 test_data <- readRDS("test_data.rds") %>% 
-  group_by(state) %>% 
-      summarize(med_est=quantile(estimate2*1000 - estimate1*1000,.5),
-            high_est=quantile(estimate2*1000 - estimate1*1000,.95),
-            low_est=quantile(estimate2*1000 - estimate1*1000,.05)) 
+  left_join(state_id,by="state_num") %>%
+  group_by(state) %>%
+    summarize(med_est=quantile(estimate/mean_est,.5),
+            high_est=quantile(estimate/mean_est,.95),
+            low_est=quantile(estimate/mean_est,.05))
 
 ```
 
-This dashboard shows estimates of the number of people presently infected in the United States with COVID-19. The estimates are available since January 1st for each state. The estimation strategy employs Bayesian inference based on the number of tests and cases in each state, and the relationship between the two. For more reference, we refer the reader to our working paper, ["A Retrospective Bayesian Model for Measuring Covariate Effects on Observed COVID-19 Test and Case Counts."](https://osf.io/preprints/socarxiv/jp4wk/) Unlike other models, such as epidemiological SEIR/SIR models, we do not aim to understand the full trajectory of the disease, but rather to adjust empirical data to gain an understanding of how many people are infected at a particular time. The model is useful for producing a much more accurate understanding of the state of COVID-19 infections, rather than try to forecast the disease trajectory. 
 
-<!-- The model is also useful for understanding the relationship between tests and infections--how far ahead or behind testing capacity is relative to the number of infeted people--and also the relationship between background factors, like partisanship, on the spread of the virus. The plots in this dashboard permit you to track different states in terms of their counts of infected individuals, and to explore whether states are ahead/behind of testing capacity per infected. Finally, we include estimates we run in the model calculating how much different state-level factors, such as social distancing policies, state wealth, public health preparedness, and vote share for President Trump track with infection rates. -->
+Estimating SARS-CoV-2 Infections
+==========================================
+
+This dashboard shows estimates of the number of people infected (presently and/or cumulative) in the United States with SARS-CoV-2, the virus that causes COVID-19. The red ribbon shows the likely range of estimates (5% - 95% uncertainty interval). The model's estimates are conservative compared to other models as it only uses reported data (confirmed COVID-19 cases and tests by day).  By default the plot shows the an estimate of the likely number of people infected in a state right now (assuming a median recovery time from COVID-19 of 19 days). Unselect "Show number presently infected" to see the cumulative number of infected.
+
+If you click on the tab labeled Estimated Testing Capacity, you can see an estimate for how many people a given state has been able to test for each person infected.
+
+The model used to produce these estimates is described in the following working paper: [Kubinec et al. "Partisanship and the Spread of COVID-19 in the United States." SocArchiv. 2020](https://osf.io/preprints/socarxiv/jp4wk)
+
+Blue dots indicate that a serology survey was performed in that state on that day by the Center for Disease Control (CDC). We use these surveys to inform our estimates of the trajectory of COVID-19.
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
 
 ```{r controls}
-selectizeInput("state", "Type in a state name to display present infected count", choices = unique(calc_sum_state$state), selected = "New York",multiple=TRUE)
-checkboxInput("percap","Show Infections Per Capita?",value = F)
-checkboxInput("actual","Show recorded cases on plot as well?")
+selectizeInput("state", "Type in a state name:", choices = unique(calc_sum_state$state), selected = "New York",multiple=TRUE)
+checkboxInput("percap","Show infections per capita?",value = F)
+checkboxInput("actual","Show confirmed cases on plot as well?")
+checkboxInput("present","Show number presently infected?",value=T)
 
 ```
 
-
-Column {data-width=650}
+Column {.tabset}
 -----------------------------------------------------------------------
 
 ### Estimated Number of People Infected by COVID-19
@@ -85,33 +113,62 @@ renderPlot({
     this_data <- calc_sum_state
   }
   
-  out_plot <- this_data %>% 
+  if(input$present) {
+    out_plot <- this_data %>% 
   filter(state %in% input$state) %>% 
-  ggplot(aes(y=med_est,x=month_day)) +
+    ggplot(aes(y=med_est_pres,x=month_day)) +
+      geom_ribbon(aes(ymin=low_est_pres,
+        ymax=high_est_pres,
+      group=state),alpha=0.5,fill="red",colour=NA) +
+        geom_text_repel(aes(x=month_day,y=med_est_pres,label=label_pres),
+                  size=3,fontface="bold",segment.colour = NA,direction="y")
+  } else {
+    out_plot <- this_data %>% 
+  filter(state %in% input$state) %>% 
+    ggplot(aes(y=med_est,x=month_day)) +
+      geom_ribbon(aes(ymin=low_est,
+        ymax=high_est,
+      group=state),alpha=0.5,fill="red",colour=NA) +
+        geom_text_repel(aes(x=month_day,y=med_est,label=label),
+                  size=3,fontface="bold",segment.colour = NA,direction="y")
+  }
+  out_plot <- out_plot +
   geom_line(aes(group=state),colour="black") +
-  geom_ribbon(aes(ymin=low_est,
-  ymax=high_est,
-  group=state),alpha=0.5,fill="red",colour=NA) +
   theme_minimal() +
   scale_fill_distiller(palette="Reds",direction=1) +
-  ylab("Number Presently Infected") +
   labs(caption="Lines are shaded with uncertainty of estimates (5% - 95% Interval).\nThese estimates are based on the assumption that as few as\n10% of cases may be reported.") +
-  geom_text_repel(aes(x=month_day,y=med_est,label=label),
-                  size=3,fontface="bold",segment.colour = NA) +
-  scale_y_continuous(labels=scales::comma) +
   xlab("Days Since Outbreak Start") + 
   guides(colour="none") +
   theme(panel.grid = element_blank(),
         legend.position = "top")
   
-  if(input$actual) {
+  if(input$actual && input$present) {
+    out_plot <- out_plot + geom_line(aes(y=present_cases,group=state)) +
+      geom_text_repel(aes(y=present_cases,label=label_cases_pres),
+                  size=3,fontface="bold",segment.colour = NA,direction="y") 
+  } else if(input$actual) {
     out_plot <- out_plot + geom_line(aes(y=cum_sum_cases,group=state)) +
       geom_text_repel(aes(y=cum_sum_cases,label=label_cases),
-                  size=3,fontface="bold",segment.colour = NA) 
-  }
+                  size=3,fontface="bold",segment.colour = NA,direction="y")
+  } 
   
   if(input$percap) {
-     out_plot <-  out_plot + geom_point(data=infl_data,aes(y=inf_pr),colour="blue",size=5)
+     out_plot <-  out_plot + geom_point(data=infl_data,aes(y=inf_pr),colour="blue",size=5) +
+       scale_y_continuous(labels=scales::percent)
+     if(input$present) {
+       out_plot <- out_plot + ylab("Proportion Infected at Present") 
+     } else {
+       out_plot <- out_plot + ylab("Cumulative Proportion Infected")
+     }
+  } else {
+    out_plot <- out_plot + ylab("Cumulative Number Infected")  +
+      scale_y_continuous(labels=scales::comma)
+    
+    if(input$present) {
+       out_plot <- out_plot + ylab("Number Infected at Present") 
+     } else {
+       out_plot <- out_plot + ylab("Cumulative Number Infected")
+     }
   }
   
   out_plot
@@ -119,10 +176,9 @@ renderPlot({
 
 ```
 
-Column {data-width=350}
------------------------------------------------------------------------
+### Estimated COVID-19 Testing Capacity {data-height=300}
 
-### Estimated COVID-19 Testing Capacity
+The plot below shows the average number of people tested for each person infected as of the last seven days of data.
 
 ```{r testcap}
 
@@ -136,16 +192,15 @@ test_data %>%
   coord_flip() +
   geom_hline(yintercept=.01) +
   xlab("") +
-  #scale_y_continuous(labels=scales::percent) +
-  # scale_y_continuous(breaks=c(.96,.98,1,1.02,1.04,1.06),
-  #                    labels = c("Ahead of\nCurve",".98","Keeping\nUp","1.02","1.04","Behind\nCurve")) +
-  # annotate("text",y=c(.96,1.05),x=c("Georgia","North Dakota"),label=c("Testing More\nThan Infection Growth","Testing Less\nThan Infection Growth"),size=3) +
-  # geom_hline(yintercept=1,linetype=2) +
-  labs(caption = stringr::str_wrap("Figure shows the average number of additional people tested in a given state for an additional 1 person out of a thousand who becomes infected. Estimate is an average and thus may not be accurate for the most recent time period.")) +
-  ylab("How Many Additional Tested For 1 Additional Resident Infected Per 1,000")
+  labs(caption = stringr::str_wrap("Figure shows the average number of additional people tested in a given state for each person who becomes infected. Estimate is a cumulative average of the last seven days of data.")) +
+  ylab("How Many People Are Tested for Each Infected Resident? (Average of Last Seven Days)")
   
 })
 ```
 
+Details of the Model 
+=======================================
 
+The estimation strategy employs Bayesian inference based on the number of tests and cases in each state, and the relationship between the two. For more reference, we refer the reader to our working paper, [Kubinec et al. "Partisanship and the Spread of COVID-19 in the United States."](https://osf.io/preprints/socarxiv/jp4wk) Unlike other models, such as epidemiological SEIR/SIR models, we do not aim to understand the full trajectory of the disease, but rather to adjust empirical data to gain an understanding of how many people are infected at a particular time. The model is useful for producing a much more accurate understanding of the state of COVID-19 infections, rather than try to forecast the disease trajectory. 
 
+The model is also useful for understanding the relationship between tests and infections--how far ahead or behind testing capacity is relative to the number of infeted people--and also the relationship between background factors, like partisanship, on the spread of the virus. The plots in this dashboard permit you to track different states in terms of their counts of infected individuals, and to explore whether states are ahead/behind of testing capacity per infected. Finally, we include estimates we run in the model calculating how much different state-level factors, such as social distancing policies, state wealth, public health preparedness, and vote share for President Trump track with infection rates.

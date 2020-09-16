@@ -9,3 +9,4 @@
 % Edge styles
 \tikzstyle{pointer}=[->]
 \tikzstyle{new edge style 1}=[-]
+\tikzstyle{dotted line}=[->, dashed=]

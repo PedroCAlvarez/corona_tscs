@@ -87,6 +87,10 @@ new_policy <- F
 
 new_cases <- F
 
+# whether to re-calculate new trump vote share interactions (takes a while, happens by default if new model estimated)
+
+calc_int <- F
+
 ```
 
 
@@ -1937,42 +1941,71 @@ What we can say is that this finding points to very strong associations between 
 
 ```{r trumpint,fig.asp=0.8,fig.cap="Marginal Effects of Increasing Within-State Trump Approval Rating Conditional on Trump Vote Share in 2016"}
 
-    over_vote_share <- parallel::mclapply(seq(min(just_data$trump),
-                                  max(just_data$trump),
-                                  length.out=100),
-                              function(p) {
-      print(p)
-      # get direct effect for poll day p
+# do a big grid
+# evaluate the total derivative of infections with respect to vote share and approval
+
+if(calc_int) {
+  
+  # warning: this will take a long time to run, though it is parallelizable & more cores will
+  # reduce the time required
+  
+  trump_grid <- expand.grid(seq(min(just_data$trump),
+                                  max(just_data$trump),length.out = 100),
+                             seq(min(just_data$trendline_approve),
+                                  max(just_data$trendline_approve),length.out = 100))
+
+    over_vote_share <- parallel::mclapply(1:nrow(trump_grid),
+                              function(i) {
       
-      de <- suppress_effect$estimate[suppress_effect$variable==15] +
-        suppress_effect$estimate[suppress_effect$variable==9] * p 
+      # trump vote share
+                                
+      p <- trump_grid$Var1[i]
+      
+      # trump approval rating
+      
+      a <- trump_grid$Var2[i]
+                                
+    
+      # get direct effect for poll day p
+      # with respect to approval rating and vote share
+      
+      de <- (suppress_effect$estimate[suppress_effect$variable==15] +
+        suppress_effect$estimate[suppress_effect$variable==9] * p) + 
+        (suppress_effect$estimate[suppress_effect$variable==1] +
+        suppress_effect$estimate[suppress_effect$variable==9] * a) 
       
       # loop over mobility
       
       mob_mats <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
         
         ide <- (suppress_mob_effect$estimate[suppress_mob_effect$variable==15 & suppress_mob_effect$mobility==m] +
-                  suppress_mob_effect$estimate[suppress_mob_effect$variable==9 & suppress_mob_effect$mobility==m] * p) * mob_effect[,m]
+                  suppress_mob_effect$estimate[suppress_mob_effect$variable==9 & suppress_mob_effect$mobility==m] * p +
+                  suppress_mob_effect$estimate[suppress_mob_effect$variable==1 & suppress_mob_effect$mobility==m] +
+                  suppress_mob_effect$estimate[suppress_mob_effect$variable==9 & suppress_mob_effect$mobility==m] * a) * mob_effect[,m]
       
     }) 
       
       fear_id <- which(colnames(real_data$suppress)=="trendline_extremely_concerned")
       
       fear <- (suppress_fear_effect$estimate[suppress_fear_effect$variable==15] +
-               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*p)  * suppress_effect$estimate[suppress_effect$variable==fear_id]
+               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*p +
+                 suppress_fear_effect$estimate[suppress_fear_effect$variable==1] +
+               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*a)  * suppress_effect$estimate[suppress_effect$variable==fear_id]
       
       # fear -> mobility pathway
       
       mob_mats_fear <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
 
         ide <- suppress_mob_effect$estimate[suppress_mob_effect$variable==fear_id & suppress_mob_effect$mobility==m] * mob_effect[,m] * (suppress_fear_effect$estimate[suppress_fear_effect$variable==15] +
-               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*p)
+               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*p +
+                 suppress_fear_effect$estimate[suppress_fear_effect$variable==1] +
+               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*a)
       
     })
       
       tibble(`Direct Effect`=state_means(de*t(p_infected1)*t(p_infected2)),
              `Total Effect` = state_means((de + fear + Reduce('+', mob_mats) +  Reduce('+', mob_mats_fear))*t(p_infected1)*t(p_infected2)),
-             `Indirect\nMobility` = state_means((Reduce('+', mob_mats) + Reduce('+', mob_mats_fear) + fear)*t(p_infected1)*t(p_infected2)),
+             `Indirect\nMobility` = state_means((Reduce('+', mob_mats) + Reduce('+', mob_mats_fear))*t(p_infected1)*t(p_infected2)),
              `Indirect\nCOVID Poll`= state_means((Reduce('+', mob_mats_fear) + fear)*t(p_infected1)*t(p_infected2)),
              `Retail Indirect`= state_means((mob_mats[[1]] + mob_mats_fear[[1]])*t(p_infected1)*t(p_infected2)),
              `Grocery Indirect`= state_means((mob_mats[[2]] + mob_mats_fear[[2]])*t(p_infected1)*t(p_infected2)),
@@ -1981,52 +2014,46 @@ What we can say is that this finding points to very strong associations between 
              `Workplaces Indirect`= state_means((mob_mats[[5]] + mob_mats_fear[[5]])*t(p_infected1)*t(p_infected2)),
              `Residential Indirect`= state_means((mob_mats[[6]] + mob_mats_fear[[6]])*t(p_infected1)*t(p_infected2)),
              `Fear Direct`= state_means(fear*t(p_infected1)*t(p_infected2)),
-             `2016 Trump Vote Share`=mean(combined$trump) + p*sd(combined$trump))
+             `2016 Trump Vote Share`=mean(combined$trump) + p*sd(combined$trump),
+             `Within-State Approval Rating`=mean(combined$trendline_approve) + a*sd(combined$trendline_approve))
     
       },mc.cores=8) %>% bind_rows
+    
+    saveRDS(over_vote_share,"over_vote_share.rds")
+} else {
+  over_vote_share <- readRDS("over_vote_share.rds")
+}
 
 trump1 <- over_vote_share %>% 
-  gather(key="Type",value="estimate",-`2016 Trump Vote Share`) %>% 
-  group_by(Type,`2016 Trump Vote Share`) %>% 
-  summarize(med_est=median(estimate),
-         high_est=quantile(estimate,.95),
-         low_est=quantile(estimate,.05)) %>% 
-  filter(Type %in% c("Indirect\nMobility",
-                     "Indirect\nCOVID Poll",
-                     "Direct Effect","Total Effect")) %>% 
-  ggplot(aes(y=med_est,x=`2016 Trump Vote Share`)) +
-  geom_ribbon(aes(ymin=low_est,ymax=high_est),fill="blue",alpha=0.5) +
-  geom_line(linetype=2,colour="white") +
-  geom_hline(yintercept = 0,linetype=3) +
-    scale_x_continuous(labels=scales::percent) +
-    scale_y_continuous(labels=scales::percent) +
-  facet_wrap(~Type) +
-    ylab("Cumulative Infected") +
-  xlab("") +
-  theme(panel.background = element_blank(),
-        panel.grid=element_blank(),
-        strip.background = element_blank())
+    gather(key="Type",value="estimate",-`2016 Trump Vote Share`,
+           -`Within-State Approval Rating`) %>% 
+    group_by(Type,`2016 Trump Vote Share`,`Within-State Approval Rating`) %>% 
+    summarize(med_est=median(estimate),
+              high_est=quantile(estimate,.95),
+              low_est=quantile(estimate,.05)) %>% 
+    filter(Type %in% c("Indirect\nMobility",
+                       "Indirect\nCOVID Poll")) %>% 
+    ggplot(aes(y=`Within-State Approval Rating`,x=`2016 Trump Vote Share`)) +
+    geom_tile(aes(fill=med_est),width=.5) +
+    facet_wrap(~Type) + scale_fill_viridis_c() + 
+  theme(panel.background = element_blank()) +
+  scale_x_continuous(labels=scales::percent) + scale_y_continuous(labels=scales::percent)
 
 trump2 <- over_vote_share %>% 
-  gather(key="Type",value="estimate",-`2016 Trump Vote Share`) %>% 
-  group_by(Type,`2016 Trump Vote Share`) %>% 
-  summarize(med_est=median(estimate),
-         high_est=quantile(estimate,.95),
-         low_est=quantile(estimate,.05)) %>% 
-  filter(!(Type %in% c("Indirect\nMobility",
-                     "Indirect\nCOVID Poll","Direct Effect","Total Effect"))) %>% 
-  ggplot(aes(y=med_est,x=`2016 Trump Vote Share`)) +
-  geom_ribbon(aes(ymin=low_est,ymax=high_est),fill="blue",alpha=0.5) +
-  geom_line(linetype=2,colour="white") +
-    scale_x_continuous(labels=scales::percent) +
-  facet_wrap(~Type) +
-  scale_y_continuous(labels=scales::percent) +
-    geom_hline(yintercept = 0,linetype=3) +
-  theme(panel.background = element_blank(),
-        panel.grid=element_blank(),
-        strip.background = element_blank()) +
-  ylab("Cumulative Infected") +
-  xlab("Trump Vote Share")
+    gather(key="Type",value="estimate",-`2016 Trump Vote Share`,
+           -`Within-State Approval Rating`) %>% 
+    group_by(Type,`2016 Trump Vote Share`,`Within-State Approval Rating`) %>% 
+    summarize(med_est=median(estimate),
+              high_est=quantile(estimate,.95),
+              low_est=quantile(estimate,.05)) %>% 
+    filter(Type %in% c("Direct Effect",
+                       "Total Effect")) %>% 
+    ggplot(aes(y=`Within-State Approval Rating`,x=`2016 Trump Vote Share`)) +
+    geom_tile(aes(fill=med_est),width=.5) +
+    facet_wrap(~Type) + scale_fill_viridis_c() + 
+  theme(panel.background = element_blank()) +
+  scale_x_continuous(labels=scales::percent) + scale_y_continuous(labels=scales::percent)
+
 
 trump1 / trump2 +
   plot_annotation(caption=str_wrap("Plots show marginal effect of within-state increasing Trump approval rating conditional on a state's vote share for Trump in 2016.",width=100),tag_levels = "A")
@@ -2197,10 +2224,6 @@ no_med + med  +
        plot_annotation(tag_levels = "A",caption="Results from mediation analysis using MCMC with Stan.\nPanel A shows indirect (via mobility data) and direct effects for business policy restrictions.\nPanel B shows direct and indirect (via mobility data) effects for stay-at-home policy restrictions.") & theme(strip.placement = NULL,legend.position = "top")
 
 ggsave("direct_indirect.png",height=8)
-
-# prop_med
-# 
-# ggsave("proportion_mediated.png",width=8,height=6)
 
 ```
 

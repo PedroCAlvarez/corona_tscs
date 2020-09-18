@@ -359,7 +359,7 @@ model {
   
   sigma_poly ~ normal(0,5);
   mu_poly ~ normal(0,10);
-  mu_test_raw ~ normal(0,20);
+  mu_test_raw ~ normal(0,200);
   mu_test_raw2 ~ normal(-5,2);
   world_infect ~ normal(0,3);
   lockdown_effect_raw ~ normal(0,5);
@@ -377,8 +377,8 @@ model {
   mob_alpha_const ~ normal(0,5);
   pcr_spec ~ normal(0,10);
   
-  finding ~ normal(30,10);
-  sigma_test_raw ~ normal(0,5);
+  finding ~ normal(100,50);
+  sigma_test_raw ~ exponential(.1);
   sigma_test_raw2 ~ normal(0,.1);
   sigma_fear ~ exponential(.1);
   fear_const ~ normal(0,5);

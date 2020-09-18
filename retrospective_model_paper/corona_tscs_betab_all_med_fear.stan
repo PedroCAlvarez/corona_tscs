@@ -370,8 +370,8 @@ model {
   mob_effect_raw ~ normal(0,5);
   suppress_effect_raw ~ normal(0,5);
   test_max_par ~ normal(0,5);
-  test_baseline ~ normal(0,5);
-  test_lin_counter ~ normal(0,5);
+  test_baseline ~ normal(0,100);
+  test_lin_counter ~ normal(0,20);
   test_lin_counter2 ~ normal(0,5);
   
   mob_alpha_const ~ normal(0,5);

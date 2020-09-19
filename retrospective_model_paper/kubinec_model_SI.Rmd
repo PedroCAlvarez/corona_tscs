@@ -1,7 +1,6 @@
 ---
 title: "Supplementary Information for A Retrospective Bayesian Model for Measuring Covariate Effects on Observed COVID-19 Test and Case Counts"
-author: "Robert Kubinec & Luiz Max Carvalho"
-date: "April 10th, 2020"
+date: "Septmeber 19, 2020"
 output: 
   bookdown::pdf_document2:
     includes: 
@@ -39,119 +38,137 @@ run_model <- F
 
 ```
 
-# Materials and Methods
+# Testing and COVID-19
 
-In this document we put forward a model for the rate of infected people $I_{ct} \in (0,1)$ in a given state/region $c$ given the the number of cases $a_{ct}$ and the number of tests $q_{ct}$ for all time periods $t \in T$.
-The outcome is here defined as the tests and cases reported on a given day rather than the cumulative total for ease of modeling purposes (i.e., the lagged difference of the cumulative total).
-We assume that $I_{ct}$ is an unobserved Beta-distributed variable with a 3-order polynomial time trend of the number of post-outbreak time periods $T_O < T$, where an outbreak begins at the first reported case in a given area.
-By using a single time function, the model assumes that the coronavirus follows a similar pattern of infection across states, as appears to be the case (i.e., all states are infected with the same virus).
+In addition to the estimation of the cumulative count of infected individuals, the model provides further useful information by parameterizing the relationship between the unobserved infection rate and the number of tests conducted in a given state. These individual parameters are shown in Figure \@ref(fig:tpi). The scale of the y axis shows the number of people that a state was able to test relative to each person infected. The plot shows that some states have been able to test far more people than have been infected (New York, Rhode Island), while other states like Texas, Arizona and Pennsylvania have tested barely twice as many as those who have been infected. The fact that new outbreaks have been seen in Texas and Arizona suggests that this shortfall in testing likely disguised early outbreaks that could have been detected otherwise.
 
-The unobserved infection rate $I_{ct}$ is a function of the following parameters:
 
-\begin{align}
-\operatorname{Pr}(I_{ct} \mid T=t) \sim \operatorname{Beta}(&\alpha_1 + \beta_{O1}\sum_{c=1}^{C} \textbf{1}(a_{ct'}>0) \forall t'<t + \beta_{S1}X_{c} + \\
-                        &\beta_{I1}t_o + \beta_{I2}t_o^2 + \beta_{I3}t_o^3 + \beta_{S2}X_{c}, \phi),
-  (\#eq:binom)
-\end{align}
+```{r tpi,fig.asp=.8,fig.cap="Measuring States' Testing Rates Relative to Infection Rates",echo=F,message=F,warning=F}
 
-where $g(\cdot)$ is the inverse logit function, $\beta_{O1}\sum_{c=1}^{C} \textbf{1}(a_{ct-1}>0) \forall t'<t$ is the sum of states with at least one case of infection in the world at any previous time point, which we term the world infection rate, and the three $\beta_{Ii}$ are polynomial coefficients of the number of post-outbreak time periods $t_o$.
+us_fit_scale <- readRDS("../data/us_fit_scale.rds")
+combined <- readRDS("combined.rds")
+real_data <- readRDS("real_data.rds")
+combined <- mutate(ungroup(combined),key=1:n()) %>% 
+  group_by(state) %>% 
+  arrange(state,month_day) %>% 
+  mutate(cum_sum_cases=cases,
+         recovered=coalesce(recovered,0),
+         deaths=coalesce(deaths,0))
+         # cum_sum_cases = cum_sum_cas
 
-The world infection parameter measures the spread of the virus due to travel across state borders, and as such will increase rapidly as more states are infected.
-By contrast, the polynomial time trends represent possible within-state transmission of the virus, which can cause exponentially growing case counts compared to the linear sum of infected states parameter.
-Finally, the parameter $\phi$ is a dispersion parameter governing how precise the infection rate estimate is. 
+prop_infected_mat <- t(as.matrix(us_fit_scale,"prop_infect_out"))
 
-Given these two primary ways that the infection rate can increase, there are two ways that possible suppression measures targeted at the outbreak can enter the model.
-The first is a constant factor, $\beta_{S1}$, which is a parameter indicating the strength of state-level suppression measures $X_c$.
-This constant parameter is meant to capture the ability of states or regions to stop the spread of transmission due to foreign travelers arriving in the state/region, which occurs at a roughly constant level over time. 
+prop_infected <- as_tibble(prop_infected_mat) %>% 
+  mutate(key=1:n()) %>% 
+  gather(key="iter",value="estimate",-key)
 
-The second way suppression measures enter the model is through $\beta_{S2}X_c$, which can increase over time as the virus increases. This parameter reflects possible measures which will grow more effective as domestic transmission of the virus increases (i.e. as the polynomial time trend takes off).
-As such, it is assumed that any deviation from the common domestic transmission pattern is due to these time-varying suppression measures.
+all_est_state <- select(combined,deaths,recovered,month_day,state,key,cum_sum_cases,state_pop,Difference,tests3,test_max) %>% 
+  left_join(prop_infected,by="key")
 
-Once an outbreak has started in state $c$, which is indicated by a positive case count in time $t-1$, a time counter $t_o=1$ starts for that state and increases by 1 for each following time point until $T$.
+# merge in deaths/recovered
 
-Given this specification of the infection rate process, we can then move to the generation of the observed data, tests $q_{ct}$ and cases $a_{ct}$.
-The infection rate is assumed to influence both of these quantities.
-First, an increasing number of infections is associated with more tests as states try to identify who may have the virus. Furthermore, a rising infection rate is associated with a higher ratio of positive results (reported cases) conditional on the number of tests.
-We model both of these observed indicators, tests and cases, jointly to simultaneously adjust for the infection rate's influence on both factors.
+us_case_count <- group_by(combined,month_day) %>% 
+  summarize(all_cum_sum=sum(cum_sum_cases),
+            all_rec=sum(recovered),
+            all_death=sum(deaths))
 
-To model the number of tests, we assume that each state has an unobserved level of testing parameter, $\beta_{cq}>0$, indicating how strongly each state is willing and able to perform tests as a factor of the unobserved infection rate.
-The number of observed tests $q_{ct}$ for a given time point $t$ and state $c$ conditional on  the states' population, $c_{p}$, has a binomial distribution: 
+all_est_state <- left_join(all_est_state,us_case_count,by="month_day")
 
-\begin{equation}
-q_{ct} \sim \operatorname{Binomial}(c_{p}, g(\alpha_2 + \beta_{cq}I_{ct})).
-(\#eq:binom2)
-\end{equation}
+# convert to marginal changes
 
-The parameter $\beta_{cq}$ serves to scale the infection rate $I_{ct}$ so that an increasing infection rate has heterogeneous effects on the number of tests by state.
-The intercept $\alpha_2$ indicates how many tests would be performed in a state with an infection rate of zero.
-It is assumed that this number is quite low, though not necessarily zero. 
+this_infect1 <- lapply(seq(max(combined$month_day) - days(7), max(combined$month_day),by=1),
+                    function(d) {
+                      
+                      filter(ungroup(all_est_state),
+                       month_day==d) %>% 
+  select(state,estimate,iter) %>% 
+  group_by(state) %>% 
+  mutate(estimate=plogis(estimate)) %>% 
+  spread(key="state",value="estimate") %>% 
+  ungroup %>% 
+  select(-iter) %>% 
+  as.matrix
+       })
 
-Given the parameter $\beta_{cq}$, a state could test almost no one or test far more than are actually infected depending on their willingness to impose tests.
-However, the number of tests is increasing in $I_{ct}$ conditional on a state's willingness to test people.
-That is, regardless of how much a state wants to test people, as the outbreak grows the number of tests will increase though at very different rates.^[For a very compelling visualiation of this process with empirical data from the COVID-19 pandemic, we refer the reader to this website: https://ourworldindata.org/grapher/covid-19-tests-cases-scatter-with-comparisons.]
+this_test_max <- ungroup(combined) %>% 
+  select(state,month_day,test_max) %>% 
+  filter(month_day==max(month_day))
 
-Given the number of observed tests $q_{ct}$, we can then generate the number of observed cases $a_{ct}$ as a binomial random variable conditional on the number of tests $q_{ct}$:
+this_time <- max(combined$lin_counter)
 
-\begin{equation}
-a_{ct} \sim \operatorname{Binomial}(q_{ct}, g(\alpha_3 + \beta_a I_{ct})),
-(\#eq:binom3)
-\end{equation}
-where $g(\cdot)$ is again the inverse logit function, $\alpha_3$ is an intercept that indicates how many cases would test positive with an infection rate of zero (equal to the false positive rate of the test), and $\beta_a>0$ is a parameter that determines how hard it is to find the infected people and test them as opposed to people who are not actually infected.
-The multiplication of this parameter and the infection rate determines the observed number of cases $a_{ct}$ as a proportion of the number of observed tests $q_{ct}$. 
+test_lin <- as.matrix(us_fit_scale,"test_lin_counter")
+test_lin2 <- as.matrix(us_fit_scale,"test_lin_counter2")
+test_base <- as.matrix(us_fit_scale,"test_baseline")
 
-To summarize the model, infection rates determine how many tests a state is likely to undertake and also the number of positive tests they receive conditional on a certain number of tests.
-This simultaneous adjustment helps takes care of mis-interpreting the observed data by not taking into account varying testing rates, which is likely why some policy makers argue that the epidemiological models are wrong.
+alpha_test <- as.data.frame(us_fit_scale,pars="alpha_test")
 
-Because sampling from a model with a hierarchical Beta parameter can be difficult, we can simplify the final likelihood by combining the beta distribution and the binomial counts into a beta-binomial model for tests:
+test_max_par <- as.data.frame(us_fit_scale,"test_max_par")
 
-\begin{equation}
-q_{ct} \sim \operatorname{Beta-Binomial}(c_p, g(\alpha_2 + \beta_qI_{ct}), \phi_q),
-(\#eq:binom4)
-\end{equation}
+lin_step <- real_data$lin_counter[2,1] - real_data$lin_counter[1,1]
 
-and cases:
+country_test <- as.matrix(us_fit_scale,"country_test_raw")
+mu_test <- as.matrix(us_fit_scale,"mu_test_raw")
+sigma_test <- as.matrix(us_fit_scale,"sigma_test_raw")
 
-\begin{equation}
-a_{ct} \sim \operatorname{Beta-Binomial}(q_{ct}, g(\alpha_3 + \beta_a I_{ct}), \phi_a).
-(\#eq:binom5)
-\end{equation}
+country_nonc <- mu_test[,1] + country_test * sigma_test[,1]
 
-For computational reasons, the infection rates $I_{ct}$ are put in to the beta-binomial model on the logit scale instead of transforming them to (0,1), but they can be transformed to proportions post-estimation with the inverse logit function.
+# loop over infections
+# loop over time
 
-## Identification
+over_days <- lapply(seq(max(combined$month_day) - days(7), max(combined$month_day),by=1),
+                    function(d) {
+                      
+    over_states <- lapply(1:real_data$num_country, function(s) {
+      
+      lin_val <- unique(combined$lin_counter[combined$month_day==d])
+      counter <- which(seq(max(combined$month_day) - days(7), max(combined$month_day),by=1)==d)
+      
+     tibble(estimate=plogis(alpha_test$alpha_test + country_nonc[,s] * this_infect1[[counter]][,s]*lin_val +
+                            test_base * this_infect1[[counter]][,s] + test_lin*lin_val),
+         state_num=s,
+         mean_est=mean(this_infect1[[counter]][,s]),
+         month_day=d)
+    }) %>% bind_rows
+                      
+}) %>% bind_rows
 
-This model contains an unobserved latent process $I_{ct}$, and as such there are further constraints necessary in order to have a unique scale and rotation of the latent variable.
-The most important restrictions are positivity constraints on the parameters $\beta_a$ and $\beta_q$ that govern the relationship between the infection rate and test and case counts.
-It is assumed that infection rates will increase both the number of tests and the number of cases relative to the number of tests, though at necessarily different rates.
 
-To add further indentification, it would be possible to fix or put an informative prior on $\alpha_3$ as the intercept necessarily equals the false positive rate of a COVID-19 test.
-The actual false positive rate of the tests being used for the virus are as yet unknown.^[For a discussion, see https://www.realclearpolitics.com/articles/2020/03/18/the_perils_of_mass_coronavirus_testing_142693.html.] For the purposes of this simulation, we will allow $\alpha_3$ to float as it will not affect identification of the sign of the covariates.
 
-As we will show, no other identification restrictions are necessary to estimate the model beyond weakly informative priors assigned to parameters.
-These are:
-\begin{align}
-\beta_a &\sim \operatorname{Exponential}(.1),\\
-\beta_{qc} &\sim \operatorname{Exponential}(\sigma_q),\\
-\sigma_q &\sim \operatorname{Exponential}(.1),\\
-\beta_{Si} &\sim \operatorname{Normal}(0, 2),\\
-\beta_{Ii} &\sim \operatorname{Normal}(0, 5),\\
-\alpha_1 &\sim \operatorname{Normal} (0,10),\\
-\alpha_2 &\sim \operatorname{Normal}(0,10),
-(\#eq:binom6)
-\end{align}
-where the normal distribution is parametrized in terms of mean and standard deviation.
 
-The one prior to note is that a hierarchical regularizing prior is put on the varying testing adjustment parameters $\beta_{qc}$ for regularization purposes due to the limited data available to inform the parameter.
+saveRDS(over_days,"test_data.rds")
 
-Other than these weakly informative priors, the model is identified, as we show in the next section.
-However, it is important to emphasize that there is no information in the model that identifies the *true* number of infected people. Rather, the infection rate is a latent process, and as such it is not known exactly what scale to assign to it without further information. However, both the relative growth in infection rates are identified, along with the effect of suppression measures, so *the model is useful without being fully identified*.
-Furthermore, by incorporating insights from SIR/SEIR models we can also identify the latent scale with reasonable informative priors, as we show in the data analysis section.
+state_id <- distinct(combined,state,state_pop) %>% 
+  ungroup %>% 
+  mutate(state_num=as.numeric(factor(state)))
 
-## Simulation
+over_days %>%
+  left_join(state_id,by="state_num") %>%
+  group_by(state) %>%
+    summarize(med_est=quantile(estimate/mean_est,.5),
+            high_est=quantile(estimate/mean_est,.95),
+            low_est=quantile(estimate/mean_est,.05)) %>% 
+  ggplot(aes(y=med_est,x=reorder(state,med_est))) +
+  geom_pointrange(aes(ymin=low_est,ymax=high_est)) +
+  theme_minimal() +
+  theme(panel.grid = element_blank(),axis.text=element_text(size = 7)) +
+  coord_flip() +
+  geom_hline(yintercept=.01) +
+  xlab("") +
+  labs(caption = stringr::str_wrap("Figure shows the average number of additional people tested in a given state for each person who becomes infected. Estimate is a cumulative average of the last seven days of data.")) +
+  ylab("Total Tested for Each Infected Resident (Cumulative Average)")
 
-Because this model is fully generative, we can simulate it using Monte Carlo methods.
-The simulation is very important as it is the only way to demonstrate that the model is globally identified and can in fact capture unobserved parameters like suppression effects and relative infection rates.
-The following R code generates data from the model and plots the resulted unobserved infection rate and observed values for tests and cases:
+ggsave("testing.png",height=5,width=8)
+
+```
+
+We would note that this information is also helpful to policy makers and others trying to make sense of observed case counts given the limitation in testing thus far. Our estimates help take into account these known biases and adjust them based on differences between states and within states in terms of disease trajectories. We believe this model can be used to help understand disease trends and factors associated with it even in the relatively data-poor environment many countries find themselves in. 
+
+# Simulation
+
+Because our model is fully generative, we can simulate it using Monte Carlo methods. The simulation presented here is a simplification of the model presented in the main paper for clarity of exposition. We do not have varying polynomial time trends but rather a single global time trend, and we do not implement the cumulative sum transformation on the latent vector. 
+Despite these simplifications, the simulation is very important as it is the only way to demonstrate that the model is globally identified and can in fact capture unobserved parameters like suppression effects and relative infection rates. We also are able to show how the bias in only using observed cases and tests can affect the estimates of parameters.
+
+The following R code generates data from the model and plots the resulted unobserved infection rate and observed values for tests and cases along with an exogenous suppression covariate:
 
 ```{r onset,fig.width=7,fig.height=6,fig.cap="Simulation of Observed Tests and Cases Given Unobserved Infectious Process"}
 
@@ -585,6 +602,7 @@ curve(f_z(x, a, b), min(`Log Difference`), max(`Log Difference`), col = 2, add =
 curve(dnorm(x, 0, sqrt(2*get_Y_var(a, b))), min(`Log Difference`), max(`Log Difference`), col = 3, add = TRUE)
 abline(v = c(log(a)-log(b), log(b)-log(a)), lwd = 2, lty = 2)
 ```
+
 If one desires to choose different parameters $a$ and $b > a$ for the distribution of $\text{log} q_{ct}$ and $\text{log} I_{ct}$, one may either (i) use the code above (`get_Y_var`) to obtain an approximating Gaussian -- with variance given by `2*get_Y_var(a, b)` -- or (ii) use the exact expression for the log of the ratio of two i.i.d. uniform random variables (`f_z`).
 Here, we will employ the standard Gaussian as it is good and tractable approximation of the exact distribution.
 
@@ -603,70 +621,5 @@ We also add a log Jacobian adjustment to the posterior density to reflect the fa
 \end{equation}
 
 The Jacobian adjustment is the derivative of the non-linear functions with respect to the underlying parameters, which in this case are the natural log and the inverse logit function.
-
-# Comparison to Observational Model
-
-```{r naivemodel,include=F}
-
-# calculate the same info but only with observed data
-
-if(run_model) {
-  obs_model <- stan_glm(cbind(combined$Difference,floor(combined$state_pop/100) - combined$Difference) ~ poly(outbreak_time,3) +
-                     emer_outbreak +
-                        `Cardiovascular Deaths` +
-                        `Air Pollution` +
-                        `Dedicated Health Care Provider` +
-                        `Smoking` +
-                        `Population under 18 years` +
-                     prop_foreign +
-                        `Public Health Funding` +
-                        gdp +
-                        trump +
-                       retail +
-                       grocery +
-                       parks +
-                       transit +
-                       workplaces +
-                       residential +
-                     world_infect +
-                       lockdown*lockdown_outbreak,
-                      data=combined,
-                 QR=TRUE,
-                      family="binomial",
-                 chains=1,cores=1)
-
-saveRDS(obs_model,"../data/obs_model.rds")
-} else {
-  obs_model <- readRDS("../data/obs_model.rds")
-}
-
-
-
-out_data <- mcmc_intervals_data(obs_model,regex_pars=":") %>%
-  filter(!grepl(x=parameter,pattern="I"))
-
-```
-
-
-```{r comptests,fig.cap="Comparison of GDP Per Capita and COVID-19 Tests per 10,000 Residents by State"}
-
-check_tests <- group_by(combined,state,`Public Health Funding`) %>% summarize(mean_tests=(mean(tests,na.rm=T)/state_pop[1])*10000) %>% 
-  filter(state!="District of Columbia")
-
-check_tests %>% 
-  ggplot(aes(y=`Public Health Funding`,x=mean_tests)) +
-    stat_smooth(method="lm",alpha=0.2) +
-  geom_text_repel(aes(label=state),alpha=0.8,segment.size=0) +
-  theme_minimal() +
-  labs("Plot shows some states like New York and Massachusetts have high average income and also\nvery high testing rates.") +
-  theme(panel.grid = element_blank()) +
-  ylab("Public Health Funding") +
-  xlab("Tests per 10,000 state residents")
-
-ggsave("gdp_tests.png")
-
-
-```
-
 
 # References

@@ -1,0 +1,42 @@
+---
+title: "Fear, Partisanship and the Spread of COVID-19 in the United States"
+author: 
+  - Robert Kubinec:
+      email: rmk7@nyu.edu
+      institute: nyuad
+      correspondence: true
+  - Luiz Max Carvalho:
+      institute: gvf
+  -  Cindy Cheng:
+      institute: tum
+  - Joan Barceló:
+      institute: nyuad
+  - Luca Messerschmidt:
+      institute: tum
+  - Derek Duba:
+      institute: arizona
+  - Matthew Sean Cottrell:
+      institute: ucr
+institute:
+  - gvf: School of Applied Mathematics, Getúlio Vargas Foundation
+  - tum: Hochschule für Politik at the Technical University of Munich (TUM) and the TUM School of Governance, Munich, Germany
+  - nyuad: Social Science Division, New York University Abu Dhabi, Abu Dhabi, United Arab Emirates
+  - yale: Department of Political Science, University of Southern California
+  - arizona: School of Politics and Global Studies, Arizona State University
+  - ucr: University of California Riverside
+date: "September 19, 2020"
+toc: false
+output: 
+  bookdown::pdf_document2:
+    keep_tex: true
+    includes:
+      in_header:
+          preamble.tex
+    pandoc_args:
+      - '--lua-filter=scholarly-metadata.lua'
+      - '--lua-filter=author-info-blocks.lua'
+  #bookdown::word_document2
+bibliography: BibTexDatabase.bib
+abstract: "In this paper we use a Bayesian latent variable model to identify the effect of sociopolitical covariates on the historical COVID-19 infection rate among the 50 states. The model is calibrated using COVID-19 serology surveys from the Center for Disease Control. The model is able to show important associations between cellphone mobility and daily polls of concern over COVID-19 with the spread of the epidemic. We use mediation analysis to show how other covariates hypothesized to affect disease spread, including 2016 Trump vote share, public health spending, smoking rates, per capita income and concern over the state of the economy predict COVID-19 spread. We are able to show stark associations between higher Trump approval and fewer COVID-19 infections, but these effects are not mediated by mobility or fear of COVID-19. Rather, the association between partisanship for President Trump and a more limited epidemic persists despite, rather than because of, recommended social distancing measures, signifying that residents of Republican-leaning states likely inferred that they did not need to adopt strategies of left-leaning states to protect themselves from COVID-19.^[To reproduce the model and to access the underlying Stan code, please see our [Github page](https://github.com/saudiwin/corona_tscs). This paper is part of the [CoronaNet project](https://lumesserschmidt.github.io/CoronaNet/) collecting data on government responses to the COVID-19 pandemic. For helpful comments we thank participants of the 2020 Polnet/Politics and Computational Social Science Conference. We acknowledge funding from New York University Abu Dhabi and the Technical University of Munich. We thank Tesea Conte, Muhannad AlRamlawi, Shiva Teerdhala, and Luke Burkholder for invaluable research assistance in evaluating state-level COVID-19 policies.]"
+---
+

@@ -50,17 +50,17 @@ corrected after initial data collection, it will read corrected in the
 `entry_type` field (the original incorrect data has already been
 replaced with the corrected data).
 
-1.  **`data/CoronaNet/coronanet_release.csv`** This file contains
-    variables from the CoronaNet government response project,
-    representing national and sub-national policy event data from more
-    than 140 countries since January 1st, 2020. The data include source
-    links, descriptions, targets (i.e. other countries), the type and
-    level of enforcement, and a comprehensive set of policy types. For
-    more detail on this data, you can see our [codebook
+1.  **`data/CoronaNet/data_bulk/coronanet_release[.rds/csv.gz]`** These
+    files contain variables from the CoronaNet government response
+    project, representing national and sub-national policy event data
+    from more than 140 countries since January 1st, 2020. The data
+    include source links, descriptions, targets (i.e. other countries),
+    the type and level of enforcement, and a comprehensive set of policy
+    types. For more detail on this data, you can see our [codebook
     here](https://docs.google.com/document/d/1zvNMpwj0onFvUZ_gLl4RRjqS-clbHv3TIX6EOHofsME).
 
-2.  **`data/CoronaNet/coronanet_release_allvars.csv`** This file
-    contains the government response information from
+2.  **`data/CoronaNet/data_bulk/coronanet_release_allvars[.rds/csv.gz]`**
+    These files contains the government response information from
     `coronanet_release.csv` along with the following datasets:
     
     1.  Tests from the CoronaNet testing database (see
@@ -71,6 +71,14 @@ replaced with the corrected data).
         human rights indices, power-sharing indices, and press freedom
         indices from the Niehaus World Economics and Politics Dataverse
         (<https://niehaus.princeton.edu/news/world-economics-and-politics-dataverse>)
+
+3.  **`data/CoronaNet/data_country/coronanet_release_[country].csv`**
+    For each country in `coronanet_release`, we have generated a
+    separate data file in a .csv format.
+
+4.  **`data/CoronaNet/data_country/coronanet_release_allvars_[country].csv`**
+    For each country in `coronanet_release_allvars`, we have generated a
+    separate data file in a .csv format.
 
 ## `coronanet_release.csv` Field Dictionary
 

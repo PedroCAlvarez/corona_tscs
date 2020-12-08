@@ -1,45 +1,45 @@
 "","record_id","policy_id","entry_type","correct_type","update_type","update_level","description","date_announced","date_start","date_end","country","ISO_A3","ISO_A2","init_country_level","domestic_policy","province","city","type","type_sub_cat","type_text","institution_status","target_country","target_geog_level","target_region","target_province","target_city","target_other","target_who_what","target_direction","travel_mechanism","compliance","enforcer","index_high_est","index_med_est","index_low_est","index_country_rank","link","date_updated","recorded_date"
-"1","R_2DUjZdcwL4sALrtCw","6761663","new_entry","original",NA,NA,"The measures, proposed by Koovo Minister of Health Arben Vitia, were approved at a meeting of the government held on Wednesday evening.
+"1","R_2DUjZdcwL4sALrtDg","6761663","new_entry","original",NA,NA,"The measures, proposed by Koovo Minister of Health Arben Vitia, were approved at a meeting of the government held on Wednesday evening.
 
 In full, the following measures were announced by the Kosovo Government: 
 
 1. To close all schools, public and private, at primary, secondary and university level until March 27
 
 ",2020-03-11,2020-03-12,2020-03-27,"Kosovo","-","-","National",1,NA,NA,"Closure and Regulation of Schools","Primary Schools (generally for children ages 10 and below)",NA,"Primary Schools closed/locked down","Kosovo",NA,NA,NA,NA,NA,"All Residents (Citizen Residents + Foreign Residents)",NA,NA,"Mandatory (Unspecified/Implied)","National Government",NA,NA,NA,NA,"https://prishtinainsight.com/further-measures-taken-by-kosovo-govt-to-tackle-coronavirus-pandemic/",2020-09-15,2020-09-15 19:41:01
-"2","R_2DUjZdcwL4sALrtDr","6761663","new_entry","original",NA,NA,"The measures, proposed by Koovo Minister of Health Arben Vitia, were approved at a meeting of the government held on Wednesday evening.
+"2","R_2DUjZdcwL4sALrtEc","6761663","new_entry","original",NA,NA,"The measures, proposed by Koovo Minister of Health Arben Vitia, were approved at a meeting of the government held on Wednesday evening.
 
 In full, the following measures were announced by the Kosovo Government: 
 
 1. To close all schools, public and private, at primary, secondary and university level until March 27
 
 ",2020-03-11,2020-03-12,2020-03-27,"Kosovo","-","-","National",1,NA,NA,"Closure and Regulation of Schools","Secondary Schools (generally for children ages 10 to 18)",NA,"Secondary Schools closed/locked down","Kosovo",NA,NA,NA,NA,NA,"All Residents (Citizen Residents + Foreign Residents)",NA,NA,"Mandatory (Unspecified/Implied)","National Government",NA,NA,NA,NA,"https://prishtinainsight.com/further-measures-taken-by-kosovo-govt-to-tackle-coronavirus-pandemic/",2020-09-15,2020-09-15 19:41:01
-"3","R_2DUjZdcwL4sALrtBh","6761663","new_entry","original",NA,NA,"The measures, proposed by Koovo Minister of Health Arben Vitia, were approved at a meeting of the government held on Wednesday evening.
+"3","R_2DUjZdcwL4sALrtBo","6761663","new_entry","original",NA,NA,"The measures, proposed by Koovo Minister of Health Arben Vitia, were approved at a meeting of the government held on Wednesday evening.
 
 In full, the following measures were announced by the Kosovo Government: 
 
 1. To close all schools, public and private, at primary, secondary and university level until March 27
 
 ",2020-03-11,2020-03-12,2020-03-27,"Kosovo","-","-","National",1,NA,NA,"Closure and Regulation of Schools","Higher education institutions (i.e. degree granting institutions)",NA,"Higher education institutions closed/locked down","Kosovo",NA,NA,NA,NA,NA,"All Residents (Citizen Residents + Foreign Residents)",NA,NA,"Mandatory (Unspecified/Implied)","National Government",NA,NA,NA,NA,"https://prishtinainsight.com/further-measures-taken-by-kosovo-govt-to-tackle-coronavirus-pandemic/",2020-09-15,2020-09-15 19:41:01
-"4","R_2AMh60euLJiCPWyCe","3312054","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+"4","R_2AMh60euLJiCPWyCm","3312054","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 
 3. An immediate suspension of public transport, as well as organised international transport
 
 ",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",0,NA,NA,"External Border Restrictions","Other External Border Restriction",NA,"","Kosovo","All countries",NA,NA,NA,NA,"All Travelers (Citizen Travelers + Foreign Travelers )","Inbound/Outbound","All kinds of transport","Mandatory (Unspecified/Implied)","National Government",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 18:36:02
-"5","R_214AEVRaAas0ouECe","7074601","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+"5","R_214AEVRaAas0ouECm","7074601","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 
 4. The borders of Kosovo are closed to all foreign citizens.",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",0,NA,NA,"External Border Restrictions","Other External Border Restriction",NA,"","Kosovo","All countries",NA,NA,NA,NA,"Foreign Travelers","Inbound","All kinds of transport","Mandatory (Unspecified/Implied)","National Government",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 18:38:48
-"6","R_Zn856LODoWos1DrCe","4570949","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+"6","R_Zn856LODoWos1DrCm","4570949","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 
 5. From March 16 at 00:00, all airline services are suspended with the exception of military and aid services.
 
 ",2020-03-13,2020-03-16,NA,"Kosovo","-","-","National",0,NA,NA,"External Border Restrictions","Other External Border Restriction",NA,"","Kosovo","All countries",NA,NA,NA,NA,"All (Travelers + Residents)","Inbound/Outbound","Flights","Mandatory (Unspecified/Implied)","National Government,Ministry/Department of Health",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 18:45:50
-"7","R_wRYXUsXQ9Z4sPf3Ee","6950692","new_entry","original",NA,NA,"The measures, proposed by Kosovo Minister of Health Arben Vitia, were approved at a meeting of the government held on Wednesday evening.
+"7","R_wRYXUsXQ9Z4sPf3Es","6950692","new_entry","original",NA,NA,"The measures, proposed by Kosovo Minister of Health Arben Vitia, were approved at a meeting of the government held on Wednesday evening.
 In full, the following measures were announced by the Kosovo Government: 
 
 7. To prohibit the export of medicine and material from Kosovo pharmaceutical producers, except when approved by a government decision
@@ -74,14 +74,14 @@ The decisions taken by the Kosovo Government:
 3. An immediate suspension of public transport, as well as organised international transport
 
 ",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",0,NA,NA,"Other Policy Not Listed Above",NA,"Transportation was listed as an example of an essential government service; in this instance, Kosovo has suspended all public transport, meaning it is the restriction of an essential government service","","Kosovo",NA,NA,NA,NA,NA,NA,NA,NA,"Mandatory (Unspecified/Implied)","National Government",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 18:32:34
-"12","R_33qkcFKvVhAev0SDs","5202165","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+"12","R_33qkcFKvVhAev0SEd","5202165","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 
 4. The borders of Kosovo are closed to all foreign citizens. Returning Kosovars will be subject to detailed medical checks with the instruction to self-quarantine for the next 15 days following entry.
 
 ",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",0,NA,NA,"Quarantine","Self-Quarantine (i.e. quarantine at home)",NA,"","Kosovo",NA,NA,NA,NA,NA,NA,NA,NA,"Mandatory (Unspecified/Implied)","National Government,Ministry/Department of Health,Police",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 18:43:34
-"13","R_2zikjXXiZUYrE3ZDk","3488472","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+"13","R_2zikjXXiZUYrE3ZDv","3488472","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 
@@ -90,7 +90,7 @@ The decisions taken by the Kosovo Government:
 7. The closure of livestock and automobile markets
 
 ",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",1,NA,NA,"Restriction and Regulation of Businesses","Restaurants",NA,"This type of business  (""Restaurants"") is closed/locked down","Kosovo",NA,NA,NA,NA,NA,"All Residents (Citizen Residents + Foreign Residents)",NA,NA,"Mandatory (Unspecified/Implied)","National Government,Police",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 18:48:39
-"14","R_2zikjXXiZUYrE3ZAh","3488472","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+"14","R_2zikjXXiZUYrE3ZAk","3488472","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 
@@ -99,7 +99,7 @@ The decisions taken by the Kosovo Government:
 7. The closure of livestock and automobile markets
 
 ",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",1,NA,NA,"Restriction and Regulation of Businesses","Bars",NA,"This type of business  (""Bars"") is closed/locked down","Kosovo",NA,NA,NA,NA,NA,"All Residents (Citizen Residents + Foreign Residents)",NA,NA,"Mandatory (Unspecified/Implied)","National Government,Police",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 18:48:39
-"15","R_2zikjXXiZUYrE3ZCd","3488472","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+"15","R_2zikjXXiZUYrE3ZCl","3488472","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 
@@ -108,28 +108,28 @@ The decisions taken by the Kosovo Government:
 7. The closure of livestock and automobile markets
 
 ",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",1,NA,NA,"Restriction and Regulation of Businesses","Other Businesses",NA,"This type of business  (""Other Businesses"") is closed/locked down","Kosovo",NA,NA,NA,NA,NA,"All Residents (Citizen Residents + Foreign Residents)",NA,NA,"Mandatory (Unspecified/Implied)","National Government,Police",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 18:48:39
-"16","R_22xEZHC3j3YSbytAd","6780089","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+"16","R_22xEZHC3j3YSbytAg","6780089","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 
 9. All private sector employees are obliged to work from home
 
 ",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",1,NA,NA,"Restriction and Regulation of Businesses","All or unspecified businesses",NA,"This type of business  (""All or unspecified businesses"") is allowed to open with conditions","Kosovo",NA,NA,NA,NA,NA,"All Residents (Citizen Residents + Foreign Residents)",NA,NA,"Mandatory (Unspecified/Implied)","National Government,Police",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 18:55:36
-"17","R_1rOo7kCyHbDDptFDq","7160792","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+"17","R_1rOo7kCyHbDDptFEb","7160792","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 
 11. The closure of shopping malls and most retail outlets, excluding pharmacies and supermarkets.
 
 ",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",1,NA,NA,"Restriction and Regulation of Businesses","Retail Businesses",NA,"This type of business  (""Retail Businesses"") is allowed to open with conditions","Kosovo",NA,NA,NA,NA,NA,"All Residents (Citizen Residents + Foreign Residents)",NA,NA,"Mandatory (Unspecified/Implied)","National Government,Police",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 19:00:03
-"18","R_1rOo7kCyHbDDptFDt","7160792","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+"18","R_1rOo7kCyHbDDptFEf","7160792","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 
 11. The closure of shopping malls and most retail outlets, excluding pharmacies and supermarkets.
 
 ",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",1,NA,NA,"Restriction and Regulation of Businesses","Shopping Centers",NA,"This type of business  (""Shopping Centers"") is closed/locked down","Kosovo",NA,NA,NA,NA,NA,"All Residents (Citizen Residents + Foreign Residents)",NA,NA,"Mandatory (Unspecified/Implied)","National Government,Police",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 19:00:03
-"19","R_3rNTO4ZFFOawkqcAd","7590844","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+"19","R_3rNTO4ZFFOawkqcAg","7590844","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 
@@ -142,8 +142,8 @@ The decisions taken by the Kosovo Government:
 
 8. A reduction in the work of all public institutions besides the security and health sectors
 
-",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",1,NA,NA,"Restriction and Regulation of Government Services",NA,NA,"This service provided by the government is provided with conditions atttached","Kosovo",NA,NA,NA,NA,NA,"All Residents (Citizen Residents + Foreign Residents)",NA,NA,"Mandatory (Unspecified/Implied)","National Government",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 18:51:30
-"21","R_2Y3LSaYXkaMMrXVAm","7592167","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
+",2020-03-13,2020-03-13,NA,"Kosovo","-","-","National",1,NA,NA,"Restriction and Regulation of Government Services",NA,NA,"","Kosovo",NA,NA,NA,NA,NA,"All Residents (Citizen Residents + Foreign Residents)",NA,NA,"Mandatory (Unspecified/Implied)","National Government",NA,NA,NA,NA,"https://prishtinainsight.com/kosovo-govt-responds-following-first-confirmed-cases-of-coronavirus/",2020-09-15,2020-09-15 18:51:30
+"21","R_2Y3LSaYXkaMMrXVAp","7592167","new_entry","original",NA,NA,"Following a meeting of the Kosovo Government on Friday evening, a number of additional measures to contain the spread of coronavirus were approved (taking effect immediately, 13 March 2020) after two people tested positive for the virus during the day.
 
 The decisions taken by the Kosovo Government:
 

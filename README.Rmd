@@ -83,13 +83,18 @@ First, CoronaNet data releases:
 
 The format of the data is in country-day-`record_id` format. Some `record_id` values have letters appended to indicate that the general policy category `type` also has a value for `type_sub_cat`, which contains more detail about the policy, such as whether health resources refers to masks, ventilators, or hospitals. Some entries are marked as `new_entry` in the `entry_type` field for when a policy of that type was first implemented in the country. Later updates to those policies are marked as updates in `entry_type`. To see how policies are connected, look at the `policy_id` field for all policies from the first entry through updates for a given country/province/city. If an entry was corrected after initial data collection, it will read corrected in the `entry_type` field (the original incorrect data has already been replaced with the corrected data). 
 
-1. **`data/CoronaNet/coronanet_release.csv`** This file contains variables from the CoronaNet government response project, representing national and sub-national policy event data from more than 140 countries since January 1st, 2020. The data include source links, descriptions, targets (i.e. other countries), the type and level of enforcement, and a comprehensive set of policy types. For more detail on this data, you can see our [codebook here](https://docs.google.com/document/d/1zvNMpwj0onFvUZ_gLl4RRjqS-clbHv3TIX6EOHofsME).
+1. **`data/CoronaNet/data_bulk/coronanet_release[.rds/csv.gz]`** These files contain variables from the CoronaNet government response project, representing national and sub-national policy event data from more than 140 countries since January 1st, 2020. The data include source links, descriptions, targets (i.e. other countries), the type and level of enforcement, and a comprehensive set of policy types. For more detail on this data, you can see our [codebook here](https://docs.google.com/document/d/1zvNMpwj0onFvUZ_gLl4RRjqS-clbHv3TIX6EOHofsME).
 
-2. **`data/CoronaNet/coronanet_release_allvars.csv`** This file contains the government response information from `coronanet_release.csv` along with the following datasets:
+2. **`data/CoronaNet/data_bulk/coronanet_release_allvars[.rds/csv.gz]`** These files contains the government response information from `coronanet_release.csv` along with the following datasets:
 
     a. Tests from the CoronaNet testing database (see http://coronanet-project.org for more info);
     b. Cases/deaths/recovered from the JHU data repository (https://github.com/CSSEGISandData/COVID-19);
     c. Country-level covariates including GDP, V-DEM democracy scores, human rights indices, power-sharing indices, and press freedom indices from the Niehaus World Economics and Politics Dataverse (https://niehaus.princeton.edu/news/world-economics-and-politics-dataverse)
+    
+3. **`data/CoronaNet/data_country/coronanet_release_[country].csv`** For each country in `coronanet_release`, we have generated a separate data file in a .csv format.
+
+4. **`data/CoronaNet/data_country/coronanet_release_allvars_[country].csv`** For each country in `coronanet_release_allvars`, we have generated a separate data file in a .csv format.
+
     
 ## `coronanet_release.csv` Field Dictionary
 

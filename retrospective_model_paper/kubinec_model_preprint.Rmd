@@ -1,5 +1,5 @@
 ---
-title: "Partisanship and the Spread of COVID-19 in the United States"
+title: "Fear, Partisanship and the Spread of COVID-19 in the United States"
 author: 
   - Robert Kubinec:
       email: rmk7@nyu.edu
@@ -37,11 +37,11 @@ output:
       - '--lua-filter=author-info-blocks.lua'
   #bookdown::word_document2
 bibliography: BibTexDatabase.bib
-abstract: "In this paper we use a Bayesian latent variable model to identify the effect of sociopolitical covariates on the historical COVID-19 infection rate among the 50 states. The model is calibrated using serology surveys issued by the Center for Disease Control. We show that as of July 14th, there are approximately 10 million people who have been infected with COVID-19 in the United States, and these people are concentrated in states that voted against President Donald Trump in 2016, are less concerned about COVID-19, are relatively unlikely to wear masks, and have fewer economic resources. Second, we find that increased mobility measured by Google cell phones in grocery stores and retail establishments has the highest correlation with subsequent COVID-19 spread, and that mobility is an important mediator of covariates and the spread of the disease. However, although support for President Trump correlates strongly with reduced COVID-19 infections, we find that this result does not come about via reduced mobility. Instead, it would appear more likely that conservative states were spared early outbreaks due to random or exogenous factors, and instead people may be inferring that partisanship has a causal effect on the disease when in fact it is likely a confounded association.^[To reproduce the model and to access the underlying Stan code, please see our [Github page](https://github.com/saudiwin/corona_tscs). This paper is part of the [CoronaNet project](https://lumesserschmidt.github.io/CoronaNet/) collecting data on government responses to the COVID-19 pandemic. For helpful comments we thank participants of the 2020 Polnet/Politics and Computational Social Science Conference. We acknowledge funding from New York University Abu Dhabi and the Technical University of Munich. We thank Tesea Conte, Muhannad AlRamlawi, Shiva Teerdhala, and Luke Burkholder for invaluable research assistance in evaluating state-level COVID-19 policies.]"
+abstract: "In this paper we use a Bayesian latent variable model to identify the effect of sociopolitical covariates on the historical COVID-19 infection rate among the 50 states. The model is calibrated using COVID-19 serology surveys from the Center for Disease Control. The model is able to show important associations between cellphone mobility and daily polls of concern over COVID-19 with the spread of the epidemic. We use mediation analysis to show how other covariates hypothesized to affect disease spread, including 2016 Trump vote share, public health spending, smoking rates, per capita income and concern over the state of the economy predict COVID-19 spread. We are able to show stark associations between higher Trump approval and fewer COVID-19 infections, but these effects are not mediated by mobility or fear of COVID-19. Rather, the association between partisanship for President Trump and a more limited epidemic persists despite, rather than because of, recommended social distancing measures, signifying that residents of Republican-leaning states likely inferred that they did not need to adopt strategies of left-leaning states to protect themselves from COVID-19.^[To reproduce the model and to access the underlying Stan code, please see our [Github page](https://github.com/saudiwin/corona_tscs). This paper is part of the [CoronaNet project](https://lumesserschmidt.github.io/CoronaNet/) collecting data on government responses to the COVID-19 pandemic. For helpful comments we thank participants of the 2020 Polnet/Politics and Computational Social Science Conference. We acknowledge funding from New York University Abu Dhabi and the Technical University of Munich. We thank Tesea Conte, Muhannad AlRamlawi, Shiva Teerdhala, and Luke Burkholder for invaluable research assistance in evaluating state-level COVID-19 policies.]"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE,warning=FALSE,message=FALSE,fig.width=6,fig.asp=0.618)
+knitr::opts_chunk$set(echo = FALSE,warning=FALSE,message=FALSE,fig.width=6,fig.asp=0.618,dpi=300)
 require(dplyr)
 require(tidyr)
 require(ggplot2)
@@ -98,9 +98,9 @@ calc_int <- F
 
 In this paper, we present a Bayesian latent variable model to track COVID-19 spread in the United States, and apply the model to measure associations between state-level sociopolitical factors and the spread of COVID-19. The utility of the model, compared to existing approaches, lies in its direct parameterization of the well-known observation bias stemming from incomplete testing for the disease in the United States. Rather than attempt to use statistical methods to eliminate the bias, we model this structure directly by jointly estimating the effect of covariates on COVID-19 cases and tests via the unobserved infection rate. 
 
-We use this model to measure important associations between U.S. state-level factors and the disease as of July 14, 2020 to better understand how political, social and economic factors correlate with the spread of the disease. We investigate the increasingly clear partisan division over the disease, and we show in this paper that there is a robust correlation between partisanship and the disease' spread, with states that voted for Trump in 2016 much less likely to see wide scale outbreaks. To explain this association, we employ mediation analysis in our models to understand how much a particular factor suppresses the disease by reducing mobility (measured through cell phone signals) or by increasing people's concern about the disease (measured through daily polling) as opposed to an unmediated direct pathway. As a result, we show in this paper that the Trump effect on the disease does not come through reducing mobility, but rather through some other unmeasured mechanism. We interpret this finding to imply that the Trump association with COVID-19 is largely driven by its direct effect; rising Trump approval is associated with more of the disease via reducing people's fears over the virus and increasing mobility.  
+We use this model to measure important associations between U.S. state-level factors and the disease as of July 14, 2020 to better understand how political, social and economic factors correlate with the spread of the disease. We investigate the increasingly clear partisan division over the disease, and we show in this paper that there is a robust correlation between partisanship and the disease's spread, with states that voted for Trump in 2016 much less likely to see wide scale outbreaks. To explain this association, we employ mediation analysis in our models to understand how much a particular factor suppresses the disease by reducing mobility (measured through cell phone signals) or by increasing people's concern about the disease (measured through daily polling) as opposed to an unmediated direct pathway. As a result, we show in this paper that the Trump effect on the disease does not come through reducing mobility or increasing concern over the pandemic, but rather through some other unmeasured mechanism. We interpret this finding to imply that the Trump association with COVID-19 is largely driven by exogenous conditions affecting the early spread of the outbreak, and that residents of pro-Trump states likely made the erroneous conclusion that the pandemic was a problem associated with more liberal areas of the country, and would not affect them as strongly. As a result, people in pro-Trump states have tended to practice fewer social distancing behaviors and have displayed less concern over COVID-19, resulting in more infections despite favorable initial conditions.
 
-In addition to this finding, we examine an array of other important political behaviors and COVID-19 and the disease. We show that social justice protests when measured as a proportion of the state population do show associations with increased COVID-19 spread through lowering people's fear of the disease and also via a direct pathway. This result suggests that epidemiologists' fears over outdoor protest activity were justified, although the effect sizes are relatively small compared to other factors. If a state were to experience significant protest activity every day following the COVID-19 outbreak--which did not of course occur--the cumulative infection rate would increase to 0.27%. 
+In addition to this finding, we examine an array of other social and political covariates and the disease. We show that social justice protests when measured as a proportion of the state population do show associations with increased COVID-19 spread through lowering people's fear of the disease and also via a direct pathway. This result suggests that epidemiologists' fears over outdoor protest activity were justified, although the effect sizes are relatively small compared to other factors. If a state were to experience significant protest activity every day following the COVID-19 outbreak--which did not of course occur--the cumulative infection rate would increase by a maximum of 0.27% of a state's population. 
 
 Finally, we show that the effect of state-level suppression policies targeted at the epidemic varies significantly over the time, making summary statements difficult. While some policies like stay-at-home orders seem to have an ability to suppress the epidemic consistently, other policies like business restrictions show declining effectiveness over time. On the other hand, individual-level measures of personal behavior, such as polling data about individual concern over COVID-19 and polling data about mask-wearing prevalence, show the strongest association with reduced disease spread. These results suggest that the link between state policies and individual behavior cannot be assumed but rather must be estimated to know what effect policies will actually have on the course of the pandemic. 
 
@@ -110,9 +110,9 @@ The partisan divide in American politics has become a serious concern in politic
 
 However, at the same time, research probing this relationship suggests observed behavior is more than just partisanship--or at least that partisanship has multiple dimensions. For example, @harper2020 find that conservatives do dislike flouting of public health rules, though they treat violations by out-group members (i.e. liberals) more harshly than they do violations in-group members. @hart2020 argue that the politicization of news media early in the pandemic contributed to the perception of COVID-19 as a partisan issue, and that if media had featured more commentary from public health experts, the issue could have been painted differently. Similarly, @porter2020 find that trust in science is an important moderator for the partisanship-social distancing relationship: when trust in science is high, conservatives also want to support in prudent public health measures. Finally, @cornelson2020 show that the partisanship relationship may be more of an issue at the state level rather than national level, as people with a different party ID than their state governor tend to disobey their state's policies.
 
-In summary, partisanship is an important variable for understanding the unfolding of the pandemic. It is important to note that the effect of partisanship is not limited to conservatives. A wave of protests following the death of George Floyd at the hands of police officers is an example of progressive movements for political change leading to risky public health behavior. However, research to date suggests the protests have not had an adverse effect on COVID-19 infections [@protest2020]. Nonetheless, there does seem to be at least some evidence that partisanship can affect willingness to follow public health directives on both side of the political divide.
+In summary, partisanship is an important variable for understanding the unfolding of the pandemic by changing individuals' perceptions of the threat that COVID-19 posed. It is important to note, however, that the effect of partisanship is not limited to conservatives. A wave of protests following the death of George Floyd at the hands of police officers is an example of progressive movements for political change leading to risky public health behavior. However, research to date suggests the protests have not had an adverse effect on COVID-19 infections [@protest2020]. Nonetheless, there does seem to be at least some evidence that partisanship can affect willingness to follow public health directives on both side of the political divide.
 
-The theory proposed in this article is that partisanship became a powerful variable not only because of President Trump's embrace of pseudo-science and the difficulties faced by state governors with hostile citizens (though these are quite influential). We argue that COVID-19 infections were unusually low in areas where Trump's approval rating was high and where more people voted for Trump in 2016, though this reprieve in the epidemic occurred despite, rather than because of, more prudent health behaviors. Instead, it would appear that the association is due to time-persistent effects related to where the outbreak initially occurred. The random chance by which coastal liberal areas experienced early outbreaks led to an enduring partisan difference in where infections arose, a difference that persists as of the date of our data (July 14th), approximately five months into the pandemic.
+The theory proposed in this article is that partisanship became a powerful variable not only because of President Trump's embrace of pseudo-science and the difficulties faced by state governors with hostile citizens (though these are quite influential). We argue that COVID-19 infections were unusually low in areas where Trump's approval rating was high and where more people voted for Trump in 2016, though this reprieve in the epidemic occurred despite, rather than because of, more prudent health behaviors. Instead, it would appear that the association is due to time-persistent effects related to where the outbreak initially occurred. The random chance by which coastal liberal areas experienced early outbreaks led to an enduring partisan difference in where infections arose, a difference that persists as of the date of our data (July 14th), approximately five months into the pandemic. 
 
 To establish this proposition, we will test the following two hypotheses:
 
@@ -120,7 +120,7 @@ To establish this proposition, we will test the following two hypotheses:
 
 and 
 
-> H2: Low COVID-19 infections in areas that voted for Trump cannot be explained by behaviors commonly associated with disease suppression (i.e., social distancing).
+> H2: Low COVID-19 infections in areas that voted for Trump happened despite, rather than because of, pathways known to prevent COVID-19 infections via individual behaviors like social distancing.
 
 In the next section, we discuss our statistical method for testing these hypotheses.
 
@@ -152,7 +152,7 @@ However, we do not have estimates of the actual infected rate $I_{ct}$, only pos
 \footnotesize{Figure shows the relationship between a covariate $X_{ct}$ representing a policy or social factor influencing the infection rate $I_{ct}$. Because the infection rate $I_{ct}$ influences both the number of reported tests $q_{ct}$ and reported cases $a_{ct}$, any regression of a covariate $X_{ct}$ on the reported data will be biased.}
 \end{figure}
 
-Given this overview of the intuition behind our approach, we turn to a more formal definition. Our observed outcomes are the cumulative total of tests and cases reported on a given day. We assume that the unobserved cumulative infection rate $I_{ct}$ can be modeled as a Beta-distributed random variable. We also assume that the over-time change in the disease can be modeled as a 3-order polynomial time trend that is a function of the number of post-outbreak time periods $T_O < T$, where an outbreak begins at the first reported case in a given area. The third-order polynomial reflects the fact that epidemics occur in waves, although the curve is unlikely to be symmetric as a simpler quadratic function would require. We allow the polynomial trends to vary by states hierarchically, i.e., the information about the trends is partially pooled across states. This time function permits reasonable flexibility while still constraining the overall trajectory of the disease to a wave-like shape. We note that varying start dates for the disease allow us to incorporate state-level heterogeneity in the early spread of the pandemic. 
+Given this overview of the intuition behind our approach, we turn to a more formal definition. Our observed outcomes are the cumulative total of tests and cases reported on a given day $t$ in a given state $c$. We assume that the unobserved state-specific cumulative infection rate $I_{ct}$ can be modeled as a Beta-distributed random variable. We also assume that the over-time change in the disease can be modeled as a 3-order polynomial time trend that is a function of the number of post-outbreak time periods $T_O < T$, where an outbreak begins at the first reported case in a given area. The third-order polynomial reflects the fact that epidemics occur in waves, although the curve is unlikely to be symmetric as a simpler quadratic function would require. We allow the polynomial trends to vary by states hierarchically, i.e., the information about the trends is partially pooled across states. This time function permits reasonable flexibility while still constraining the overall trajectory of the disease to a wave-like shape. We note that varying start dates for the disease allow us to incorporate state-level heterogeneity in the early spread of the pandemic. 
 
 We define the conditional distribution of the unobserved infection rate $I_{ct}$ as:
 
@@ -164,7 +164,7 @@ We define the conditional distribution of the unobserved infection rate $I_{ct}$
   (\#eq:binom)
 \end{align}
 
-This parameterization of the Beta distribution in terms of $\mu$ and $\phi$ follows from the Beta regression literature [@ferrari2010] so that we can model the expected value $E[I_{ct}]$ directly via $\mu$. As such, we use $g^{-1}(\cdot)$, the inverse logit function, to scale the linear model in $\mu$ to the $(0,1)$ interval. For the parameters, $\beta_{O1}\sum_{c=1}^{C} \sum_{t=1}^{t-14} a_{ct}$ represents the sum of infections in the country with a 14-day lag, which we term the national infection rate, and the three $\beta_{Ii}$ are polynomial coefficients of the number of post-outbreak time periods $t_o$. 
+This parameterization of the Beta distribution in terms of $\mu$ and $\phi$ follows from the Beta regression literature [@ferrari2010] so that we can model the expected value $E[I_{ct}]$ directly via $\mu$. As such, we use $g^{-1}(\cdot)$, the inverse logit function, to scale the linear model in $\mu$ to the $(0,1)$ interval. For the parameters, $\beta_{O1}\sum_{c=1}^{C} \sum_{t=1}^{t-14} a_{ct}$ are the sum of observed cases in the country with a 14-day lag, which represents the possibility of cross-border spread in infections. The three $\beta_{Ii}$ are polynomial coefficients of the number of post-outbreak time periods $t_o$. 
 
 The parameter vector $\beta_C$ represents the effect of independent covariate matrix $X_{ct}$ on the latent infection rate. These are our main variables of interest, and are estimated marginal of the polynomial time trends. Finally, the parameter $\phi$ is a dispersion parameter governing the variability of latent infection rate.
 
@@ -187,9 +187,9 @@ q_{ct} \sim \operatorname{Binomial}(c_{p}, g^{-1}(\alpha_2 + \beta_b I_{ct} +
 The parameter $\beta_{cq}$ serves to scale the infection rate $I_{ct}$ so that an increasing infection rate has heterogeneous effects on the number of tests by state. The parameters $\beta_b$ and $\beta_L$ permit the baseline rate of testing to infected to vary over time as well. The intercept $\alpha_2$ indicates how many tests would be performed in a state with an infection rate of zero, and as such is likely to be very low.
 
 Given the parameter $\beta_{cq}$, a state could test almost no one or test far more than are actually infected depending on their willingness to impose tests.
-Because the capacity to test changed significantly over time, we include a linear time interaction (denoted $L_t$) to allow testing capacity to change over time.^[For a very compelling visualization of this process with empirical data from the COVID-19 pandemic, we refer the reader to this website: https://ourworldindata.org/grapher/covid-19-tests-cases-scatter-with-comparisons.]
+Because the capacity to test changed significantly over time, we include a linear time interaction (denoted $L_t$) to allow testing capacity to adjust accordingly.^[For a very compelling visualization of this process with empirical data from the COVID-19 pandemic, we refer the reader to this website: https://ourworldindata.org/grapher/covid-19-tests-cases-scatter-with-comparisons.]
 
-The binomial model for the number of observed tests $q_{ct}$ provides some information about $I_{ct}$, but not enough for useful estimates. We can learn much more about $I_{ct}$ by also  modeling the number of observed cases $a_{ct}$ as another binomial random variable expressed as a proportion of the state population $c_p$:
+The binomial model for the number of observed tests $q_{ct}$ provides some information about $I_{ct}$, but not enough for useful estimates. We can learn much more about $I_{ct}$ by also  modeling the number of observed cases $a_{ct}$ as another binomial random variable expressed as a proportion of the state population, $c_p$:
 
 \begin{equation}
 a_{ct} \sim \operatorname{Binomial}(c_p, g^{-1}(\alpha_3 + \beta_a I_{ct})),
@@ -218,7 +218,7 @@ a_{ct} &\sim \operatorname{Beta-Binomial}(q_{ct}, \mu_a \phi_a, (1 - \mu_a) \phi
 (\#eq:binom5)
 \end{align}
 
-where $I_{ct}$ is now equal to the linear model vector $\mu$ shown in \@ref(eq:binom).
+where $I_{ct}$ is now equal to the linear model vector $\mu$ shown in \@ref(eq:binom) and mapped to $(0,1)$ via the inverse logit function.
 
 ## Identification
 
@@ -975,23 +975,23 @@ The priors to note are the hierarchical regularizing prior put on the varying te
 
 We note that an advantage of this framework is providing a way to measured the count of infected adjusting for known biases in the number of tests. By comparing numbers of tests per capita and growth rates in cases across regions, the model is able to backwards infer a likely number of infected individuals in a given area. As such it exploits both within-area and between-area variance to adjust for the biases of imperfect testing. The wide variety of covariates we add to the model, which we describe in the next section, provide the mechanism through which the model can infer test/case relationships even in states which have not had a CDC serology survey.
 
-We also extend this model in order to analyze the mediation of a subset of covariates $X'_{ct}$ by adding a mediators $M_{ct}$ for mobility and $F_{ct}$ for fear of the disease to the causal diagram, as in Figure \ref{tikzfig2}. Figure \ref{tikzfig2} has several paths due to the fact that the influence of covariates $X_{ct}$ affects the two mediators differently. Given that beliefs and preferences precede actions, the covariates $X'_{ct}$ first influence $I_{ct}$ along the $ae$ and $abd$ path through perceptions of how dangerous the disease is. These beliefs both affect the chance of an individual getting infected and thus $I_{ct}$ directly on the path $ae$, such as by causing an individual to adopt social distancing behaviors, and also on an indirect path $abd$ by which increase fear of the disease reduces mobility as people stay at home. 
+We also extend this model in order to analyze the mediation of a subset of covariates $X'_{ct}$ by adding mediators $M_{ct}$ for mobility and $F_{ct}$ for fear of the disease to the causal diagram, as in Figure \ref{tikzfig2}. Figure \ref{tikzfig2} has several paths due to the fact that the influence of covariates $X_{ct}$ affects the two mediators differently. Given that beliefs and preferences precede actions, the covariates $X'_{ct}$ first influence $I_{ct}$ along the $ae$ and $abd$ path through perceptions of how dangerous the disease is. These beliefs both affect the chance of an individual getting infected and thus $I_{ct}$ directly on the path $ae$, such as by causing an individual to adopt social distancing behaviors, and also on an indirect path $abd$ by which an increase in a people's fear of the disease reduces mobility as people prefer to stay home. 
 
-In addition to pathways through the fear mediator $F_{ct}$, a covariate could influence infections along the pathway through mobility $ed$ without increasing or decreasing fear. This situation could arise if government policies forced people to stay at home against their will and despite their unconcern about the virus. Finally, a covariate could have an unmediated direct effect $g$ on the infection rate. The total effect of a covariate $X_{ct}$ on the spread of the disease is then the sum of all the paths, $abd + af + ed + g$. To calculate the indirect effects and direct effects given the use of the inverse logit function $g^{-1}(\cdot)$, I employ the chain rule as in @winship1983 to calculate the marginal effect of covariates with respect to different pathways to $I_{ct}$.
+In addition to pathways through the fear mediator $F_{ct}$, a covariate could influence infections along the pathway through mobility $ed$ without increasing or decreasing fear. This situation could arise if government policies forced people to stay at home against their will and despite their unconcern about the disease. Finally, a covariate could have an unmediated direct effect $g$ on the infection rate. The total effect of a covariate $X_{ct}$ on the spread of the disease is then the sum of all the paths, $abd + af + ed + g$. To calculate the indirect effects and direct effects given the use of the inverse logit function $g^{-1}(\cdot)$, I employ the chain rule as in @winship1983 to calculate the marginal effect of covariates with respect to different pathways to $I_{ct}$.
 
 Adding the mediators to the model is relatively simple as they do not have link functions and can be included as Normal distributions (i.e., OLS regression) as in @Yuan2009. It should be noted that there are in fact five mobility covariates as explained in the following section, and so we explicitly model the covariance in mobility via a multivariate Normal distribution with a covariance matrix parameter $\Sigma_m$.
 \begin{figure}
 \label{tikzfig2}
-\caption{Directed Acyclic Graph for Latent Infection Rate with Mediator}
+\caption{Directed Acyclic Graph for Latent Infection Rate with Mediators}
 \ctikzfig{policy_dag_mediate}
-\footnotesize{This figure adds a mediator $M_{ct}$ (mobility data) that mediates the relationship between state policies $X'_{ct}$ and the latent infection rate $I_{ct}$.}
+\footnotesize{This figure adds mediators $M_{ct}$ (mobility data) and $F_{ct}$ (fear of COVID-19) that mediate the relationship between state-level covariates $X'_{ct}$ and the latent infection rate $I_{ct}$.} Because beliefs precede actions, $F_{ct}$ is causally prior to $M_{ct}$ and can affect infections both via reducing mobility (path $abd$) and directly apart from mobility (path $ae$), such as by encouraging individuals to remain socially distant.
 \end{figure}
 
-To add continuous mediation covariates $M_{ct}$, which we describe in the next section as cell phone mobility data, we add the following likelihoods to the joint posterior:
+To add our mediation covariates $M_{ct}$ and $F_{ct}$, which we describe in more detail in the next section, we multiply the following likelihoods with the joint posterior:
 
 \begin{align}
-M_{ct} &\sim MVN(\alpha_m + \beta_m X_{ct},\Sigma_m)\\
-F_{ct} &\sim N(\alpha_f + \beta_f X_{ct}, \sigma_f)
+M_{ct} &\sim MVN(\alpha_m + \beta_m X'_{ct},\Sigma_m)\\
+F_{ct} &\sim N(\alpha_f + \beta_f X'_{ct}, \sigma_f)
 (\#eq:mediate)
 \end{align}
 
@@ -1057,7 +1057,7 @@ count_pol %>% group_by(type,month_day,province) %>% summarize(sum_pol=sum(count_
 ```
 
 
-To better understand over-time factors that may also affect COVID-19, we include polling data from Civiqs and YouGov at the state level. From Civiqs we include state-level polling averages by day for the percentage of respondents favoring Trump, percentage reporting the economy is "very good", and the percentage reporting that they are "extremely concerned" about the coronavirus. From YouGov we use a poll from May 8th reporting average number of respondents who said they used masks by U.S. state. As this poll does not vary over time, we set the mask prevalence at one-half the minimum value of the poll prior to the WHO's revision of guidance concerning wearing masks on April 3rd, and equal to the poll's values thereafter. As described in the previous section, the poll asking respondents whether they are "extremely concerned" about COVID-19 represents our fear mediator, and also included as a separate outcome with other covariates as predictors.
+To better understand over-time factors that may also affect COVID-19, we include polling data from Civiqs and YouGov at the state level. From Civiqs we include state-level polling averages by day for the percentage of respondents favoring Trump, percentage reporting the economy is "very good", and the percentage reporting that they are "extremely concerned" about the coronavirus. From YouGov we use a poll from May 8th reporting average number of respondents who said they used masks by U.S. state. As this poll does not vary over time, we set the mask prevalence at one-half the minimum value of the poll prior to the WHO's revision of guidance concerning wearing masks on April 3rd, and equal to the poll's values thereafter. As described in the previous section, the poll asking respondents whether they are "extremely concerned" about COVID-19 represents our fear mediator, and is also included as a separate outcome with other covariates as predictors.
 
 To better understand the mediating effects of suppression policies, we include Google mobility data^[See https://www.google.com/covid19/mobility/] for retail, residential, parks, workplaces, transit and retail establishments. These estimates are by day and aggregated to the state level. They are measured in terms of an index that is initialized with a value of 100 at the index start on February 15th, 2020. To test for mediation, we include these as predictors of the infection rate, and separately fit a likelihood with each mobility covariate as an outcome and the other covariates as predictors. 
 
@@ -1328,7 +1328,9 @@ Given this check on the model's fidelity to the data, we can then report the mod
 
 We compare these estimates with a popular COVID-19 forecaster employing SEIR models from @gu2020 by plotting their estimates as a red ribbon on the plot. As can be seen, the trajectories are similar although they diverge slightly at the end of the series in mid-July. This is likely due to the fact that our model is not designed to predict into the future, and so it does not pick up as strongly on the increase in cases in the last week of July. However, on the whole it would seem that our estimate of infected individuals is on the conservative end compared to other approaches--in other words, while we do not know for certain what the true number is, we are unlikely to be under-estimating the total. Again, as our aim here is interpretation and inference rather than forecasting, we believe the conservative nature of our model is a benefit. The estimates of covariate associations we present later in this paper could be slightly too low, but they are unlikely to be too large given what we can model. Furthermore, our intervals are far more precise than the SEIR model, which is likely because we are only trying to identify a single parameter as opposed to the full range of outcomes, including deaths and hospitalizations.
 
-Panel B in the plot shows our estimates of infected individuals, excepts that it adjusts the cumulative number with a 19-day lag to account for the approximate time that recovery from COVID-19 requires (deaths are first subtracted). This plot displays an imperfect but useful formulation of the likely number of people infected at any given time point. As of July 14, it would appear that there were approximately 1 million infected individuals in the United States, while the number peaked at about four million in late April. It should be noted that the data used to fit the model did not include the latest wave of infections, and because the model is not predictive, it does not weight as strongly the last few observations in the series. Given these limitations, the estimate shows a declining case/infection ratio as testing increased, with the bias reaching a very low number at the end of the series. We expect given recent data that the bias would increase as case totals surged and testing lagged.
+Panel B in the plot shows our estimates of infected individuals, excepts that it adjusts the cumulative number with a 19-day lag to account for the approximate time that recovery from COVID-19 requires (deaths are first subtracted). This plot displays an imperfect but useful formulation of the likely number of people infected at any given time point. As of July 14, it would appear that there were approximately 1 million infected individuals in the United States, while the number peaked at about four million in late April. 
+
+<!-- It should be noted that the data used to fit the model did not include the latest wave of infections, and because the model is not predictive, it does not weight as strongly the last few observations in the series. Given these limitations, the estimate shows a declining case/infection ratio as testing increased, with the bias reaching a very low number at the end of the series. We expect given recent data that the bias would increase as case totals surged and testing lagged. -->
 
 
 ```{r totalinf,fig.asp=0.8,fig.cap="Total Cumulative and Present COVID-19 Infections in the United States"}
@@ -1434,9 +1436,9 @@ ggsave("est_vs_obs_experts.png")
 ```
 
 
-By comparison, Figure \@ref(fig:stateplot) shows the cumulative totals of estimated infections by state. Plot A in this figure has the count of infections by state, while plot B shows the percentage of the population infected by state. Both the overall S-shape of the epidemic can be seen along with the substantial heterogeneity in infections, with early infected states like New York and New Jersey still in the top quartile of states with infections even though they successfully reduced the rate of disease spread. 
+By comparison, Figure \@ref(fig:stateplot) shows the cumulative totals of estimated infections by state. Plot A in this figure has the count of infections by state, while plot B shows the percentage of the population infected by state. Both the overall S-shape of the epidemic can be seen along with the substantial heterogeneity in infections, with early infected states like New York and New Jersey still in the top quartile of states with infections even though they successfully reduced the rate of disease spread. In the supplemental information we also show the relative number of people tested in each state per person infected. New York and New Jersey are lower in the distribution having cumulatively tested around 18-20 people for each infected person, implying that the high infection rates in the plot above for these states are not an artifact of more rigorous testing.
 
-```{r stateplot,fig.cap="Average Cumulative Count of Infected People by U.S. State as of April 20th",echo=F,fig.asp=0.8}
+```{r stateplot,fig.cap="Average Cumulative Count of Infected People by U.S. State as of July 14th",echo=F,fig.asp=0.8}
 require(ggrepel)
 
 # need different figures for case-level deaths + recovere
@@ -1556,91 +1558,11 @@ all / per_cap + plot_annotation(tag_levels = "A")
 ggsave("certain_state_rates.png")
 ```
 
-In addition to the estimation of the cumulative count of infected individuals, the model provides further useful information by parameterizing the relationship between the unobserved infection rate and the number of tests conducted in a given state. These individual parameters are shown in Figure \@ref(fig:tpi). The scale of the y axis shows the number of people that a state was able to test relative to each person infected. The plot shows that some states have been able to test far more people than have been infected (New York, Rhode Island), while other states like Texas, Arizona and Pennsylvania have tested barely twice as many as those who have been infected. The fact that new outbreaks have been seen in Texas and Arizona suggests that this shortfall in testing likely disguised early outbreaks that could have been detected otherwise.
 
 
-```{r tpi,fig.asp=.8,fig.cap="Measuring States' Testing Rates Relative to Infection Rates"}
+To calculate the effect of covariates on the infection rate, we report here average cumulative marginal effects by state. We report cumulative marginal effects rather than the sample average marginal effect because the outcome monotonically increases, and so the marginal effect at any one point in time is not as meaningful a statistic. The way to interpret the coefficients presented is how a 1-unit (and mainly 1-SD) change would affect the infection rate if that increase were sustained for an average state's entire time series (March to July).
 
-# convert to marginal changes
-
-this_infect1 <- lapply(seq(max(combined$month_day) - days(7), max(combined$month_day),by=1),
-                    function(d) {
-                      
-                      filter(ungroup(all_est_state),
-                       month_day==d) %>% 
-  select(state,estimate,iter) %>% 
-  group_by(state) %>% 
-  mutate(estimate=plogis(estimate)) %>% 
-  spread(key="state",value="estimate") %>% 
-  ungroup %>% 
-  select(-iter) %>% 
-  as.matrix
-       })
-
-this_test_max <- ungroup(combined) %>% 
-  select(state,month_day,test_max) %>% 
-  filter(month_day==max(month_day))
-
-this_time <- max(combined$lin_counter)
-
-alpha_test <- as.data.frame(us_fit_scale,pars="alpha_test")
-
-test_max_par <- as.data.frame(us_fit_scale,"test_max_par")
-
-lin_step <- real_data$lin_counter[2,1] - real_data$lin_counter[1,1]
-
-# loop over infections
-# loop over time
-
-over_days <- lapply(seq(max(combined$month_day) - days(7), max(combined$month_day),by=1),
-                    function(d) {
-                      
-    over_states <- lapply(1:real_data$num_country, function(s) {
-      
-      lin_val <- unique(combined$lin_counter[combined$month_day==d])
-      counter <- which(seq(max(combined$month_day) - days(7), max(combined$month_day),by=1)==d)
-      
-     tibble(estimate=plogis(alpha_test$alpha_test + country_nonc[,s] * this_infect1[[counter]][,s]*lin_val +
-                            test_base * this_infect1[[counter]][,s] + test_lin*lin_val),
-         state_num=s,
-         mean_est=mean(this_infect1[[counter]][,s]),
-         month_day=d)
-    }) %>% bind_rows
-                      
-}) %>% bind_rows
-
-
-
-
-saveRDS(over_days,"test_data.rds")
-
-state_id <- distinct(combined,state,state_pop) %>% 
-  ungroup %>% 
-  mutate(state_num=as.numeric(factor(state)))
-
-over_days %>%
-  left_join(state_id,by="state_num") %>%
-  group_by(state) %>%
-    summarize(med_est=quantile(estimate/mean_est,.5),
-            high_est=quantile(estimate/mean_est,.95),
-            low_est=quantile(estimate/mean_est,.05)) %>% 
-  ggplot(aes(y=med_est,x=reorder(state,med_est))) +
-  geom_pointrange(aes(ymin=low_est,ymax=high_est)) +
-  theme_minimal() +
-  theme(panel.grid = element_blank(),axis.text=element_text(size = 7)) +
-  coord_flip() +
-  geom_hline(yintercept=.01) +
-  xlab("") +
-  labs(caption = stringr::str_wrap("Figure shows the average number of additional people tested in a given state for each person who becomes infected. Estimate is a cumulative average of the last seven days of data.")) +
-  ylab("Total Tested for Each Infected Resident (Cumulative Average)")
-
-ggsave("testing.png",height=5,width=8)
-
-```
-
-We would note that this information is also helpful to policy makers and others trying to make sense of observed case counts given the limitation in testing thus far. Our estimates help take into account these known biases and adjust them based on differences between states and within states in terms of disease trajectories. We believe this model can be used to help understand disease trends and factors associated with it even in the relatively data-poor environment many countries find themselves in. 
-
-We next explore the effect of covariates on the latent infection rate. In Figure \@ref(fig:mobility) we show the marginal effect of a 1-SD increase in different types of Google mobility on the infection rate expressed as a fraction of a state's population. In line with the growing research on cellphone mobility and the epidemic, there are strong positive effects of some types of mobility on the spread of the disease, especially grocery stores, retail stores and to a lesser extent residential mobility and transit. Workplace mobility has an estimated zero association with infections, while mobility related to parks has a small but negative association with COVID-19. While these results are somewhat surprising given how large the grocery store effect is relative to the other series, other results confirm with prior suspicions that outdoor activities like attending parks are relatively low-risk for COVID exposure. It should be noted as well that all the effects are estimated simultaneously and the variables are correlated, so the effect of workplace mobility could be partially masked by the other mobility measures. In any case, it is clear that the mobility measures have the single largest estimated effect on suppressing the disease for a time-varying covariate, reaching up to a 0.0219% increase in population infected for a 1-SD increase in grocery store mobility. 
+We first show the association of mobility types with the infection rate. In Figure \@ref(fig:mobility) we show the marginal effect of a 1-SD increase in different types of Google mobility on the infection rate expressed as a fraction of a state's population. In line with the growing research on cellphone mobility and the epidemic, there are strong positive effects of some types of mobility on the spread of the disease, especially grocery stores, residential mobility and to a lesser extent workplace and retail mobility. Movement in parks and via transit has an estimated zero association with infections. While these results are somewhat surprising given how large the grocery store effect is relative to the other series, other results confirm with prior suspicions that outdoor activities like attending parks are relatively low-risk for COVID exposure. It should be noted as well that all the effects are estimated simultaneously and the variables are correlated, so the effect of workplace mobility could be partially masked by the other mobility measures. In any case, it is clear that the mobility measures have the single largest estimated effect on suppressing the disease for a time-varying covariate, reaching up to a 0.3% cumulative increase in population infected for a 1-SD increase in grocery store mobility. 
 
 ```{r mobility,fig.cap="Effect of Google Mobility Data on COVID-19 Spread"}
 
@@ -1754,7 +1676,7 @@ ggsave("mobility.png")
 
 ```
 
-Figure \@ref(fig:suppress) shows the marginal effect of all other covariates in the model on the latent infection rate, expressed as the marginal increase in the proportion infected for a standard deviation increase in the covariate. The estimates are further broken out in terms of mediation, and the indirect effects are calculated by summing individual mediation effects across mobility data types. The direct effects and indirect effects are plotted together in panel A, while the total effects (direct effects plus indirect effects) are shown below in panel B. 
+Figure \@ref(fig:suppress) shows the marginal effect of all other covariates in the model on the latent infection rate expressed as average cumulative marginal effects. The estimates are further broken out in terms of mediation. The mobility effect is equivalent to the $ed$ path in Figure \ref{tikzfig2}, i.e., it is the path from the covariates to mobility that does not go through increased fear. The fear effect, on the other hand, is equivalent to the $abd + ae$ paths, or the sum of the path from fear through mobility and the path from fear to infections apart from mobility. The direct effects are equivalent to the $g$ path in Figure \ref{tikzfig2}, and the total effects are the sum of all paths. The direct and indirect effects are in panel A while the total effects are in panel B.
 
 ```{r suppress,fig.asp=1.5,fig.cap="Marginal Effects of Covariates on Latent Infection Rates for U.S. States"}
 
@@ -1940,150 +1862,128 @@ p2 / p1 + plot_annotation(caption="Marginal effects calculated as a 1-standard d
 ```
 
 
-The use of mediation analysis shows substantial heterogeneity in the types of associations and whether direct and indirect effects tend to complement or substitute each other. First, it is important to note that the single strongest associations in panel B come from the YouGov mask-wearing poll, the Civiqs concern over coronavirus poll, the relative vote share for Donald Trump in 2016, and the percent of a state's residents that are foreign-born. The percentage of foreign born is the single largest factor behind a state's infection rate, with a one SD increase in foreign born associated with a 0.15% percent increase in a state's population that is infected by COVID-19. As these are sample average marginal effects, that number reflects what an *average* state might experience; the effect could well be larger for states with higher infection rates than average. By contrast, the other large effects are strongly negative, with states with more mask-wearers, states with more people concerned over the coronavirus, and states with more people who voted for Donald Trump all experiencing substantially fewer infections, approximately 0.01% of an average state's population. While these effects may seem small, considering that they accumulate over time and that the state with the highest infection rate is 5 percent, they represent substantial changes in the count of infected individuals.
+The use of mediation analysis shows substantial heterogeneity in the types of associations and whether direct and indirect effects tend to complement or substitute each other. First, it is important to note that the single strongest associations in panel B come from the YouGov mask-wearing poll, the Civiqs concern over coronavirus poll and the economy poll, and the percent of a state's residents that are foreign-born. As these are cumulative average marginal effects, that number reflects what an *average* state might experience; the effect could well be larger for states with higher infection rates than average. On the other hand, as these effects are cumulative, they reflect a state that experienced a sustained increase in the covariates and so it might overstate the effects somewhat. 
 
-In general, we have more reason to think that the time-varying variables, such as the COVID poll and the Trump approval poll, are likely causally identified relative to variables that only vary by state, such as the share of foreign-born in a state. On the one hand, it is very interesting to note that the share of foreign-born is associated with both indirect and direct effects on the disease. However, considering that the share of foreign-born was fixed before the outbreak, we have limited ability to know why these associations are so strong. However, we have reason to think that the share of foreign-born could be a proxy for international travel and hence may be estimating the long influence of the outbreak of the epidemic in states with easy access to international travel. In fact, this connection was the original motivation for including this variable as a control covariate. At the same time, it is somewhat more difficult to explain why the share of foreign-born would be so strongly related to mobility data, and this is an issue we will leave to future inquiry.
+In general, the factors that are most strongly associated with infection suppression are concern over COVID-19, wearing masks, and living in a state with more smokers, more wealth and more population density. Conversely, a higher percentage of foreign-born, more concern over the economy, more PPE policies and social justice protests are associated with more infections. 
 
-In line with other research, we find that social justice protests had little if any association with infection rates. Though the total effect is positive and statistically significant (i.e., the posterior interval does not include zero), the sample average marginal effect is approximately +`r round(over_all_sum2$med_est[12]*100,5)`%, or small to the point of being minute. There is some evidence, as @protest2020 suggest, that the positive effect of the protests was offset by reduced mobility by non-protesters as the indirect effect is negative, though it is small (`r round(over_all_sum2$med_indirect_est[12]*100,5)`%). As such, it is possible that some additional people were infected, but the number would be so small that it cannot constitute a major outbreak or increase in the level of the epidemic.
+Given that these are associations, we can learn more about the meaning of the results when we can identify effects through pathways which we have a theoretical reason to believe matter for fighting the epidemic: individual concern over COVID-19 and individual mobility. Furthermore, there is more reason to think that an association might be identified if it is a time-varying factor given that the 14-day lag can rule out reverse causality. For this reason, while the association with percent foreign-born is quite strong, we cannot say as much about the reasons underpinning the association as it is mainly a direct effect. Indirectly, the percentage foreign born is associated with *reduced* COVID-19 spread via the fear pathway. 
 
-Other factors that seem to have little effect include state-level policies designed to increase access to test (probably because they were widely implemented across states early in the pandemic), the level of PM$_{2.5}$ in the atmosphere, and the percent of smokers in a state's population. Some factors also have moderate negative associations the disease, including state per capita income (GDP), concern over the economy and the percentage of youth in a population. 
+Considering that the share of foreign-born was fixed before the outbreak, we have limited ability to know why the direct association is so strong. However, we have reason to think that the share of foreign-born could be a proxy for international travel and hence may be estimating the long influence of the outbreak of the epidemic in states with easy access to international travel. In fact, this connection was the original motivation for including this variable as a control covariate. 
 
-While it is difficult to generalize given the variety of associations, it does seem possible to rule out some possibilities. The number of young people does not (yet) appear to be strongly positively related to the disease despite accusations that younger people tend to ignore social distancing and other policies. A state's wealth does insulate it somewhat from infections, and states with more people who wear masks and who are concerned about COVID-19 also (perhaps counter-intuitively) see fewer infections over time. Health-related variables including the prior level of public health funding and the number of providers are negatively associated with the disease, though not at a level we might expect compared to other covariates.
+In contrast to other research, we find that social justice protests are positively associated with COVID-19 spread, though the effect is not particularly large. Furthermore, as we report cumulative marginal effects, it is unlikely that states experienced protests every day in the sample, suggesting that the reported effect is more of an upper bound for what most states experiencd. There is some limited evidence, as @protest2020 suggest, that the positive effect of the protests was offset by reduced mobility by non-protesters as the indirect effect is weakly negative, though it is small (`r round(over_all_sum2$med_indirectmob_est[13]*100,3)`%). There is also a positive association via the fear pathway, suggesting that protest activity tended to reduce people's fear of COVID-19, and this may have led to increased infections independently of social contact.
 
-In fact, the strongest time-varying factors present in the model concern individual behavior more than policies or state preparedness. Considering that the percentage of foreign residents and Trump vote share were determined long before COVID-19 arrived, it is clear that individuals' willingness to wear masks and their personal fear of the disease is strongly associated with repressing it. In fact, the effect of individual reported mask-wearing is far stronger than the effect of having a state-level mask policy, suggesting again substantial heterogeneity in how state policies are interpreted and applied on the ground. 
+While it is difficult to generalize given the variety of associations, it does seem possible to rule out some possibilities. The number of young people does not (yet) appear to be a positive predictor of the disease despite accusations that younger people tend to ignore social distancing and other policies.  Health-related variables including the prior level of public health funding and the number of providers are either positively or weakly associated with the disease. They also tend to have countervailing influences via different pathways and direct effects, suggesting rather complicated processes through which they are associated with the spread of the pandemic. At the very least, there is no simple path from increased public health spending or number of healthcare providers and a more limited outbreak of COVID-19.
 
-At the same time, it is important to note that there are potential post-treatment issues in evaluating both concern over COVID and state policies simultaneously as some have hypothesized that state policies may effect behavior by increasing people's subjective perception of risk [@dryhurst2020risk]. As such, including these variables may deflate the predictive value of other covariates that are causally prior. While we note this issue, as examining risk perceptions is not the main focus of our paper, we do not further explore this particular issue besides noting that the direct effect estimates are likely conservative given that additional mediation may be occurring.
+What is clear is that the strongest time-varying factors present in the model concern individual behavior more than policies or state preparedness. Considering that the percentage of foreign residents and the number of smokers were determined long before COVID-19 arrived, the most important manipulable factors are those involving beliefs, such as in the strength of the economy and the relative threat of COVID-19, along with personal behaviors like mask-wearing.
 
-It is interesting finally to note differences in indirect and direct effects of the covariates in panel A of Figure \@ref(fig:suppress). The large effect from the COVID poll primarily comes from mobility data; people who are more concerned about COVID are less likely to frequent places where they could contract the disease. Somewhat counter-intuitively, the mask poll is also associated with repressing COVID through mobility, which we might not expect given that masks can be worn while frequenting locations. The other factor with surprising heterogeneity is per capita income: wealthier states have a strong suppressive *direct* effect on the disease, but the effect mediated through mobility is slightly positive. Wealthier states lower their risk of exposure through some other channel than reducing mobility. A similar trend can be seen with public health funding, which has a moderate negative association with COVID-19 primarily as a direct effect, not through mobility. Again, given that GDP per capita and public health funding do not vary with time, we only have limited ability to say what underlies the association.
+It is interesting finally to note differences in indirect and direct effects of the covariates in panel A of Figure \@ref(fig:suppress). The large effect from the COVID poll primarily comes from mobility data; people who are more concerned about COVID are less likely to frequent places where they could contract the disease. The mask poll is associated with repressing COVID through mobility *and* fear of COVID-19, while the direct effect is positive. This may suggest that the direct association has to do with overall higher rates of COVID-19 in places where people adopted masks. These associations suggest that masks do influence how we think about the disease, though the increased awareness of the disease leads to more prudent social behavior overall rather than masks substituting for social distancing as some supposed would happen [@abaluck2020]. 
 
-Given the prominence of Trump-related variables in explaining the spread of the disease, in addition to the importance of the question to the study of partisanship, we explore the interaction between Trump vote share and Trump approval polls in Figure \@ref(fig:trumpint). In this figure, the effect of Trump approval on COVID-19 is plotted conditional on the vote share within a given state for Trump in 2016 on the $x$ axis. The effects are shown aggregated in panel A and disaggregated across mobility types in panel B. Panel A shows that in general, the effect of partisanship for Trump is largely a direct effect, and is highly conditional on the prior level of votes for Trump. In states with high Trump vote share, increasing Trump approval is associated with less COVID-19. By contrast, in states with low vote share, increasing Trump approval is associated with *more* COVID-19. These effects are quite large: a 1-SD increase in Trump's approval within a state is associated with a -0.02% decline in COVID infections in pro-Trump states and a +0.02% increase in COVID infections in anti-Trump states. 
+Given the prominence of Trump-related variables in explaining the spread of the disease, in addition to the importance of the question to the study of partisanship, we explore the interaction between Trump vote share and Trump approval polls in Figure \@ref(fig:trumpint). In this figure, the effect of Trump 2016 vote share is plotted conditional on the relative level of daily Trump approval polling on the $x$ axis. The effects are shown aggregated in panel A and disaggregated across mobility types in panel B. Panel A shows that in general, the effect of partisanship for Trump is largely a direct effect, and is highly conditional on the above/below polling average of approval for Trump in a given state (which has a maximum swing of about +/- 4 pp). States that voted for Trump in 2016 tend to see more infections when Trump approval is low, and fewer infections when Trump approval is high. These effects are quite large, reaching cumulative numbers of +/- 5% infections.
 
-These effects are difficult to generalize though it is clear that it is primarily a direct effect, not mediated through mobility. However, to the extent that there is a relationship with mobility, it is also negative for both pro and anti-Trump states. It is difficult to assign a precise interpretation to this heterogeneity because of a composition problem: we do not know who exactly is changing their views about Trump at a given time point, and also what other variables might mediate the relationship. We know the effect is direct in the sense that it is not mediated by mobility, but there could be other factors that mediate the relationship which we have not identified. We do note that many plausible factors, such as mask-wearing, state-level policies, and health variables have all been accounted for in the model.
+However, it is important to note opposite effects through the mediated pathways. Figure \@ref(fig:trumpint) shows that Trump vote share mediated through mobility and fear is *positive*. While the effects are not as large as the direct effects, they are still substantial. Trump vote share's effect on COVID-19 mediated through these important channels shows that pro-Trump states tend to implement social-distancing behaviors at lower rates, as previous research has shown, with consequent relative increases in infections. Furthermore, these associations are relatively constant given Trump approval polls, although there is a more stronger association for Trump approval polling and Trump vote share in dampening fears over COVID-19. 
 
-What we can say is that this finding points to very strong associations between partisanship and the spread of the COVID-19, but not via behaviors that we know to suppress the epidemic. States with higher Trump vote shares have seen significantly fewer infections; when Trump approval increases in these states they generally observe fewer infections, which cannot be explained through decreased mobility. Our contention, as expressed through our hypotheses, is that the evidence suggests this relationship is spurious. After all, it is well-known that the early states that were infected with COVID tended to vote against Trump, although partisanship is not why they were more vulnerable to COVID initially. We believe that pro-Trump states received fortuitous outcomes by happening to not be on major travel routes from early COVID-19 hot spots, and subsequent state actions were able to contain the disease well enough that rising approval sentiment for Trump became associated with continued suppression. In other words, although it is implausible to suggest that voting for Trump in 2016 protected a state from an early outbreak in any causal sense, the strength of this association has likely contributed to the polarization of the disease along partisan lines.
+What we can say is that this finding points to very strong associations between partisanship and the spread of the COVID-19, but not via behaviors that we know to suppress the epidemic. States with higher Trump vote shares have seen significantly fewer infections; when Trump approval increases in these states they generally observe fewer infections, which cannot be explained through decreased mobility nor concern over COVID-19. Our contention, as expressed through our hypotheses, is that the evidence suggests this relationship is spurious. After all, it is well-known that the early states that were infected with COVID tended to vote against Trump, although partisanship is not why they were more vulnerable to COVID initially. We believe that pro-Trump states received fortuitous outcomes by happening to not be on major travel routes from early COVID-19 hot spots; rising Trump approval in these states occurred as pro-Trump residents believed their president's dismissal of the virus' threat. In other words, the unexplained direct effect justified the relative inattention to important behaviors that could prevent infection. Given the increase in COVID-19 infections in the last two months in heavily Republican states, it would seem that this tendency would lead pro-Trump states to suffer in the long run as behavior caught up with initial conditions.
 
-```{r trumpint,fig.asp=0.8,fig.cap="Marginal Effects of Increasing Within-State Trump Approval Rating Conditional on Trump Vote Share in 2016"}
+```{r trumpint,fig.asp=0.8,fig.cap="Marginal Effects of Trump Vote Share in 2016 Conditional on State Approval Polls"}
 
-# do a big grid
-# evaluate the total derivative of infections with respect to vote share and approval
-
-if(calc_int) {
-  
-  # warning: this will take a long time to run, though it is parallelizable & more cores will
-  # reduce the time required
-  
-  trump_grid <- expand.grid(seq(min(just_data$trump),
-                                  max(just_data$trump),length.out = 100),
-                             seq(min(just_data$trendline_approve),
-                                  max(just_data$trendline_approve),length.out = 100))
-
-    over_vote_share <- parallel::mclapply(1:nrow(trump_grid),
-                              function(i) {
-      
-      # trump vote share
-                                
-      p <- trump_grid$Var1[i]
-      
-      # trump approval rating
-      
-      a <- trump_grid$Var2[i]
-                                
-    
-      # get direct effect for poll day p
-      # with respect to approval rating and vote share
-      
-      de <- (suppress_effect$estimate[suppress_effect$variable==15] +
-        suppress_effect$estimate[suppress_effect$variable==9] * p) + 
-        (suppress_effect$estimate[suppress_effect$variable==1] +
-        suppress_effect$estimate[suppress_effect$variable==9] * a) 
-      
-      # loop over mobility
-      
-      mob_mats <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
-        
-        ide <- (suppress_mob_effect$estimate[suppress_mob_effect$variable==15 & suppress_mob_effect$mobility==m] +
-                  suppress_mob_effect$estimate[suppress_mob_effect$variable==9 & suppress_mob_effect$mobility==m] * p +
-                  suppress_mob_effect$estimate[suppress_mob_effect$variable==1 & suppress_mob_effect$mobility==m] +
-                  suppress_mob_effect$estimate[suppress_mob_effect$variable==9 & suppress_mob_effect$mobility==m] * a) * mob_effect[,m]
-      
-    }) 
-      
-      fear_id <- which(colnames(real_data$suppress)=="trendline_extremely_concerned")
-      
-      fear <- (suppress_fear_effect$estimate[suppress_fear_effect$variable==15] +
-               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*p +
-                 suppress_fear_effect$estimate[suppress_fear_effect$variable==1] +
-               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*a)  * suppress_effect$estimate[suppress_effect$variable==fear_id]
-      
-      # fear -> mobility pathway
-      
-      mob_mats_fear <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
-
-        ide <- suppress_mob_effect$estimate[suppress_mob_effect$variable==fear_id & suppress_mob_effect$mobility==m] * mob_effect[,m] * (suppress_fear_effect$estimate[suppress_fear_effect$variable==15] +
-               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*p +
-                 suppress_fear_effect$estimate[suppress_fear_effect$variable==1] +
-               suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*a)
-      
-    })
-      
-      tibble(`Direct Effect`=state_means(de*t(p_infected1)*t(p_infected2)),
-             `Total Effect` = state_means((de + fear + Reduce('+', mob_mats) +  Reduce('+', mob_mats_fear))*t(p_infected1)*t(p_infected2)),
-             `Indirect\nMobility` = state_means((Reduce('+', mob_mats) + Reduce('+', mob_mats_fear))*t(p_infected1)*t(p_infected2)),
-             `Indirect\nCOVID Poll`= state_means((Reduce('+', mob_mats_fear) + fear)*t(p_infected1)*t(p_infected2)),
-             `Retail Indirect`= state_means((mob_mats[[1]] + mob_mats_fear[[1]])*t(p_infected1)*t(p_infected2)),
-             `Grocery Indirect`= state_means((mob_mats[[2]] + mob_mats_fear[[2]])*t(p_infected1)*t(p_infected2)),
-             `Parks Indirect`= state_means((mob_mats[[3]] + mob_mats_fear[[3]])*t(p_infected1)*t(p_infected2)),
-             `Transit Indirect`= state_means((mob_mats[[4]] + mob_mats_fear[[4]])*t(p_infected1)*t(p_infected2)),
-             `Workplaces Indirect`= state_means((mob_mats[[5]] + mob_mats_fear[[5]])*t(p_infected1)*t(p_infected2)),
-             `Residential Indirect`= state_means((mob_mats[[6]] + mob_mats_fear[[6]])*t(p_infected1)*t(p_infected2)),
-             `Fear Direct`= state_means(fear*t(p_infected1)*t(p_infected2)),
-             `2016 Trump Vote Share`=mean(combined$trump) + p*sd(combined$trump),
-             `Within-State Approval Rating`=mean(combined$trendline_approve) + a*sd(combined$trendline_approve))
-    
-      },mc.cores=8) %>% bind_rows
-    
-    saveRDS(over_vote_share,"over_vote_share.rds")
-} else {
-  over_vote_share <- readRDS("over_vote_share.rds")
-}
+over_vote_share <- parallel::mclapply(seq(min(just_data$trendline_approve),
+                                          max(just_data$trendline_approve),
+                                          length.out=100),
+                                      function(p) {
+                                        print(p)
+                                        # get direct effect for poll day p
+                                        
+                                        de <- suppress_effect$estimate[suppress_effect$variable==1] +
+                                          suppress_effect$estimate[suppress_effect$variable==9] * p 
+                                        
+                                        # loop over mobility
+                                        
+                                        mob_mats <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
+                                          
+                                          ide <- (suppress_mob_effect$estimate[suppress_mob_effect$variable==1 & suppress_mob_effect$mobility==m] +
+                                                    suppress_mob_effect$estimate[suppress_mob_effect$variable==9 & suppress_mob_effect$mobility==m] * p) * mob_effect[,m]
+                                          
+                                        }) 
+                                        
+                                        fear_id <- which(colnames(real_data$suppress)=="trendline_extremely_concerned")
+                                        
+                                        fear <- (suppress_fear_effect$estimate[suppress_fear_effect$variable==1] +
+                                                   suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*p)  * suppress_effect$estimate[suppress_effect$variable==fear_id]
+                                        
+                                        # fear -> mobility pathway
+                                        
+                                        mob_mats_fear <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
+                                          
+                                          ide <- suppress_mob_effect$estimate[suppress_mob_effect$variable==fear_id & suppress_mob_effect$mobility==m] * mob_effect[,m] * (suppress_fear_effect$estimate[suppress_fear_effect$variable==1] +
+                                                                                                                                                                             suppress_fear_effect$estimate[suppress_fear_effect$variable==9]*p)
+                                          
+                                        })
+                                        
+                                        tibble(`Direct Effect`=state_means(de*t(p_infected1)*t(p_infected2)),
+                                               `Total Effect` = state_means((de + fear + Reduce('+', mob_mats) +  Reduce('+', mob_mats_fear))*t(p_infected1)*t(p_infected2)),
+                                               `Indirect\nMobility` = state_means((Reduce('+', mob_mats) + Reduce('+', mob_mats_fear) + fear)*t(p_infected1)*t(p_infected2)),
+                                               `Indirect\nCOVID Poll`= state_means((Reduce('+', mob_mats_fear) + fear)*t(p_infected1)*t(p_infected2)),
+                                               `Retail Indirect`= state_means((mob_mats[[1]] + mob_mats_fear[[1]])*t(p_infected1)*t(p_infected2)),
+                                               `Grocery Indirect`= state_means((mob_mats[[2]] + mob_mats_fear[[2]])*t(p_infected1)*t(p_infected2)),
+                                               `Parks Indirect`= state_means((mob_mats[[3]] + mob_mats_fear[[3]])*t(p_infected1)*t(p_infected2)),
+                                               `Transit Indirect`= state_means((mob_mats[[4]] + mob_mats_fear[[4]])*t(p_infected1)*t(p_infected2)),
+                                               `Workplaces Indirect`= state_means((mob_mats[[5]] + mob_mats_fear[[5]])*t(p_infected1)*t(p_infected2)),
+                                               `Residential Indirect`= state_means((mob_mats[[6]] + mob_mats_fear[[6]])*t(p_infected1)*t(p_infected2)),
+                                               `Fear Direct`= state_means(fear*t(p_infected1)*t(p_infected2)),
+                                               interact=mean(combined$trendline_approve) + p*sd(combined$trendline_approve))
+                                        
+                                      },mc.cores=3) %>% bind_rows
 
 trump1 <- over_vote_share %>% 
-    gather(key="Type",value="estimate",-`2016 Trump Vote Share`,
-           -`Within-State Approval Rating`) %>% 
-    group_by(Type,`2016 Trump Vote Share`,`Within-State Approval Rating`) %>% 
-    summarize(med_est=median(estimate),
-              high_est=quantile(estimate,.95),
-              low_est=quantile(estimate,.05)) %>% 
-    filter(Type %in% c("Indirect\nMobility",
-                       "Indirect\nCOVID Poll")) %>% 
-    ggplot(aes(y=`Within-State Approval Rating`,x=`2016 Trump Vote Share`)) +
-    geom_tile(aes(fill=med_est),width=.5) +
-    facet_wrap(~Type) + scale_fill_viridis_c() + 
-  theme(panel.background = element_blank()) +
-  scale_x_continuous(labels=scales::percent) + scale_y_continuous(labels=scales::percent)
+  gather(key="Type",value="estimate",-interact) %>% 
+  group_by(Type,interact) %>% 
+  summarize(med_est=median(estimate),
+            high_est=quantile(estimate,.95),
+            low_est=quantile(estimate,.05)) %>% 
+  filter(Type %in% c("Indirect\nMobility",
+                     "Indirect\nCOVID Poll",
+                     "Direct Effect","Total Effect")) %>% 
+  ggplot(aes(y=med_est,x=interact)) +
+  geom_ribbon(aes(ymin=low_est,ymax=high_est),fill="blue",alpha=0.5) +
+  geom_line(linetype=2,colour="white") +
+  geom_hline(yintercept = 0,linetype=3) +
+  scale_x_continuous(labels=scales::percent) +
+  scale_y_continuous(labels=scales::percent) +
+  facet_wrap(~Type) +
+  ylab("Cumulative Infected") +
+  xlab("") +
+  theme(panel.background = element_blank(),
+        panel.grid=element_blank(),
+        strip.background = element_blank())
 
 trump2 <- over_vote_share %>% 
-    gather(key="Type",value="estimate",-`2016 Trump Vote Share`,
-           -`Within-State Approval Rating`) %>% 
-    group_by(Type,`2016 Trump Vote Share`,`Within-State Approval Rating`) %>% 
-    summarize(med_est=median(estimate),
-              high_est=quantile(estimate,.95),
-              low_est=quantile(estimate,.05)) %>% 
-    filter(Type %in% c("Direct Effect",
-                       "Total Effect")) %>% 
-    ggplot(aes(y=`Within-State Approval Rating`,x=`2016 Trump Vote Share`)) +
-    geom_tile(aes(fill=med_est),width=.5) +
-    facet_wrap(~Type) + scale_fill_viridis_c() + 
-  theme(panel.background = element_blank()) +
-  scale_x_continuous(labels=scales::percent) + scale_y_continuous(labels=scales::percent)
-
+  gather(key="Type",value="estimate",-interact) %>% 
+  group_by(Type,interact) %>% 
+  summarize(med_est=median(estimate),
+            high_est=quantile(estimate,.95),
+            low_est=quantile(estimate,.05)) %>% 
+  filter(!(Type %in% c("Indirect\nMobility",
+                       "Indirect\nCOVID Poll","Direct Effect","Total Effect"))) %>% 
+  ggplot(aes(y=med_est,x=interact)) +
+  geom_ribbon(aes(ymin=low_est,ymax=high_est),fill="blue",alpha=0.5) +
+  geom_line(linetype=2,colour="white") +
+  scale_x_continuous(labels=scales::percent) +
+  facet_wrap(~Type) +
+  scale_y_continuous(labels=scales::percent) +
+  geom_hline(yintercept = 0,linetype=3) +
+  theme(panel.background = element_blank(),
+        panel.grid=element_blank(),
+        strip.background = element_blank()) +
+  ylab("Cumulative Infected") +
+  xlab("Trump Vote Share")
 
 trump1 / trump2 +
   plot_annotation(caption=str_wrap("Plots show marginal effect of within-state increasing Trump approval rating conditional on a state's vote share for Trump in 2016.",width=100),tag_levels = "A")
 
+
 ```
 
-We can also use estimates of cell phone mobility on COVID-19 to understand how policies have had mediated effects on the disease through increasing or decreasing mobility. Figure \@ref(fig:rankcountries2) shows the disaggregated mediation effects for two types of policies for the sake of space, restrictions on businesses and stay-at-home orders. The plots reveal how indirect mediation effects differ substantially between policy types. Panel A shows that business restrictions had a powerful suppressive effect on grocery store and to a lesser extent retail establishments during the early part of the epidemic, though that association changed over time. By contrast, panel B indicates that stay-at-home orders have had more durable effects on mobility that have suppressed the disease, particularly in grocery stores, retail establishments and transit. Furthermore, these effects seem to be increasing rather than decreasing over time. On the other hand, stay-at-home orders seem to be increasing disease infections via increasing residential mobility and decreasing time spent in parks, trade-offs that were noted in some early epidemiological modeling of COVID-19 [@flaxman2020].
+Finally, we can also use estimates of cell phone mobility on COVID-19 to understand how policies have had mediated effects on the disease through increasing or decreasing mobility. Figure \@ref(fig:rankcountries2) shows the disaggregated mediation effects for two types of policies for the sake of space, restrictions on businesses and stay-at-home orders. The plots reveal how indirect mediation effects differ substantially between policy types. Panel A shows that business restrictions had a powerful suppressive effect on grocery store and to a lesser extent retail establishments during the early part of the epidemic, though that association changed over time. By contrast, panel B indicates that stay-at-home orders have had more durable effects on mobility that have suppressed the disease, particularly in grocery stores, retail establishments and transit. Furthermore, these effects seem to be increasing rather than decreasing over time. On the other hand, stay-at-home orders seem to be increasing disease infections via increasing residential mobility and decreasing time spent in parks, trade-offs that were noted in some early epidemiological modeling of COVID-19 [@flaxman2020].
 
 ```{r rankcountries2,fig.cap="Mediated Effects of Lockdowns on Google Mobility Data",fig.asp=0.9}
 
@@ -2255,9 +2155,9 @@ The fact that we can find indirect effects of state policies, but not from Trump
 
 # Conclusion
 
-These empirical results indicate that partisanship is strongly associated with the spread of the disease, though we believe it is very unlikely that the relationship can be described as causal. Although states with higher vote shares for Donald Trump in 2016 and rising Trump approval polls have observed fewer infections, these associations are not explained primarily by mobility data, which is often seen as one of the main ways that the disease is contained. We believe that further research is necessary to understand whether people have been making flawed inferences about the spread of COVID-19 and partisanship, allowing politicians to use the epidemic as a wedge issue.
+These empirical results indicate that partisanship is strongly associated with the spread of the disease, though we believe it is very unlikely that the relationship can be described as causal. Although states with higher vote shares for Donald Trump in 2016 and rising Trump approval polls have observed fewer infections, these associations are not explained primarily by mobility data nor personal concern over COVID-19, which are powerful predictors of reduced infections. We believe that further research is necessary to understand whether people have been making flawed inferences about the spread of COVID-19 and partisanship, allowing politicians to use the epidemic as a wedge issue.
 
-This model was devised to permit the statistical identification of suppression measures and social, political and economic factors on the spread of COVID-19. It is not intended to be a replacement or alternative to the disease forecasting literature. If anything, this modeling exercise shows why structural epidemiological models are so important: without them it is impossible to project the total number of infected people on a given day. This model's simplicity and ability to use empirical data are its main features, and the hope is that it can be used and extended by researchers looking at government policies and other tertiary factors on the spread of the disease. At the very least, the model provides realistic uncertainty intervals taking into account very real biases in the observed data.
+The model employed in this article was devised to permit the statistical identification of suppression measures and social, political and economic factors on the spread of COVID-19. It is not intended to be a replacement or alternative to the disease forecasting literature. If anything, this modeling exercise shows why structural epidemiological models are so important: without them it is impossible to project the total number of infected people on a given day. This model's simplicity and ability to use empirical data are its main features, and the hope is that it can be used and extended by researchers looking at government policies and other tertiary factors on the spread of the disease. At the very least, the model provides realistic uncertainty intervals taking into account very real biases in the observed data.
 
 In addition, the model provides insight into how the number of tests undertaken by a given country or area compares to the probably number of infections. These parameter estimates can be used to understand whether a state's testing exceeds, is the same as or is less than the number of infected individuals. Given the wide problem of data scarcity in understanding the disease's spread, we hope this model can be used to make the most of empirical evidence. 
 

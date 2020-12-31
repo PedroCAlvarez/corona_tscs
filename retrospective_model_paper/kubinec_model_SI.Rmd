@@ -5,7 +5,7 @@ output:
   bookdown::pdf_document2:
     includes: 
       in_header:
-          preamble.tex
+          preamble2.tex
 toc: true
 csl: nature.csl
 bibliography: BibTexDatabase.bib
@@ -38,141 +38,14 @@ run_model <- F
 
 ```
 
-# Testing and COVID-19
-
-In addition to the estimation of the cumulative count of infected individuals, the model provides further useful information by parameterizing the relationship between the unobserved infection rate and the number of tests conducted in a given state. These individual parameters are shown in Figure \@ref(fig:tpi). The scale of the y axis shows the number of people that a state was able to test relative to each person infected. The plot shows that some states have been able to test far more people than have been infected (New York, Rhode Island), while other states like Texas, Arizona and Pennsylvania have tested barely twice as many as those who have been infected. The fact that new outbreaks have been seen in Texas and Arizona suggests that this shortfall in testing likely disguised early outbreaks that could have been detected otherwise.
-
-
-```{r tpi,fig.asp=.8,fig.cap="Measuring States' Testing Rates Relative to Infection Rates",echo=F,message=F,warning=F}
-
-us_fit_scale <- readRDS("../data/us_fit_scale.rds")
-combined <- readRDS("combined.rds")
-real_data <- readRDS("real_data.rds")
-combined <- mutate(ungroup(combined),key=1:n()) %>% 
-  group_by(state) %>% 
-  arrange(state,month_day) %>% 
-  mutate(cum_sum_cases=cases,
-         recovered=coalesce(recovered,0),
-         deaths=coalesce(deaths,0))
-         # cum_sum_cases = cum_sum_cas
-
-prop_infected_mat <- t(as.matrix(us_fit_scale,"prop_infect_out"))
-
-prop_infected <- as_tibble(prop_infected_mat) %>% 
-  mutate(key=1:n()) %>% 
-  gather(key="iter",value="estimate",-key)
-
-all_est_state <- select(combined,deaths,recovered,month_day,state,key,cum_sum_cases,state_pop,Difference,tests3,test_max) %>% 
-  left_join(prop_infected,by="key")
-
-# merge in deaths/recovered
-
-us_case_count <- group_by(combined,month_day) %>% 
-  summarize(all_cum_sum=sum(cum_sum_cases),
-            all_rec=sum(recovered),
-            all_death=sum(deaths))
-
-all_est_state <- left_join(all_est_state,us_case_count,by="month_day")
-
-# convert to marginal changes
-
-this_infect1 <- lapply(seq(max(combined$month_day) - days(7), max(combined$month_day),by=1),
-                    function(d) {
-                      
-                      filter(ungroup(all_est_state),
-                       month_day==d) %>% 
-  select(state,estimate,iter) %>% 
-  group_by(state) %>% 
-  mutate(estimate=plogis(estimate)) %>% 
-  spread(key="state",value="estimate") %>% 
-  ungroup %>% 
-  select(-iter) %>% 
-  as.matrix
-       })
-
-this_test_max <- ungroup(combined) %>% 
-  select(state,month_day,test_max) %>% 
-  filter(month_day==max(month_day))
-
-this_time <- max(combined$lin_counter)
-
-test_lin <- as.matrix(us_fit_scale,"test_lin_counter")
-test_lin2 <- as.matrix(us_fit_scale,"test_lin_counter2")
-test_base <- as.matrix(us_fit_scale,"test_baseline")
-
-alpha_test <- as.data.frame(us_fit_scale,pars="alpha_test")
-
-test_max_par <- as.data.frame(us_fit_scale,"test_max_par")
-
-lin_step <- real_data$lin_counter[2,1] - real_data$lin_counter[1,1]
-
-country_test <- as.matrix(us_fit_scale,"country_test_raw")
-mu_test <- as.matrix(us_fit_scale,"mu_test_raw")
-sigma_test <- as.matrix(us_fit_scale,"sigma_test_raw")
-
-country_nonc <- mu_test[,1] + country_test * sigma_test[,1]
-
-# loop over infections
-# loop over time
-
-over_days <- lapply(seq(max(combined$month_day) - days(7), max(combined$month_day),by=1),
-                    function(d) {
-                      
-    over_states <- lapply(1:real_data$num_country, function(s) {
-      
-      lin_val <- unique(combined$lin_counter[combined$month_day==d])
-      counter <- which(seq(max(combined$month_day) - days(7), max(combined$month_day),by=1)==d)
-      
-     tibble(estimate=plogis(alpha_test$alpha_test + country_nonc[,s] * this_infect1[[counter]][,s]*lin_val +
-                            test_base * this_infect1[[counter]][,s] + test_lin*lin_val),
-         state_num=s,
-         mean_est=mean(this_infect1[[counter]][,s]),
-         month_day=d)
-    }) %>% bind_rows
-                      
-}) %>% bind_rows
-
-
-
-
-saveRDS(over_days,"test_data.rds")
-
-state_id <- distinct(combined,state,state_pop) %>% 
-  ungroup %>% 
-  mutate(state_num=as.numeric(factor(state)))
-
-over_days %>%
-  left_join(state_id,by="state_num") %>%
-  group_by(state) %>%
-    summarize(med_est=quantile(estimate/mean_est,.5),
-            high_est=quantile(estimate/mean_est,.95),
-            low_est=quantile(estimate/mean_est,.05)) %>% 
-  ggplot(aes(y=med_est,x=reorder(state,med_est))) +
-  geom_pointrange(aes(ymin=low_est,ymax=high_est)) +
-  theme_minimal() +
-  theme(panel.grid = element_blank(),axis.text=element_text(size = 7)) +
-  coord_flip() +
-  geom_hline(yintercept=.01) +
-  xlab("") +
-  labs(caption = stringr::str_wrap("Figure shows the average number of additional people tested in a given state for each person who becomes infected. Estimate is a cumulative average of the last seven days of data.")) +
-  ylab("Total Tested for Each Infected Resident (Cumulative Average)")
-
-ggsave("testing.png",height=5,width=8)
-
-```
-
-We would note that this information is also helpful to policy makers and others trying to make sense of observed case counts given the limitation in testing thus far. Our estimates help take into account these known biases and adjust them based on differences between states and within states in terms of disease trajectories. We believe this model can be used to help understand disease trends and factors associated with it even in the relatively data-poor environment many countries find themselves in. 
-
-
 # Model Stan Code
 
 The Stan code used to fit the model in the paper is as follows:
 
+\singlespacing
+
 ```
-
 functions {
-  
-
    // if(r_in(3,{1,2,3,4})) will evaluate as 1
   int r_in(int pos,int[] pos_var) {
    
@@ -298,10 +171,6 @@ functions {
               }
         }
               
-            //need a recursive function to transform to ordered vector
-            
-
-              
         mu_infect = mean(prop_infected);
         sd_infect = sd(prop_infected);
         
@@ -329,7 +198,6 @@ functions {
           log_prob += normal_lpdf(fear[start2:end2]|fear_const + Q_lock[start2:end2,1:L]*lockdown_med_raw_fear +
                                 Q_supp2[start2:end2,1:(S-1)]*suppress_med_raw_fear,sigma_fear);
 
-        
     mu_tests = inv_logit(alpha_test + 
                           test_baseline *  mix_prop_std +
                           country1 * mix_prop_std .* lin_counter[start2:end2,1] +
@@ -359,8 +227,6 @@ functions {
       }
       return log_prob;
     }
-    
-    
 }
 data {
   int time_all;
@@ -407,7 +273,6 @@ transformed data {
   matrix[L, L] R_lock_inverse;
   vector[G] mob_array[num_rows];
   
-  
   // thin and scale the QR decomposition
   Q_supp = qr_Q(suppress)[, 1:S] * sqrt(num_rows - 1);
   Q_supp2 = qr_Q(suppress2)[, 1:(S-1)] * sqrt(num_rows - 1);
@@ -429,8 +294,6 @@ transformed data {
       mob_array[n,g] = mobility[n,g];
     }
   }
-  
-  
 }
 parameters {
   vector[num_country] poly1; // polinomial function of time
@@ -571,82 +434,19 @@ target += reduce_sum_static(partial_sum, states,
                      fear,
                      fear_const,
                      sigma_fear);
-
 }
-generated quantities {
-  
-  // convert QR estimates back to actual numbers
-  
-  vector[S] suppress_effect; // suppression effect of govt. measures, cannot increase virus transmission rate
-  vector[L] lockdown_effect;
-  vector[G] mob_effect;
-  vector[L] lockdown_med[G];
-  vector[S] suppress_med[G];
-  vector[L] lockdown_med_fear;
-  vector[S-1] suppress_med_fear;
-  vector[num_rows] prop_infect_out;
-  
-  suppress_effect = R_supp_inverse * suppress_effect_raw;
-  lockdown_effect = R_lock_inverse * lockdown_effect_raw;
-  mob_effect = R_mob_inverse * mob_effect_raw;
-  
-  for(g in 1:G) {
-    lockdown_med[g] = R_lock_inverse * lockdown_med_raw[g];
-    suppress_med[g] = R_supp_inverse * suppress_med_raw[g];
-  }
-  
-  suppress_med_fear = R_supp_inverse2 * suppress_med_raw_fear;
-  lockdown_med_fear = R_lock_inverse * lockdown_med_raw_fear;
-    
-  
-  for(s in 1:num_country) {
-    
-        real poly_nonc1; // non-centered poly parameters
-        real poly_nonc2; // non-centered poly parameters
-        real poly_nonc3; // non-centered poly parameters
-        
-        int start2 = states[s,2];
-        int end2 = states[s,3];
-        int obs = end2 - start2 + 1;
-        
-        poly_nonc1 = mu_poly[1] + sigma_poly[1]*poly1[s];
-        poly_nonc2 = mu_poly[2] + sigma_poly[2]*poly2[s];
-        poly_nonc3 = mu_poly[3] + sigma_poly[3]*poly3[s];
-    
-    for(i in 1:obs) {
-              if(i==1) {
-                prop_infect_out[start2] = alpha_infect + count_outbreak[start2,1] * poly_nonc1 +
-                    count_outbreak[start2,2] * poly_nonc2  +
-                    count_outbreak[start2,3] * poly_nonc3  +
-                    world_infect*month_cases[start2] +
-                    Q_supp[start2,1:S]*suppress_effect_raw +
-                    Q_lock[start2,1:L]*lockdown_effect_raw +
-                    Q_mob[start2,1:G]*mob_effect_raw;
-              } else {
-                prop_infect_out[start2 + i - 1] = exp(alpha_infect + count_outbreak[start2+i-1,1] * poly_nonc1  +
-                    count_outbreak[start2+i-1,2] * poly_nonc2 +
-                    count_outbreak[start2+i-1,3] * poly_nonc3 +
-                    world_infect*month_cases[start2+i-1] +
-                    Q_supp[start2+i-1,1:S]*suppress_effect_raw +
-                    Q_lock[start2+i-1,1:L]*lockdown_effect_raw +
-                    Q_mob[start2+i-1,1:G]*mob_effect_raw) + prop_infect_out[start2 + i - 2];
-              }
-        }
-  }
-          
-}
-
-
-
-
 ```
 
 # Simulation
+
+\doublespacing
 
 Because our model is fully generative, we can simulate it using Monte Carlo methods. The simulation presented here is a simplification of the model presented in the main paper for clarity of exposition. We do not have varying polynomial time trends but rather a single global time trend, and we do not implement the cumulative sum transformation on the latent vector. 
 Despite these simplifications, the simulation is very important as it is the only way to demonstrate that the model is globally identified and can in fact capture unobserved parameters like suppression effects and relative infection rates. We also are able to show how the bias in only using observed cases and tests can affect the estimates of parameters.
 
 The following R code generates data from the model and plots the resulted unobserved infection rate and observed values for tests and cases along with an exogenous suppression covariate:
+
+\singlespacing
 
 ```{r onset,fig.width=7,fig.height=6,fig.cap="Simulation of Observed Tests and Cases Given Unobserved Infectious Process"}
 
@@ -794,6 +594,7 @@ all_out %>%
         legend.position = "top")
 ```
 
+\doublespacing
 
 Figure \@ref(fig:onset) shows one line for each state's trajectory from a total of 100 states and 100 time points.
 As can be seen, the shading indicating strength of suppression policies diverges substantially over time.
@@ -813,8 +614,10 @@ The model could be further extended with more complicated processes, such as spa
 
 We can then fit an empirical model using the Hamiltonian Monte Carlo (HMC) Markov Chain Monte Carlo (MCMC) sampler in Stan [@carpenter2017]
 to model the unobserved infection rate given the simulated observed data.
-We also fit a Bayesian binomial model of the proportion of counts to state population using the same specification as \@ref(eq:binom).
+We also fit a Bayesian binomial model of the proportion of counts to state population using the same covariates but with the observed counts as the outcome.
 This naive model is fitted to indicate the amount of bias that can occur in estimates as a result of ignoring the underlying infection process.
+
+\singlespacing
 
 ```{r stan_code}
 
@@ -935,12 +738,16 @@ all_est %>%
 ```
 
 
+\doublespacing
+
 We see how the model is able to partially recover the infection rate as shown in Figure \@ref(fig:plotdata).
 The estimates reveal the same general arc as the generated data, with higher suppression policies associated with lower infection counts, but the scale of the infection rate is no longer identified.
 As such, the model is only able to recover the relative rather than absolute trajectory of the infection rate. 
 
 However, because we have inferred the correct arc, we can also see what the estimated suppression parameters are.
 We also compare those to the same suppression parameters from the naive model in Figure \@ref(fig:suppeff).
+
+\singlespacing
 
 ```{r suppeff,fig.cap="Recovered Simulated Virus Suppression Parameters Versus Naive Model"}
 
@@ -974,6 +781,7 @@ bind_rows(list(Latent=p1,
 
 ```
 
+\doublespacing
 
 We can see in Figure \@ref(fig:suppeff) that despite the uncertainty in not perfectly observing the infection rate, we can still get a precise credible interval on the suppression effect.
 However, while the observed model's parameters have the same sign, they are wildly inflated, and far too precise.
@@ -984,120 +792,120 @@ The advantage of this model, as can be seen, is that with testing numbers and ca
 It is far simpler than existing approaches while still permitting inference on these hard-to-quantify measures.
 It is no substitute for infectious disease modeling--for example, it produces no estimates of the susceptible versus recovered individuals in the population, nor death rates--but rather a way to measure the effect of different background factors of interest to social and natural sciences on disease outcomes as well as approximate disease trajectory. Furthermore, the model's main quantity is a better measure to share with the public than misleading numbers of positive case counts.
 
-While the partial identification of this model is interesting and potentially useful in situations where nothing else can be inferred about the virus, it is possible to further identify the scale of the latent variable by incorporating information from SIR/SEIR models, which we demonstrate in the next section.
+<!-- While the partial identification of this model is interesting and potentially useful in situations where nothing else can be inferred about the virus, it is possible to further identify the scale of the latent variable by incorporating information from SIR/SEIR models, which we demonstrate in the next section. -->
 
-## Identifying the Latent Scale
+<!-- ## Identifying the Latent Scale -->
 
-To show how we can further attempt to identify the scale of the latent variable, instead of only relative differences between states, we show in this section how we can add in information from SEIR/SIR modeling to identify the total number of infected persons in the model.
-The crucial missing piece of information in the model is the ratio between the proportion of infected persons $I_{ct}$ and the proportion of tests per state population $q_{ct}$:
+<!-- To show how we can further attempt to identify the scale of the latent variable, instead of only relative differences between states, we show in this section how we can add in information from SEIR/SIR modeling to identify the total number of infected persons in the model. -->
+<!-- The crucial missing piece of information in the model is the ratio between the proportion of infected persons $I_{ct}$ and the proportion of tests per state population $q_{ct}$: -->
 
-\begin{equation}
-\frac{q_{ct}}{I_{ct}}
-\end{equation}
+<!-- \begin{equation} -->
+<!-- \frac{q_{ct}}{I_{ct}} -->
+<!-- \end{equation} -->
 
-Another way of framing the problem is to think of how much the number of tests should increase given a one-percentage increase in the infection rate.
-How many of these infected people will be tested? Without an idea of the true number of infected people, it is impossible to answer this question and thus identify the latent scale.
+<!-- Another way of framing the problem is to think of how much the number of tests should increase given a one-percentage increase in the infection rate. -->
+<!-- How many of these infected people will be tested? Without an idea of the true number of infected people, it is impossible to answer this question and thus identify the latent scale. -->
 
-However, an increasing number of SIR/SEIR papers show that it is likely that as few as 10% of the total number of infected persons are actually recorded as cases, including in the United States.
-This number provides us with a conservative lower bound if we consider that the number of tests should be at least 10% of the total proportion of infected persons.
-In other words, we can consider adding the following information into the model:
+<!-- However, an increasing number of SIR/SEIR papers show that it is likely that as few as 10% of the total number of infected persons are actually recorded as cases, including in the United States. -->
+<!-- This number provides us with a conservative lower bound if we consider that the number of tests should be at least 10% of the total proportion of infected persons. -->
+<!-- In other words, we can consider adding the following information into the model: -->
 
-\begin{equation}
-\frac{q_{ct}}{I_{ct}} >0.1.
-\end{equation}
+<!-- \begin{equation} -->
+<!-- \frac{q_{ct}}{I_{ct}} >0.1. -->
+<!-- \end{equation} -->
 
-Every percentage increase in the infection rate should result in at least a 0.1% increase in the total number of people tested as a percentage of the population, though the upper bound is unknown (some states may test many more than are actually infected).
-It is difficult to impose this constraint directly in the model; however, we can consider adding it as prior information if we can define a prior density over the ratio.
-First, for computational simplicity, we can consider a distribution over the log differences of the parameters:
+<!-- Every percentage increase in the infection rate should result in at least a 0.1% increase in the total number of people tested as a percentage of the population, though the upper bound is unknown (some states may test many more than are actually infected). -->
+<!-- It is difficult to impose this constraint directly in the model; however, we can consider adding it as prior information if we can define a prior density over the ratio. -->
+<!-- First, for computational simplicity, we can consider a distribution over the log differences of the parameters: -->
 
-\begin{equation}
-\text{log} q_{ct} - \text{log} I_{ct}.
-\end{equation}
+<!-- \begin{equation} -->
+<!-- \text{log} q_{ct} - \text{log} I_{ct}. -->
+<!-- \end{equation} -->
 
-By simulating from uniform distributions of possible rates for $\text{log} q_{ct}$ and $\text{log} I_{ct}$, it is possible to tell that the a realistic distribution of log differences with small density less than 0.1 is in fact very close a standard normal distribution:
+<!-- By simulating from uniform distributions of possible rates for $\text{log} q_{ct}$ and $\text{log} I_{ct}$, it is possible to tell that the a realistic distribution of log differences with small density less than 0.1 is in fact very close a standard normal distribution: -->
 
-```{r genlogs,fig.cap="Distribution of Log Difference in Probabilities"}
-# this code generates a log distribution of a ratio of two probabilities.
-f_y <- function(y, a, b, log = FALSE){
-  lc <-  log(b-a)
-  ans <- y  - lc
-  if(!log) ans <- exp(ans)
-  return(ans)
-}
-#
-get_Y_var <- function(a, b){
-  EXsq <- ( b*(log(b)^2 - 2*log(b) + 2) -  a*(log(a)^2 - 2*log(a) + 2) )/(b-a)
-  EX <- (b*(log(b) - 1) - a*(log(a) - 1) ) /(b-a)
-  ans <- EXsq - (EX)^2
-  return(ans)
-}
-##
-analytic_W <- function(w, a, b){  ## assumes i.i.d.
-  c0 <- all(w > a/b, w < b/a)
-  k <- (b-a)*(b-a)
-  m <- max(a, a/w)
-  M <- min(b, b/w)
-  soln <- function(L, U) ((U *abs(U))- (L *abs(L)))/(2*k)
-  d0 <- soln(L = m, U = M)
-  dens <- c0 * d0 
-  return(dens)  
-}
-analytic_W <- Vectorize(analytic_W)
-##
-f_z <- function(z, a, b, log = FALSE){
-  ans <- log(analytic_W(exp(z), a, b)) + z
-  if(!log) ans <- exp(ans)
-  return(ans)
-}
-f_z <- Vectorize(f_z)
-###############
+<!-- ```{r genlogs,fig.cap="Distribution of Log Difference in Probabilities"} -->
+<!-- # this code generates a log distribution of a ratio of two probabilities. -->
+<!-- f_y <- function(y, a, b, log = FALSE){ -->
+<!--   lc <-  log(b-a) -->
+<!--   ans <- y  - lc -->
+<!--   if(!log) ans <- exp(ans) -->
+<!--   return(ans) -->
+<!-- } -->
+<!-- # -->
+<!-- get_Y_var <- function(a, b){ -->
+<!--   EXsq <- ( b*(log(b)^2 - 2*log(b) + 2) -  a*(log(a)^2 - 2*log(a) + 2) )/(b-a) -->
+<!--   EX <- (b*(log(b) - 1) - a*(log(a) - 1) ) /(b-a) -->
+<!--   ans <- EXsq - (EX)^2 -->
+<!--   return(ans) -->
+<!-- } -->
+<!-- ## -->
+<!-- analytic_W <- function(w, a, b){  ## assumes i.i.d. -->
+<!--   c0 <- all(w > a/b, w < b/a) -->
+<!--   k <- (b-a)*(b-a) -->
+<!--   m <- max(a, a/w) -->
+<!--   M <- min(b, b/w) -->
+<!--   soln <- function(L, U) ((U *abs(U))- (L *abs(L)))/(2*k) -->
+<!--   d0 <- soln(L = m, U = M) -->
+<!--   dens <- c0 * d0  -->
+<!--   return(dens)   -->
+<!-- } -->
+<!-- analytic_W <- Vectorize(analytic_W) -->
+<!-- ## -->
+<!-- f_z <- function(z, a, b, log = FALSE){ -->
+<!--   ans <- log(analytic_W(exp(z), a, b)) + z -->
+<!--   if(!log) ans <- exp(ans) -->
+<!--   return(ans) -->
+<!-- } -->
+<!-- f_z <- Vectorize(f_z) -->
+<!-- ############### -->
 
-M <- 1E6
-a <-  .01
-b <-  .5
-Y <- log(runif(M, min = a, max = b))
+<!-- M <- 1E6 -->
+<!-- a <-  .01 -->
+<!-- b <-  .5 -->
+<!-- Y <- log(runif(M, min = a, max = b)) -->
 
-#hist(Y, probability = TRUE)
-# curve(f_y(x, a, b), min(Y), max(Y), add = TRUE, lwd = 2)
-# abline(v = c(log(a), log(b)), lwd = 2, lty = 2)
-# integrate(function(x) f_y(x, a, b), log(a), log(b))
+<!-- #hist(Y, probability = TRUE) -->
+<!-- # curve(f_y(x, a, b), min(Y), max(Y), add = TRUE, lwd = 2) -->
+<!-- # abline(v = c(log(a), log(b)), lwd = 2, lty = 2) -->
+<!-- # integrate(function(x) f_y(x, a, b), log(a), log(b)) -->
 
-###
+<!-- ### -->
 
-Y1 <- log(runif(M, min = a, max = b))
-Y2 <- log(runif(M, min = a, max = b))
+<!-- Y1 <- log(runif(M, min = a, max = b)) -->
+<!-- Y2 <- log(runif(M, min = a, max = b)) -->
 
-`Log Difference` <- Y1 - Y2
+<!-- `Log Difference` <- Y1 - Y2 -->
 
-# integrate(function(x) f_z(x, a, b), log(a)-log(b), log(b)-log(a))
-# integrate(function(x) x^2* f_z(x, a, b), log(a)-log(b), log(b)-log(a))
-# 
-# 2*get_Y_var(a, b)
-# Var(`Log Difference`)
-# 
-hist(`Log Difference`, breaks = 50, probability = TRUE)
-curve(f_z(x, a, b), min(`Log Difference`), max(`Log Difference`), col = 2, add = TRUE)
-curve(dnorm(x, 0, sqrt(2*get_Y_var(a, b))), min(`Log Difference`), max(`Log Difference`), col = 3, add = TRUE)
-abline(v = c(log(a)-log(b), log(b)-log(a)), lwd = 2, lty = 2)
-```
+<!-- # integrate(function(x) f_z(x, a, b), log(a)-log(b), log(b)-log(a)) -->
+<!-- # integrate(function(x) x^2* f_z(x, a, b), log(a)-log(b), log(b)-log(a)) -->
+<!-- #  -->
+<!-- # 2*get_Y_var(a, b) -->
+<!-- # Var(`Log Difference`) -->
+<!-- #  -->
+<!-- hist(`Log Difference`, breaks = 50, probability = TRUE) -->
+<!-- curve(f_z(x, a, b), min(`Log Difference`), max(`Log Difference`), col = 2, add = TRUE) -->
+<!-- curve(dnorm(x, 0, sqrt(2*get_Y_var(a, b))), min(`Log Difference`), max(`Log Difference`), col = 3, add = TRUE) -->
+<!-- abline(v = c(log(a)-log(b), log(b)-log(a)), lwd = 2, lty = 2) -->
+<!-- ``` -->
 
-If one desires to choose different parameters $a$ and $b > a$ for the distribution of $\text{log} q_{ct}$ and $\text{log} I_{ct}$, one may either (i) use the code above (`get_Y_var`) to obtain an approximating Gaussian -- with variance given by `2*get_Y_var(a, b)` -- or (ii) use the exact expression for the log of the ratio of two i.i.d. uniform random variables (`f_z`).
-Here, we will employ the standard Gaussian as it is good and tractable approximation of the exact distribution.
+<!-- If one desires to choose different parameters $a$ and $b > a$ for the distribution of $\text{log} q_{ct}$ and $\text{log} I_{ct}$, one may either (i) use the code above (`get_Y_var`) to obtain an approximating Gaussian -- with variance given by `2*get_Y_var(a, b)` -- or (ii) use the exact expression for the log of the ratio of two i.i.d. uniform random variables (`f_z`). -->
+<!-- Here, we will employ the standard Gaussian as it is good and tractable approximation of the exact distribution. -->
 
-We can see in the figure above that the standard normal provides an approximate fit to the density of two probabilities where there is limited density on values below $\text{log } -2$ or 0.14.
-On the other hand, the prior puts substantial mass on ratios of tests to infected that are quite high, such as $\text{log} 2$, 7.38. This informative prior, which still allows for a range of possible ratios, allows me to use SEIR/SIR model conclusions while still permitting uncertainty over the underlying relationship.
+<!-- We can see in the figure above that the standard normal provides an approximate fit to the density of two probabilities where there is limited density on values below $\text{log } -2$ or 0.14. -->
+<!-- On the other hand, the prior puts substantial mass on ratios of tests to infected that are quite high, such as $\text{log} 2$, 7.38. This informative prior, which still allows for a range of possible ratios, allows me to use SEIR/SIR model conclusions while still permitting uncertainty over the underlying relationship. -->
 
-For these reasons, we add this term to the joint posterior for each time point $t$ and state $c$:
+<!-- For these reasons, we add this term to the joint posterior for each time point $t$ and state $c$: -->
 
-\begin{equation}
-\text{log} q_{ct} - \text{log} I_{ct} \sim \operatorname{Normal}(0, 1).
-\end{equation}
+<!-- \begin{equation} -->
+<!-- \text{log} q_{ct} - \text{log} I_{ct} \sim \operatorname{Normal}(0, 1). -->
+<!-- \end{equation} -->
 
-We also add a log Jacobian adjustment to the posterior density to reflect the fact that this prior is a non-linear function of parameters we have already assigned priors to:
-\begin{equation}
-\text{log} (1 - q_{ct}) + \text{log} (1 - I_{ct}).
-\end{equation}
+<!-- We also add a log Jacobian adjustment to the posterior density to reflect the fact that this prior is a non-linear function of parameters we have already assigned priors to: -->
+<!-- \begin{equation} -->
+<!-- \text{log} (1 - q_{ct}) + \text{log} (1 - I_{ct}). -->
+<!-- \end{equation} -->
 
-The Jacobian adjustment is the derivative of the non-linear functions with respect to the underlying parameters, which in this case are the natural log and the inverse logit function.
+<!-- The Jacobian adjustment is the derivative of the non-linear functions with respect to the underlying parameters, which in this case are the natural log and the inverse logit function. -->
 
 # References

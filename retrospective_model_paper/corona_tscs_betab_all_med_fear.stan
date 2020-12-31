@@ -16,45 +16,6 @@ functions {
     }
     return 0;
     }
-    
-  
-  int r_in2(int pos,int[] pos_var) {
-    
-    for (p in 1:(size(pos_var))) {
-       int i = 0;
-       int prev;
-       if (pos_var[p]==pos) {
-       // can return immediately, as soon as find a match
-          i += 1;
-          if(p<size(pos_var)) {
-            prev = pos_var[p];
-            // remaining elements to check
-            if(i==1) {
-            // keep going
-            } else {
-              if(prev==pos_var[p] && p < size(pos_var)) {
-                // keep going
-                continue;
-              } else {
-                if(prev==pos_var[p]) {
-                  return p;
-                } else {
-                  // sequence ended last iteration
-                  return p - 1;
-                }
-                
-              }
-              
-            }
-          } else {
-            // match was at the end of the sequence
-            return p;
-          }
-          
-       } 
-    }
-    return 0;
-    }
   
   real partial_sum(int[,] y_slice,
                    int start, int end,
@@ -126,7 +87,6 @@ functions {
         vector[end2 - start2 + 1] prop_infected; // modeled infection rates for domestic transmission\
         
         int obs = end2 - start2 + 1;
-        //int min_cc = min(this_cc2);
         real poly_nonc1; // non-centered poly parameters
         real poly_nonc2; // non-centered poly parameters
         real poly_nonc3; // non-centered poly parameters
@@ -187,10 +147,8 @@ functions {
         log_prob += normal_lpdf(poly2[s]|0,1);
         log_prob += normal_lpdf(poly3[s]|0,1);
         
-        // increasing constraint
-        
-        //log_prob += exponential_lpdf(prop_infected[2:obs] - prop_infected[1:(obs-1)]|1);
-        
+        //mobility mediation
+
         for(g in 1:G) {
           mu_mob[1:obs,g] = to_array_1d(mob_alpha_const[g] +
           Q_lock[start2:end2,1:L]*lockdown_med_raw[g]  +
@@ -198,7 +156,8 @@ functions {
         }
         
           log_prob += multi_normal_cholesky_lpdf(mob_array[start2:end2,1:G]|mu_mob,M_Sigma);
-
+          
+        // fear mediation
           log_prob += normal_lpdf(fear[start2:end2]|fear_const + Q_lock[start2:end2,1:L]*lockdown_med_raw_fear +
                                 Q_supp2[start2:end2,1:(S-1)]*suppress_med_raw_fear,sigma_fear);
 
@@ -207,7 +166,8 @@ functions {
                           test_baseline *  mix_prop_std +
                           country1 * mix_prop_std .* lin_counter[start2:end2,1] +
                           test_lin_counter * lin_counter[start2:end2,1]);
-
+        
+        // observed data model
         log_prob += beta_binomial_lpmf(tests[start2:end2]|country_pop[start2:end2],mu_tests*phi[1],(1-mu_tests) * phi[1]);
        log_prob += beta_binomial_lpmf(cases[start2:end2]|country_pop[start2:end2],mu_cases*phi[2],(1-mu_cases) * phi[2]);
     
@@ -216,22 +176,13 @@ functions {
         for(n in start2:end2) {
           int q = r_in(n,sero_row);
           if(q>0) {
-            //print("beta prior");
-            //print(log_prob);
-            //log_prob += beta_lpdf(inv_logit(prop_infected[n-start2+1])|.5 + sero[r,1]*sero[r,3],.5 + sero[r,3] - (sero[r,3]*sero[r,1]));  
-            //print(log_prob);
             log_prob += normal_lpdf(prop_infected[n-start2+1]|logit(sero[q,1]),.01);
             log_prob += log(prop_infected[n-start2+1] - prop_infected[n-start2]);
-            //log_prob += log(prop_infected[n-start2+1] - prop_infected[n-start2]) - 2 * log(1 + prop_infected[n-start2+1] - prop_infected[n-start2]);
           } else {
             // prior implies inflation rate (cases/true infected) is between 2 - 20
-            //print("normal prior");
-            //print(log_prob);
             if((n-start2)>60) {
                 log_prob += lognormal_lpdf(inv_logit(prop_infected[n-start2+1])/((cases[n-start2+1]*1.0)/(country_pop[n-start2+1]*1.0))|2.1,.4);
                 log_prob +=  log(prop_infected[n-start2+1] - prop_infected[n-start2]) - 2 * log(1 + prop_infected[n-start2+1] - prop_infected[n-start2]);
-                //print(log_prob);
-                //log_prob += ;
             }
     
           }
@@ -341,9 +292,7 @@ parameters {
   vector[G] mob_alpha_const; // mobility hierarchical intercepts
   vector[num_country] country_test_raw; // unobserved rate at which countries are willing to test vs. number of infected
   vector[num_country] country_test_raw2;
-  // we assume that as infection rates increase, more tests will be conducted
   real alpha_infect; // other intercepts
-  //real<upper=-5> alpha_test;
   real alpha_test;
   vector<lower=0>[2] phi; // shape parameter for infected
   real<lower=0> sigma_test_raw; // estimate of between-state testing heterogeneity
@@ -382,7 +331,6 @@ model {
   sigma_test_raw2 ~ normal(0,.1);
   sigma_fear ~ exponential(.1);
   fear_const ~ normal(0,5);
-  //country_test_raw2 ~ normal(0,1);
   sero_est ~ beta(.5 + sero[,1] .* sero[,3],.5 + sero[,3] - (sero[,3] .* sero[,1]));
   
   for(g in 1:G) {
@@ -457,7 +405,6 @@ target += reduce_sum_static(partial_sum, states,
                      sigma_fear);
 
 }
-
 generated quantities {
   
   // convert QR estimates back to actual numbers
@@ -470,15 +417,6 @@ generated quantities {
   vector[L] lockdown_med_fear;
   vector[S-1] suppress_med_fear;
   vector[num_rows] prop_infect_out;
-  // vector[num_rows] out_infected;
-  // 
-  // vector[num_country] poly_nonc1; // non-centered poly parameters
-  // vector[num_country] poly_nonc2; // non-centered poly parameters
-  // vector[num_country] poly_nonc3; // non-centered poly parameters
-  // 
-  // poly_nonc1 = mu_poly[1] + sigma_poly[1]*poly1;
-  // poly_nonc2 = mu_poly[2] + sigma_poly[2]*poly2;
-  // poly_nonc3 = mu_poly[3] + sigma_poly[3]*poly3;
   
   suppress_effect = R_supp_inverse * suppress_effect_raw;
   lockdown_effect = R_lock_inverse * lockdown_effect_raw;
@@ -528,16 +466,6 @@ generated quantities {
         }
   }
           
-  
-          
-    
-  // out_infected = alpha[2] + count_outbreak[,1] .* poly_nonc1[cc]  +
-  //         count_outbreak[,2] .* poly_nonc2[cc] +
-  //         count_outbreak[,3] .* poly_nonc3[cc] +
-  //         world_infect*month_cases +
-  //         Q_supp[,1:S]*suppress_effect_raw +
-  //         Q_lock[,1:L]*lockdown_effect_raw +
-  //         Q_mob[,1:G]*mob_effect_raw;
-  // 
 }
+
 

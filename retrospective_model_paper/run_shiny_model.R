@@ -34,15 +34,15 @@ system2("git",args=c("-C ~/covid-19-data","pull"))
 
 # whether to run model (it will take a few hours) or load saved model from disk
 
-run_model <- T
+run_model <- F
 
 # whether to use fresher coronanet policy data
 
-new_policy <- T
+new_policy <- F
 
 # whether to pull new cases/tests from NYT/COVID project
 
-new_cases <- T
+new_cases <- F
 
 # vote share
 # MIT Election Lab
@@ -1276,77 +1276,77 @@ over_all_sum2 <- left_join(over_all_sum2,tibble(variable=1:ncol(covs),
                       prop_foreign="% Foreign-Born",
                       public_health="Public Health"))
 
-over_vote_share <- parallel::mclapply(seq(min(just_data$trump),
-                                          max(just_data$trump),
-                                          length.out=100),
-                                      function(p) {
-                                        
-                                        # get direct effect for poll day p
-                                        
-                                        de <- suppress_effect$estimate[suppress_effect$variable==14] +
-                                          suppress_effect$estimate[suppress_effect$variable==1] * p 
-                                        
-                                        # loop over mobility
-                                        
-                                        mob_mats <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
-                                          
-                                          ide <- (suppress_mob_effect$estimate[suppress_mob_effect$variable==14 & suppress_mob_effect$mobility==m] +
-                                                    suppress_mob_effect$estimate[suppress_mob_effect$variable==1 & suppress_mob_effect$mobility==m] * p) * mob_effect[,m]
-                                          
-                                        }) 
-                                        
-                                        tibble(`Direct Effect`=rowMeans(de*t(p_infected1)*t(p_infected2)),
-                                               `Total Effect` = rowMeans((de + Reduce('+', mob_mats))*t(p_infected1)*t(p_infected2)),
-                                               `All Indirect` = rowMeans(Reduce('+', mob_mats)*t(p_infected1)*t(p_infected2)),
-                                               `Retail Indirect`= rowMeans(mob_mats[[1]]*t(p_infected1)*t(p_infected2)),
-                                               `Grocery Indirect`= rowMeans(mob_mats[[2]]*t(p_infected1)*t(p_infected2)),
-                                               `Parks Indirect`= rowMeans(mob_mats[[3]]*t(p_infected1)*t(p_infected2)),
-                                               `Transit Indirect`= rowMeans(mob_mats[[4]]*t(p_infected1)*t(p_infected2)),
-                                               `Workplaces Indirect`= rowMeans(mob_mats[[5]]*t(p_infected1)*t(p_infected2)),
-                                               `Residential Indirect`= rowMeans(mob_mats[[6]]*t(p_infected1)*t(p_infected2)),
-                                               `2016 Trump Vote Share`=mean(combined$trump) + p*sd(combined$trump))
-                                        
-                                      },mc.cores=16) %>% bind_rows
-
-trump1 <- over_vote_share %>% 
-  gather(key="Type",value="estimate",-`2016 Trump Vote Share`) %>% 
-  group_by(Type,`2016 Trump Vote Share`) %>% 
-  summarize(med_est=median(estimate),
-            high_est=quantile(estimate,.95),
-            low_est=quantile(estimate,.05)) %>% 
-  filter(Type %in% c("All Indirect","Direct Effect","Total Effect")) %>% 
-  ggplot(aes(y=med_est,x=`2016 Trump Vote Share`)) +
-  geom_ribbon(aes(ymin=low_est,ymax=high_est),fill="blue",alpha=0.5) +
-  geom_line(linetype=2,colour="white") +
-  geom_hline(yintercept = 0,linetype=3) +
-  scale_x_continuous(labels=scales::percent) +
-  scale_y_continuous(labels=scales::percent) +
-  facet_wrap(~Type) +
-  ylab("Cumulative Infected") +
-  xlab("") +
-  theme(panel.background = element_blank(),
-        panel.grid=element_blank(),
-        strip.background = element_blank())
-
-trump2 <- over_vote_share %>% 
-  gather(key="Type",value="estimate",-`2016 Trump Vote Share`) %>% 
-  group_by(Type,`2016 Trump Vote Share`) %>% 
-  summarize(med_est=median(estimate),
-            high_est=quantile(estimate,.95),
-            low_est=quantile(estimate,.05)) %>% 
-  filter(!(Type %in% c("All Indirect","Direct Effect","Total Effect"))) %>% 
-  ggplot(aes(y=med_est,x=`2016 Trump Vote Share`)) +
-  geom_ribbon(aes(ymin=low_est,ymax=high_est),fill="blue",alpha=0.5) +
-  geom_line(linetype=2,colour="white") +
-  scale_x_continuous(labels=scales::percent) +
-  facet_wrap(~Type) +
-  scale_y_continuous(labels=scales::percent) +
-  geom_hline(yintercept = 0,linetype=3) +
-  theme(panel.background = element_blank(),
-        panel.grid=element_blank(),
-        strip.background = element_blank()) +
-  ylab("Cumulative Infected") +
-  xlab("Trump Vote Share")
+# over_vote_share <- parallel::mclapply(seq(min(just_data$trump),
+#                                           max(just_data$trump),
+#                                           length.out=100),
+#                                       function(p) {
+#                                         
+#                                         # get direct effect for poll day p
+#                                         
+#                                         de <- suppress_effect$estimate[suppress_effect$variable==14] +
+#                                           suppress_effect$estimate[suppress_effect$variable==1] * p 
+#                                         
+#                                         # loop over mobility
+#                                         
+#                                         mob_mats <- lapply(1:max(suppress_mob_effect$mobility), function(m) {
+#                                           
+#                                           ide <- (suppress_mob_effect$estimate[suppress_mob_effect$variable==14 & suppress_mob_effect$mobility==m] +
+#                                                     suppress_mob_effect$estimate[suppress_mob_effect$variable==1 & suppress_mob_effect$mobility==m] * p) * mob_effect[,m]
+#                                           
+#                                         }) 
+#                                         
+#                                         tibble(`Direct Effect`=rowMeans(de*t(p_infected1)*t(p_infected2)),
+#                                                `Total Effect` = rowMeans((de + Reduce('+', mob_mats))*t(p_infected1)*t(p_infected2)),
+#                                                `All Indirect` = rowMeans(Reduce('+', mob_mats)*t(p_infected1)*t(p_infected2)),
+#                                                `Retail Indirect`= rowMeans(mob_mats[[1]]*t(p_infected1)*t(p_infected2)),
+#                                                `Grocery Indirect`= rowMeans(mob_mats[[2]]*t(p_infected1)*t(p_infected2)),
+#                                                `Parks Indirect`= rowMeans(mob_mats[[3]]*t(p_infected1)*t(p_infected2)),
+#                                                `Transit Indirect`= rowMeans(mob_mats[[4]]*t(p_infected1)*t(p_infected2)),
+#                                                `Workplaces Indirect`= rowMeans(mob_mats[[5]]*t(p_infected1)*t(p_infected2)),
+#                                                `Residential Indirect`= rowMeans(mob_mats[[6]]*t(p_infected1)*t(p_infected2)),
+#                                                `2016 Trump Vote Share`=mean(combined$trump) + p*sd(combined$trump))
+#                                         
+#                                       },mc.cores=16) %>% bind_rows
+# 
+# trump1 <- over_vote_share %>% 
+#   gather(key="Type",value="estimate",-`2016 Trump Vote Share`) %>% 
+#   group_by(Type,`2016 Trump Vote Share`) %>% 
+#   summarize(med_est=median(estimate),
+#             high_est=quantile(estimate,.95),
+#             low_est=quantile(estimate,.05)) %>% 
+#   filter(Type %in% c("All Indirect","Direct Effect","Total Effect")) %>% 
+#   ggplot(aes(y=med_est,x=`2016 Trump Vote Share`)) +
+#   geom_ribbon(aes(ymin=low_est,ymax=high_est),fill="blue",alpha=0.5) +
+#   geom_line(linetype=2,colour="white") +
+#   geom_hline(yintercept = 0,linetype=3) +
+#   scale_x_continuous(labels=scales::percent) +
+#   scale_y_continuous(labels=scales::percent) +
+#   facet_wrap(~Type) +
+#   ylab("Cumulative Infected") +
+#   xlab("") +
+#   theme(panel.background = element_blank(),
+#         panel.grid=element_blank(),
+#         strip.background = element_blank())
+# 
+# trump2 <- over_vote_share %>% 
+#   gather(key="Type",value="estimate",-`2016 Trump Vote Share`) %>% 
+#   group_by(Type,`2016 Trump Vote Share`) %>% 
+#   summarize(med_est=median(estimate),
+#             high_est=quantile(estimate,.95),
+#             low_est=quantile(estimate,.05)) %>% 
+#   filter(!(Type %in% c("All Indirect","Direct Effect","Total Effect"))) %>% 
+#   ggplot(aes(y=med_est,x=`2016 Trump Vote Share`)) +
+#   geom_ribbon(aes(ymin=low_est,ymax=high_est),fill="blue",alpha=0.5) +
+#   geom_line(linetype=2,colour="white") +
+#   scale_x_continuous(labels=scales::percent) +
+#   facet_wrap(~Type) +
+#   scale_y_continuous(labels=scales::percent) +
+#   geom_hline(yintercept = 0,linetype=3) +
+#   theme(panel.background = element_blank(),
+#         panel.grid=element_blank(),
+#         strip.background = element_blank()) +
+#   ylab("Cumulative Infected") +
+#   xlab("Trump Vote Share")
 
 rsconnect::deployApp(appDir="~/corona_tscs/retrospective_model_paper",
                      appFiles = c("flex_dashboard.Rmd","calc_sum_state.rds",

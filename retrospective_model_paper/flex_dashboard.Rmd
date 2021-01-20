@@ -22,6 +22,8 @@ require(ggrepel)
 require(plotly)
 require(readr)
 
+set.seed(87399)
+
 # load fitted model object
 
 calc_sum_state <- readRDS("calc_sum_state.rds") %>% 
@@ -32,6 +34,26 @@ percap <- readRDS("percap.rds") %>%
 
 infl_data <- select(percap,inf_pr,state,month_day) %>% filter(!is.na(inf_pr))
 
+# calculate CIs using simulation
+
+serology <- readRDS("serology.rds") %>% 
+  rename(month_day="date_end")
+
+cis <- lapply(1:nrow(serology), function(i) {
+  
+  est <- rbeta(10000,.5 + serology$inf_pr[i]*serology$survey_size[i],
+                      5 + serology$survey_size[i] - serology$inf_pr[i]*serology$survey_size[i])
+  
+  tibble(high_est=quantile(est,.95),
+         low_est=quantile(est,.05),
+         state_id=serology$state_id[i],
+         key=serology$key[i])
+  
+}) %>% bind_rows
+
+# join
+
+serology <- left_join(serology,cis)
 
 combined <- readRDS("combined.rds")
 
@@ -86,7 +108,7 @@ Column {.tabset}
 ```{r statetrend}
 
   infldata <- reactive({
-    filter(infl_data,state %in% input$state)
+    filter(serology,state_id %in% input$state)
   })
 
   plotdb <- reactive({
@@ -197,7 +219,10 @@ renderPlot({
   } 
   
   if(input$percap) {
-     out_plot <-  out_plot + geom_point(data=infldata(),aes(y=inf_pr),colour="blue",size=5) +
+     out_plot <-  out_plot + geom_pointrange(data=infldata(),aes(y=inf_pr,
+                                                            ymin=low_est,
+                                                            ymax=high_est),colour="blue",size=1,
+                                             alpha=0.5) +
        scale_y_continuous(labels=scales::percent)
      if(input$present) {
        out_plot <- out_plot + ylab("Proportion Infected at Present") 

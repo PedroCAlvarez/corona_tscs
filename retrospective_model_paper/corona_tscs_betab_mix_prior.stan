@@ -43,11 +43,11 @@ functions {
                    matrix Q_lock,
                    matrix Q_mob,
                    int[] cc,
-                   real[] pcr_spec,
-                   real[] finding,
-                   real[] test_baseline,
-                   real test_lin_counter,
-                   vector[] country_test_raw,
+                   real pcr_spec,
+                   real finding,
+                   real test_baseline,
+                   //real test_lin_counter,
+                   vector country_test_raw,
                    int S,
                    int G,
                    int L,
@@ -62,11 +62,11 @@ functions {
                    vector suppress_med_raw_fear,
                    vector lockdown_med_raw_fear,
                    real[] sigma_test_raw,
-                   vector[] country_test_raw2,
-                   vector[] country_test_raw3,
-                   real test_lin_counter2,
-                   real test_max_par,
-                   vector test_max,
+                   vector country_test_raw2,
+                   vector country_test_raw3,
+                   //real test_lin_counter2,
+                   //real test_max_par,
+                   //vector test_max,
                    matrix lin_counter,
                    real[] mu_test_raw,
                    real[] mu_test_raw2,
@@ -95,33 +95,29 @@ functions {
         real country1s;
         real country2s;
         real country3s;
-        real country1f;
-        real country2f;
-        real country3f;
+        //real country1f;
+        //real country2f;
+        //real country3f;
         real mu_infect;
         real sd_infect;
         
         vector[end2 - start2 + 1] prop_success;
         vector[end2 - start2 + 1] prop_fail;
-        vector[end2 - start2 + 1] mu_cases[2];
-        vector[end2 - start2 + 1] mu_tests[2];
+        //vector[end2 - start2 + 1] mu_cases;
+        vector[end2 - start2 + 1] mu_tests;
         vector[G] mu_mob[end2 - start2 + 1];
         
         poly_nonc1 = mu_poly[1] + sigma_poly[1]*poly1[s];
         poly_nonc2 = mu_poly[2] + sigma_poly[2]*poly2[s];
         poly_nonc3 = mu_poly[3] + sigma_poly[3]*poly3[s];
         
-        //poly_nonc1 = poly1[1];
-        //poly_nonc2 = poly2[1];
-        //poly_nonc3 = poly3[1];
+        country1s = mu_test_raw[1] + sigma_test_raw[1]*country_test_raw[s];
+        country2s = mu_test_raw2[1] + sigma_test_raw2[1]*country_test_raw2[s];
+        country3s = mu_test_raw3[1] + sigma_test_raw3[1]*country_test_raw3[s];
         
-        country1s = mu_test_raw[1] + sigma_test_raw[1]*country_test_raw[1,s];
-        country2s = mu_test_raw2[1] + sigma_test_raw2[1]*country_test_raw2[1,s];
-        country3s = mu_test_raw3[1] + sigma_test_raw3[1]*country_test_raw3[1,s];
-        
-        country1f = mu_test_raw[2] + sigma_test_raw[2]*country_test_raw[2,s];
-        country2f = mu_test_raw2[2] + sigma_test_raw2[2]*country_test_raw2[2,s];
-        country3f = mu_test_raw3[2] + sigma_test_raw3[2]*country_test_raw3[2,s];
+        //country1f = mu_test_raw[2] + sigma_test_raw[2]*country_test_raw[2,s];
+        //country2f = mu_test_raw2[2] + sigma_test_raw2[2]*country_test_raw2[2,s];
+        //country3f = mu_test_raw3[2] + sigma_test_raw3[2]*country_test_raw3[2,s];
         
         //country1 = country_test_raw[1];
         //country2 = country_test_raw2[1];
@@ -158,15 +154,19 @@ functions {
         mu_infect = mean(prop_infected);
         sd_infect = sd(prop_infected);
         
-        prop_success = log_inv_logit(prop_infected); 
-        prop_fail = log1m_inv_logit(prop_infected);
+        prop_success = inv_logit(prop_infected); 
+        prop_fail = 1 - inv_logit(prop_infected);
         
-        mu_cases[1] = exp(pcr_spec[1] + finding[1]*prop_success);
-        mu_cases[2] = exp(pcr_spec[2] + finding[2]*prop_fail);
+        //mu_cases = exp(pcr_spec + finding*prop_success);
+        //mu_cases[2] = exp(pcr_spec[2] + finding[2]*prop_fail);
 
-        log_prob += normal_lpdf(to_vector(country_test_raw[1:2,s])|0,1); // more likely near the middle than the ends
-        log_prob += normal_lpdf(to_vector(country_test_raw2[1:2,s])|0,1); // more likely near the middle than the ends
-        log_prob += normal_lpdf(to_vector(country_test_raw3[1:2,s])|0,1);
+        // log_prob += normal_lpdf(to_vector(country_test_raw[1:2,s])|0,1); // more likely near the middle than the ends
+        // log_prob += normal_lpdf(to_vector(country_test_raw2[1:2,s])|0,1); // more likely near the middle than the ends
+        // log_prob += normal_lpdf(to_vector(country_test_raw3[1:2,s])|0,1);
+        
+        log_prob += normal_lpdf(country_test_raw[s]|0,1); // more likely near the middle than the ends
+        log_prob += normal_lpdf(country_test_raw2[s]|0,1); // more likely near the middle than the ends
+        log_prob += normal_lpdf(country_test_raw3[s]|0,1);
         
         log_prob += normal_lpdf(poly1[s]|0,1);
         log_prob += normal_lpdf(poly2[s]|0,1);
@@ -187,17 +187,17 @@ functions {
                                 Q_supp2[start2:end2,1:(S-1)]*suppress_med_raw_fear,sigma_fear);
 
         
-          mu_tests[1] = exp(alpha_test[1] + 
+          mu_tests = exp(alpha_test[1] + 
                           country1s * lin_counter[start2:end2,1] +
                           country2s * lin_counter[start2:end2,2] +
                           country3s * lin_counter[start2:end2,3] +
-                          test_baseline[1] * prop_success);
+                          test_baseline * prop_success);
                           
-          mu_tests[2] = exp(alpha_test[2] + 
-                          country1f * lin_counter[start2:end2,1] +
-                          country2f * lin_counter[start2:end2,2] +
-                          country3f * lin_counter[start2:end2,3] +
-                          test_baseline[2] * prop_fail);
+          // mu_tests[2] = exp(alpha_test[2] + 
+          //                 country1f * lin_counter[start2:end2,1] +
+          //                 country2f * lin_counter[start2:end2,2] +
+          //                 country3f * lin_counter[start2:end2,3] +
+          //                 test_baseline[2] * prop_fail);
         
         // observed data model
         // loop over serology surveys to add informative prior information
@@ -209,10 +209,8 @@ functions {
           
           if(q <= 0) {
             
-            //log_prob += beta_binomial_lpmf(tests[n]|country_pop[n],mu_tests[n-start2+1],phi[1]);
-            //log_prob += beta_binomial_lpmf(cases[n]|country_pop[n],mu_cases[n-start2+1],phi[2]);
-            log_prob += beta_binomial_lpmf(tests[n]|country_pop[n],mu_tests[1],mu_tests[2]);
-            log_prob += beta_binomial_lpmf(cases[n]|country_pop[n],mu_cases[1],mu_cases[2]);
+            log_prob += beta_binomial_lpmf(cases[n]|country_pop[n],prop_success[n-start2+1]*phi[1],prop_fail[n-start2+1]*phi[1]);
+            log_prob += beta_binomial_lpmf(tests[n]|country_pop[n],mu_tests[n-start2+1],phi[2]);
             
             // we're going to re-scale the distribution so that the reported cases is 
             // always the lower bound
@@ -323,7 +321,7 @@ parameters {
   vector[num_country] poly2; // polinomial function of time
   vector[num_country] poly3; // polinomial function of time
   real mu_test_raw[2];
-  real finding[2]; // difficulty of identifying infected cases 
+  real finding; // difficulty of identifying infected cases 
   //vector<lower=0,upper=1>[R] survey_prop; // variable that stores survey proportions from CDC data
   real<lower=0> world_infect; // infection rate based on number of travelers
   vector[S] suppress_effect_raw; // suppression effect of govt. measures, cannot increase virus transmission rate
@@ -332,21 +330,21 @@ parameters {
   vector[S] suppress_med_raw[G];
   vector[L] lockdown_med_raw_fear;
   vector[S-1] suppress_med_raw_fear;
-  real test_lin_counter;
-  real test_baseline[2];
-  real test_lin_counter2;
+  //real test_lin_counter;
+  real test_baseline;
+  //real test_lin_counter2;
   real mu_test_raw2[2];
   real mu_test_raw3[2];
-  real pcr_spec[2]; // anticipated 1 - specificity of RT-PCR tests (taken from literature)
+  real pcr_spec; // anticipated 1 - specificity of RT-PCR tests (taken from literature)
   // constraint equal to upper limit spec of 98 percent, 2% FPR of PCR test results
   vector[3] mu_poly; // hierarchical mean for poly coefficients
   vector[G] mob_effect_raw;
-  real test_max_par;
+  //real test_max_par;
   vector<lower=0>[3] sigma_poly; // varying sigma polys
   vector[G] mob_alpha_const; // mobility hierarchical intercepts
-  vector[num_country] country_test_raw[2]; // unobserved rate at which countries are willing to test vs. number of infected
-  vector[num_country] country_test_raw2[2];
-  vector[num_country] country_test_raw3[2];
+  vector[num_country] country_test_raw; // unobserved rate at which countries are willing to test vs. number of infected
+  vector[num_country] country_test_raw2;
+  vector[num_country] country_test_raw3;
   real alpha_infect; // other intercepts
   real alpha_test[2];
   vector<lower=0>[2] phi_raw; // shape parameter for infected
@@ -367,12 +365,9 @@ model {
   matrix[G, G] M_Sigma;
   int grainsize = 1;
   
-  sigma_poly ~ exponential(10);
+  sigma_poly ~ exponential(.1);
   mu_poly ~ normal(0,30);
   mu_test_raw ~ normal(0,20);
-  //poly1 ~ normal(0,10);
-  //poly2 ~ normal(0,10);
-  //poly3 ~ normal(0,10);
   
   mu_test_raw2 ~ normal(0,20);
   mu_test_raw3 ~ normal(0,20);
@@ -384,10 +379,10 @@ model {
   phi_raw ~ exponential(1);
   mob_effect_raw ~ normal(0,5);
   suppress_effect_raw ~ normal(0,5);
-  test_max_par ~ normal(0,5);
+  //test_max_par ~ normal(0,5);
   test_baseline ~ normal(0,20);
-  test_lin_counter ~ normal(0,20);
-  test_lin_counter2 ~ normal(0,20);
+  //test_lin_counter ~ normal(0,20);
+  //test_lin_counter2 ~ normal(0,20);
   
   mob_alpha_const ~ normal(0,5);
   pcr_spec ~ normal(0,20);
@@ -416,7 +411,8 @@ target += reduce_sum_static(partial_sum, states,
                      grainsize,
                     tests,
                      cases,
-                     phi,country_pop,
+                     phi,
+                     country_pop,
                      num_country,
                      num_rows,
                      mu_poly,
@@ -440,7 +436,7 @@ target += reduce_sum_static(partial_sum, states,
                      pcr_spec,
                      finding,
                      test_baseline,
-                     test_lin_counter,
+                     //test_lin_counter,
                      country_test_raw,
                      S,
                      G,
@@ -458,9 +454,9 @@ target += reduce_sum_static(partial_sum, states,
                      sigma_test_raw,
                      country_test_raw2,
                      country_test_raw3,
-                     test_lin_counter2,
-                     test_max_par,
-                     test_max,
+                     //test_lin_counter2,
+                     //test_max_par,
+                     //test_max,
                      lin_counter,
                      mu_test_raw,
                      mu_test_raw2,
@@ -485,6 +481,7 @@ generated quantities {
   vector[L] lockdown_med_fear;
   vector[S-1] suppress_med_fear;
   vector[num_rows] prop_infect_out;
+  vector[num_rows] cov_out;
   
   suppress_effect = R_supp_inverse * suppress_effect_raw;
   lockdown_effect = R_lock_inverse * lockdown_effect_raw;
@@ -526,6 +523,9 @@ generated quantities {
                     Q_supp[start2,1:S]*suppress_effect_raw +
                     Q_lock[start2,1:L]*lockdown_effect_raw +
                     Q_mob[start2,1:G]*mob_effect_raw;
+                    
+                 cov_out[start2] = alpha_infect + Q_mob[start2,1:G]*mob_effect_raw;
+                    
               } else {
                 prop_infect_out[start2 + i - 1] = exp(alpha_infect + count_outbreak[start2+i-1,1] * poly_nonc1  +
                     count_outbreak[start2+i-1,2] * poly_nonc2 +
@@ -534,6 +534,8 @@ generated quantities {
                     Q_supp[start2+i-1,1:S]*suppress_effect_raw +
                     Q_lock[start2+i-1,1:L]*lockdown_effect_raw +
                     Q_mob[start2+i-1,1:G]*mob_effect_raw) + prop_infect_out[start2 + i - 2];
+                    
+                cov_out[start2 + i - 1] = exp(alpha_infect + Q_mob[start2+i-1,1:G]*mob_effect_raw) + cov_out[start2 + i - 2];
               }
         }
   }

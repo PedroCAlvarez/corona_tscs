@@ -1,20 +1,44 @@
 ---
 title: "Fear, Partisanship and the Spread of COVID-19 in the United States"
-date: "September 19, 2020"
+author: 
+  - Robert Kubinec:
+      email: rmk7@nyu.edu
+      institute: nyuad
+      correspondence: true
+  - Luiz Max Carvalho:
+      institute: gvf
+  -  Cindy Cheng:
+      institute: tum
+  - Joan Barceló:
+      institute: nyuad
+  - Luca Messerschmidt:
+      institute: tum
+  - Derek Duba:
+      institute: arizona
+  - Matthew Sean Cottrell:
+      institute: ucr
+institute:
+  - gvf: School of Applied Mathematics, Getúlio Vargas Foundation
+  - tum: Hochschule für Politik at the Technical University of Munich (TUM) and the TUM School of Governance, Munich, Germany
+  - nyuad: Social Science Division, New York University Abu Dhabi, Abu Dhabi, United Arab Emirates
+  - yale: Department of Political Science, University of Southern California
+  - arizona: School of Politics and Global Studies, Arizona State University
+  - ucr: University of California Riverside
+date: "January 25, 2020"
 toc: false
 output: 
   bookdown::pdf_document2:
     keep_tex: true
     includes:
-      in_header:
-          preamble.tex
+      in_header: 
+        preamble2.tex
     pandoc_args:
       - '--lua-filter=scholarly-metadata.lua'
       - '--lua-filter=author-info-blocks.lua'
-  #bookdown::word_document2
 bibliography: BibTexDatabase.bib
 abstract: "In this paper we present a Bayesian latent variable model that accounts for the bias in COVID-19 cases and tests and enables direct inferences about the causes of the pandemic. We use this model to analyze the effects of hypothesized factors relating to the disease's spread both directly and as mediated by cell phone mobility and fear of the disease. By decomposing these channels of transmission, we can better understand how an array of policy and demographic factors, including partisanship, affected the spread of COVID-19. We show that both Trump vote share in 2016 and racial justice protests are associated with the spread of COVID-19 through increased mobility and decreased concern over the virus. However, there is a pronounced direct effect of Trump vote share that cannot be explained by conventional factors and suggests that the power law distribution of early COVID-19 spread led to a surprisingly durable association between liberal states and the disease. WORD COUNT: 10,529"
 ---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE,warning=FALSE,message=FALSE,fig.width=6,fig.asp=0.618,dpi=300)
 require(dplyr)
@@ -95,8 +119,8 @@ The theory proposed in this article is that partisanship became a powerful varia
 The stickiness of early conditions in the COVID-19 pandemic is becoming increasingly clear through analysis of the differential spread of early transmission. @blasius2020 shows that COVID-19 had a power law distribution in its early stages due to unchecked and unmitigated transmission. This highly skewed distribution resulted in very unequal levels of infections even in countries that share borders, such as China and Vietnam. While many expected the horrors of New York to appear in other states, the highly exponential level of growth in early clusters of COVID-19 did not replicate elsewhere with the same trajectory. As a result, seemingly random initial conditions, such as the fact that New York and New Jersey were states that voted against President Trump, produced a long-standing correlation between liberal-leaning areas and the level of infections despite lackluster efforts to control the pandemic in conservative states.
 
 To establish this proposition, we will test the following two hypotheses:
-
-> H1: Higher levels of partisanship as measured by Trump vote share, Trump daily approval ratings and participation in racial justice protests are associated with reduced concern over COVID-19, increased within-state mobility and subsequent spread of the disease.
+  
+  > H1: Higher levels of partisanship as measured by Trump vote share, Trump daily approval ratings and participation in racial justice protests are associated with reduced concern over COVID-19, increased within-state mobility and subsequent spread of the disease.
 
 > H2: The inverse correlation between Trump vote share in 2016 and level of infections persists despite partisan disregard for the threat posed by the virus and social distancing behaviors as measured by within-state mobility.
 
@@ -592,7 +616,24 @@ min_mask <- min(combined$mask_wear)
 combined <- combined %>% 
   group_by(state) %>% 
   mutate(mask_wear=ifelse(ymd("2020-04-03")<month_day,mask_wear,min_mask/2)) %>% 
-  filter(state %in% sample(state,20))
+  ungroup
+  # filter(state %in% c("New York",
+  #                     "Florida",
+  #                     "California",
+  #                     "Utah",
+  #                     "Connecticut",
+  #                     "Michigan",
+  #                     "Minnesota",
+  #                     "Hawaii",
+  #                     "Vermont",
+  #                     "Texas",
+  #                     "Lousiana",
+  #                     "Pennsylvania",
+  #                     "Washington",
+  #                     "Missouri",
+  #                     "Montana",
+  #                     "Georgia",
+  #                     "North Carolina"))
 
 # need to impute negative test numbers
 
@@ -719,12 +760,14 @@ comm_data <- left_join(comm_data,
 #                    !(state_id=="Utah" & date_end==ymd("2020-06-05")),
 #                    !(state_id=="Minnesota" & date_end==ymd("2020-06-07")))
 
-# serology <- left_join(serology,mutate(select(ungroup(combined),month_day,state),key=1:n()),
-#                       by=c("date_end"="month_day","state_id"="state")) %>% 
-#   mutate(key=key - 1:n())
-# 
-# # remove rows from combined that are in the sero data
-# combined$key <- 1:nrow(combined)
+serology <- left_join(serology,mutate(select(ungroup(combined),month_day,state),key=1:n()),
+                      by=c("date_end"="month_day","state_id"="state")) %>%
+  mutate(key=key - 1:n())
+
+saveRDS(serology,"serology.rds")
+
+# remove rows from combined that are in the sero data
+combined$key <- 1:nrow(combined)
 
   #filter(state %in% c("New York","California","Alabama","Florida","Vermont","New Mexico"))
 
@@ -856,6 +899,12 @@ state <- select(combined,month_day,state,key) %>%
 
 # convert to numbers from dates/factorsß
 
+out_sero <- mutate(serology,
+                   num_pos=as.integer(floor(inf_pr*survey_size)),
+                   survey_size=as.integer(survey_size)) %>% 
+  select(num_pos,survey_size) %>% 
+  as.matrix
+
 real_data <- list(time_all=length(unique(combined$month_day)),
                  num_country=length(unique(combined$state)),
                  num_rows=nrow(combined),
@@ -866,37 +915,37 @@ real_data <- list(time_all=length(unique(combined$month_day)),
                  L=ncol(covs_lock),
                  country_id=as.numeric(factor(combined$state)),
                  date_id=as.numeric(factor(combined$date)),
-                 sero=as.matrix(select(serology,-state_id,-date_end,-key,-date_begin)),
+                 sero=out_sero,
                  sero_row=serology$key,
                  country_pop=floor(combined$state_pop),
                  cases=cases_matrix_num[,1],
-                 phi_scale=.001,
+                 phi_scale=c(.01,.000001),
                  fear=just_data$trendline_extremely_concerned,
                  test_max=combined$test_max,
                  count_outbreak=time_outbreak,
-                 lin_counter=cbind(combined$lin_counter,combined$lin_counter),
+                 lin_counter=poly(combined$lin_counter,3),
                  tests=tests_matrix_num[,1],
                  month_cases=combined$world_infect,
                  suppress=covs,
                  suppress2=covs[,-which(colnames(covs)=="trendline_extremely_concerned")],
-                 mobility=covs_mob,
+                 mobility=scale(covs_mob),
                  lockdown=covs_lock,
                  states=select(state,-state))
 
 saveRDS(real_data,"real_data.rds")
 
 init_vals <- function() {
-  list(phi_raw=c(1000,1000),
+  list(phi_raw=c(1,1),
        world_infect=0.1,
-       finding=20,
+       finding=c(1,1),
        suppress_effect_raw=rep(0,real_data$S),
        lockdown_effect_raw=rep(0,real_data$L),
        mob_effect_raw=rep(0,real_data$G),
        country_test_raw=rep(1,real_data$num_country),
-       sero_est=serology$inf_pr,
-       pcr_spec=-10,
-       alpha_infect=-5,
-       alpha_test=-10)
+       #sero_est=serology$inf_pr,
+       pcr_spec=c(-2,-2),
+       alpha_infect=-2,
+       alpha_test=c(-2,-2))
 }
 
 
@@ -988,19 +1037,19 @@ The only data required to fit the model, in addition to the covariates of intere
 
 
 
-```{r run_over_id_model_scale,include=F}
+```{r runmodel,include=F}
 
 trans <- TRUE
 
 if(run_model) {
-  pan_model_scale <- cmdstan_model("corona_tscs_betab_all_med_fear.stan",
+  pan_model_scale <- cmdstan_model("corona_tscs_betab_mix_prior.stan",
                                    cpp_options=list(stan_threads=TRUE))
   
    us_fit_scale_mod <- pan_model_scale$sample(data=real_data,chains=2,
                            iter_warmup=500,iter_sampling=500,
                            threads_per_chain = 8,
                            init=init_vals,
-                           max_treedepth = 14,
+                           max_treedepth = 15,
                            output_dir=".", validate_csv = FALSE,
                            parallel_chains=2)
   
@@ -1067,7 +1116,7 @@ We first examine model performance to see how well the model is able to reproduc
 The results of drawing from posterior values for the beta-binomial distribution of cases and tests are shown relative to the original observed values in Figure \@ref(fig:infectscaled) for five states. The plots show that although there is noise in the predictions (represented by the black shaded region), the model is generally able to capture the empirical values (represented by a red line) with high probability and reasonable fit. It is important to note as well that the predictions are not always as accurate near the end of the sample time series. This is due to the use of linear time adjustments that will fit the full series but not necessarily the tails. Adding a tighter fit to the observed data would be more useful for predictive validity but at the cost of increased bias due to over-fitting (i.e., the well-known bias/variance trade-off). As Figure \@ref(fig:infectscaled) shows, the model likely under-fits the data, which we take as a reasonable trade-off because the aim of this model is identification of the latent infection rate, not forecasting future cases and tests.
 
 
-```{r infectscaled,fig.asp=0.75,fig.cap="Predictive Validity of Model Vis-a-vis Observed Cases and Tests"}
+```{r postpredict,fig.asp=0.75,fig.cap="Predictive Validity of Model Vis-a-vis Observed Cases and Tests"}
 
 
 combined <- mutate(ungroup(combined),key=1:n()) %>% 
@@ -1083,7 +1132,7 @@ combined <- mutate(ungroup(combined),key=1:n()) %>%
 
 # add in sero data
 if(!("inf_pr" %in% names(combined)))
-    combined <- left_join(combined,select(serology,-key,-case_pr),
+    combined <- left_join(combined,select(serology,-key),
                       by=c("state"="state_id",
                                              "month_day"="date_end"))
 
@@ -1122,6 +1171,11 @@ prior_mat <- new.env()
 prior_mat$prior_mat <- matrix(ncol=ncol(poly_time))
 
 alpha_infect_mat <- sapply(1:nrow(alpha_infect), function(i) rep(alpha_infect[i,],nrow(poly_time)))
+
+check_world_infect <- t(world_infect %*% real_data$month_cases)
+check_suppress <- real_data$suppress %*% t(suppress_effect_raw) 
+check_lockdown <- as.matrix(real_data$lockdown) %*% t(lockdown_effect_raw)
+check_mobility <- real_data$mobility %*% t(mob_effect_raw)
 
   prop_infected_mat_raw <- alpha_infect_mat + 
           poly_time +
@@ -1171,23 +1225,41 @@ prop_infected <- as_tibble(prop_infected_mat) %>%
 
 # let's generate posterior-predictive data
 
-country_test <- as.matrix(us_fit_scale,"country_test_raw")
+country_test1 <- as.matrix(us_fit_scale,"country_test_raw")
+country_test2 <- as.matrix(us_fit_scale,"country_test_raw2")
+country_test3 <- as.matrix(us_fit_scale,"country_test_raw3")
 mu_test <- as.matrix(us_fit_scale,"mu_test_raw")
 sigma_test <- as.matrix(us_fit_scale,"sigma_test_raw")
+mu_test2 <- as.matrix(us_fit_scale,"mu_test_raw2")
+sigma_test2 <- as.matrix(us_fit_scale,"sigma_test_raw2")
+mu_test3 <- as.matrix(us_fit_scale,"mu_test_raw3")
+sigma_test3 <- as.matrix(us_fit_scale,"sigma_test_raw3")
 
-country_nonc <- mu_test[,1] + country_test * sigma_test[,1]
+country1s <- mu_test[,1] + country_test1[,1:real_data$num_country] * sigma_test[,1]
+country2s <- mu_test2[,1] + country_test2[,1:real_data$num_country] * sigma_test2[,1]
+country3s <- mu_test3[,1] + country_test3[,1:real_data$num_country] * sigma_test3[,1]
+
+# country1f <- mu_test[,2] + country_test[,(real_data$num_country+1):ncol(country_test)] * sigma_test[,2]
+# country2f <- mu_test2[,2] + country_test2[,(real_data$num_country+1):ncol(country_test)] * sigma_test2[,2]
+# country3f <- mu_test3[,2] + country_test[,(real_data$num_country+1):ncol(country_test)] * sigma_test3[,2]
 
 finding <- as.matrix(us_fit_scale,"finding")
 pcr_spec <- as.matrix(us_fit_scale,"pcr_spec")
-test_max_par <- as.matrix(us_fit_scale,"test_max_par")
+# test_max_par <- as.matrix(us_fit_scale,"test_max_par")
 phi <- as.matrix(us_fit_scale,"phi")
-test_lin <- as.matrix(us_fit_scale,"test_lin_counter")
-test_lin2 <- as.matrix(us_fit_scale,"test_lin_counter2")
+# test_lin <- as.matrix(us_fit_scale,"test_lin_counter")
+# test_lin2 <- as.matrix(us_fit_scale,"test_lin_counter2")
 test_base <- as.matrix(us_fit_scale,"test_baseline")
 
 # need to generate test/infection relationship first
 
 prop_infected_mat_scale <- apply(prop_infected_mat,2,plogis)
+#prop_infected_mat_scale1 <- apply(prop_infected_mat_scale,2,log)
+#prop_infected_mat_scale2 <- apply(prop_infected_mat_scale,2,function(c) {
+  
+#   log(1-c)
+#   
+# })
 
 # positive-only transformation
 
@@ -1200,41 +1272,56 @@ prop_infected_trans <- as_tibble(prop_infect_trans) %>%
   gather(key="iter",value="estimate",-key) %>% 
   mutate(estimate=qlogis(estimate))
 
-test_inf <- lapply(unique(real_data$cc), function(c) {
-
-  prop_infected_mat_scale[real_data$cc==c,,drop=F] * country_nonc[,c] * real_data$lin_counter[real_data$cc==c,1] 
+test_inf1 <- lapply(unique(real_data$cc), function(c) {
+  
+  country1s[,c] * real_data$lin_counter[real_data$cc==c,1] +
+   country2s[,c] * real_data$lin_counter[real_data$cc==c,2] +
+    country3s[,c] * real_data$lin_counter[real_data$cc==c,3] 
 }) %>% do.call(rbind,.)
 
-tests_pred <- lapply(1:ncol(test_inf), function(i) {
-  
-    # mu_tests <- plogis(alpha[i,1] + test_inf[,i] + combined$test_max * test_max_par[i,])
+# test_inf2 <- lapply(unique(real_data$cc), function(c) {
+#   
+#   country1f[,c] * real_data$lin_counter[real_data$cc==c,1] +
+#    country2f[,c] * real_data$lin_counter[real_data$cc==c,2] +
+#     country3f[,c] * real_data$lin_counter[real_data$cc==c,3] 
+# }) %>% do.call(rbind,.)
 
-        mu_tests <- plogis(alpha_test[i,] + 
-                               test_base[i,]*prop_infected_mat_scale[,i] +
-                             test_inf[,i] +
-                             test_lin[i,] * real_data$lin_counter[,1])
+tests_pred <- lapply(1:ncol(test_inf1), function(i) {
   
-    tibble(out_pr=mu_tests,
-      out_pred=extraDistr::rbbinom(n=rep(1,length(mu_tests)),
-                    real_data$country_pop,
-                     mu_tests*phi[i,1],
-                     (1-mu_tests)*phi[i,1]),
-           iter=i) %>% 
+  # mu_tests <- plogis(alpha[i,1] + test_inf[,i] + combined$test_max * test_max_par[i,])
+  
+  mu_tests1 <- exp(alpha_test[i,1] + 
+                       test_base[i,]*prop_infected_mat_scale[,i] +
+                       test_inf1[,i])
+  
+  # mu_tests2 <- exp(alpha_test[i,2] + 
+  #                      test_base[i,2]*prop_infected_mat_scale2[,i] +
+  #                      test_inf2[,i])
+  tibble(out_pr1=mu_tests1,
+         #out_pr2=mu_tests2,
+         out_pred=extraDistr::rbbinom(n=rep(1,length(mu_tests1)),
+                                      real_data$country_pop,
+                                      mu_tests1,
+                                      phi[i,2]),
+         iter=i) %>% 
     mutate(key=1:n())
-          }) %>% bind_rows %>% 
+}) %>% bind_rows %>% 
   left_join(select(combined,key,tests,state,month_day),by=c("key"))
 
-cases_pred <- lapply(1:nrow(finding), function(i) {
-
-    mu_cases <-  plogis(pcr_spec[i,] + finding[i,]*prop_infected_mat_scale[,i])
-
-    tibble(out_pred=extraDistr::rbbinom(n=rep(1,length(mu_cases)),
-                     real_data$country_pop,
-                     mu_cases*phi[i,2],
-                     (1-mu_cases)*phi[i,2]),
-           iter=i) %>% 
+cases_pred <- lapply(sample(1:nrow(finding),100), function(i) {
+  
+  #mu_cases1 <-  exp(pcr_spec[i,] + finding[i,]*prop_infected_mat_scale[,i])
+  #mu_cases2 <-  exp(pcr_spec[i,2] + finding[i,2]*prop_infected_mat_scale2[,i])
+  
+  tibble(out_pred=extraDistr::rbbinom(n=rep(1,nrow(prop_infected_mat_scale)),
+                                      real_data$country_pop,
+                                      prop_infected_mat_scale[,i]*phi[i,1],
+                                      (1-prop_infected_mat_scale[,i])*phi[i,1]),
+         out_pr1=prop_infected_mat_scale[,i],
+         #out_pr2=mu_cases2,
+         iter=i) %>% 
     mutate(key=1:n())
-          }) %>% bind_rows %>% 
+}) %>% bind_rows %>% 
   left_join(select(combined,key,cases,state,month_day),by=c("key"))
 
 # do some ggploting
@@ -1261,10 +1348,10 @@ c1 <- cases_pred %>%
   geom_line(aes(y=cases),colour="red",size=1) +
   scale_y_continuous(labels=scales::comma) +
   facet_wrap(~state,scales="free_y") +
-    theme(panel.grid = element_blank(),
+  theme(panel.grid = element_blank(),
         panel.background = element_blank(),
         strip.background = element_blank()) +
-    xlab("") +
+  xlab("") +
   ylab("Predicted Cases")
 
 ggsave("cases_pred.png")
@@ -1320,7 +1407,7 @@ Panel B in the plot shows our estimates of infected individuals, excepts that it
 
 # need to load in others predictions
 
-gu_inf <- read_csv("~/covid19_projections/projections/2020-07-14/US.csv")
+gu_inf <- read_csv("US.csv")
 
 max_est <- as.integer(round(calc_sum$med_est[calc_sum$month_day==max(calc_sum$month_day)]))
 high_max_est <- as.integer(round(calc_sum$high_est[calc_sum$month_day==max(calc_sum$month_day)]))
@@ -1593,27 +1680,31 @@ this_infect1 <- lapply(seq(max(combined$month_day) - days(7), max(combined$month
   as.matrix
        })
 
-this_test_max <- ungroup(combined) %>% 
-  select(state,month_day,test_max) %>% 
-  filter(month_day==max(month_day))
-
 this_time <- max(combined$lin_counter)
 
-test_lin <- as.matrix(us_fit_scale,"test_lin_counter")
-test_lin2 <- as.matrix(us_fit_scale,"test_lin_counter2")
+# test_lin <- as.matrix(us_fit_scale,"test_lin_counter")
+# test_lin2 <- as.matrix(us_fit_scale,"test_lin_counter2")
 test_base <- as.matrix(us_fit_scale,"test_baseline")
 
 alpha_test <- as.data.frame(us_fit_scale,pars="alpha_test")
 
-test_max_par <- as.data.frame(us_fit_scale,"test_max_par")
+#test_max_par <- as.data.frame(us_fit_scale,"test_max_par")
 
-lin_step <- real_data$lin_counter[2,1] - real_data$lin_counter[1,1]
+#lin_step <- real_data$lin_counter[2,1] - real_data$lin_counter[1,1]
 
-country_test <- as.matrix(us_fit_scale,"country_test_raw")
+country_test1 <- as.matrix(us_fit_scale,"country_test_raw")
+country_test2 <- as.matrix(us_fit_scale,"country_test_raw2")
+country_test3 <- as.matrix(us_fit_scale,"country_test_raw3")
 mu_test <- as.matrix(us_fit_scale,"mu_test_raw")
 sigma_test <- as.matrix(us_fit_scale,"sigma_test_raw")
+mu_test2 <- as.matrix(us_fit_scale,"mu_test_raw2")
+sigma_test2 <- as.matrix(us_fit_scale,"sigma_test_raw2")
+mu_test3 <- as.matrix(us_fit_scale,"mu_test_raw3")
+sigma_test3 <- as.matrix(us_fit_scale,"sigma_test_raw3")
 
-country_nonc <- mu_test[,1] + country_test * sigma_test[,1]
+country_nonc1 <- mu_test[,1] + country_test1 * sigma_test[,1]
+country_nonc2 <- mu_test2[,1] + country_test2 * sigma_test2[,1]
+country_nonc3 <- mu_test3[,1] + country_test3 * sigma_test3[,1]
 
 # loop over infections
 # loop over time
@@ -1623,14 +1714,19 @@ over_days <- lapply(seq(max(combined$month_day) - days(7), max(combined$month_da
                       
     over_states <- lapply(1:real_data$num_country, function(s) {
       
-      lin_val <- unique(combined$lin_counter[combined$month_day==d])
+      lin_val <- unique(real_data$lin_counter[combined$month_day==d,])
       counter <- which(seq(max(combined$month_day) - days(7), max(combined$month_day),by=1)==d)
       
-     tibble(estimate=plogis(alpha_test$alpha_test + country_nonc[,s] * this_infect1[[counter]][,s]*lin_val +
-                            test_base * this_infect1[[counter]][,s] + test_lin*lin_val),
+      alpha_est <- exp(alpha_test$`alpha_test[1]` + country_nonc1[,s] * lin_val[,1] +
+                          country_nonc2[,s] * lin_val[,2] +
+                           country_nonc3[,s] * lin_val[,3] +
+                            test_base * this_infect1[[counter]][,s])
+      
+     tibble(estimate=alpha_est/(alpha_est + phi[,2]),
          state_num=s,
          mean_est=mean(this_infect1[[counter]][,s]),
          month_day=d)
+     
     }) %>% bind_rows
                       
 }) %>% bind_rows
@@ -1781,6 +1877,45 @@ p3 +  plot_annotation(caption="Marginal effects calculated as a 1-standard devia
 ggsave("mobility.png")
 
 ```
+
+```{r mobcov,fig.cap="Estimated Correlation of Mobility Measures"}
+
+#require(tidybayes)
+
+# for(currentChainId in seq_len(length(us_fit_scale@sim$samples))) {
+#     names(us_fit_scale@sim$samples[[currentChainId]])= # ... rename variables to restore tidybayes compatibility.
+#         names(us_fit_scale)
+# }
+
+require(ggcorrplot)
+
+L <- rstan::extract(us_fit_scale, pars = "M_Omega")[[1]] # 4000 x 7 x 7
+Theta <- apply(L, MARGIN = 1, FUN = tcrossprod) %>% 
+  as_tibble %>% 
+  mutate(row=rep(colnames(covs_mob),each=6),
+         column=rep(colnames(covs_mob),times=6)) %>% 
+  gather(key="iter",value="estimate",-row,-column) %>% 
+  group_by(row,column) %>% 
+  summarize(mean_est=mean(estimate),
+            high_est=quantile(estimate,.95),
+            low_est=quantile(estimate,.05)) %>% 
+  mutate(row=stringr::str_to_title(row),
+         column=stringr::str_to_title(column)) %>% 
+  select(-high_est,-low_est) %>% 
+  spread(key = "column",value="mean_est") %>% 
+  ungroup %>% 
+  select(-row) %>% 
+  as.matrix
+
+row.names(Theta) <- colnames(Theta)
+
+ggcorrplot(Theta,hc.order=TRUE,type="upper",
+           ggtheme=ggthemes::theme_tufte(),
+           show.diag=F,
+           lab=T)
+
+```
+
 
 Figure \@ref(fig:suppress) shows the marginal effect of all other covariates in the model on the latent infection rate expressed as average cumulative marginal effects. The estimates are further broken out in terms of mediation. The mobility effect is equivalent to the $ed$ path in Figure \ref{tikzfig2}, i.e., it is the path from the covariates to mobility that does not go through increased fear. The fear effect, on the other hand, is equivalent to the $abd + ae$ paths, or the sum of the path from fear through mobility and the path from fear to infections apart from mobility. The direct effects are equivalent to the $g$ path in Figure \ref{tikzfig2}, and the total effects are the sum of all paths. The direct and indirect effects are in panel A while the total effects are in panel B.
 
@@ -2110,7 +2245,7 @@ trump1 / trump2 / trump3 +
 
 Finally, we can also use estimates of cell phone mobility on COVID-19 to understand how policies have had mediated effects on the disease through increasing or decreasing mobility. Figure \@ref(fig:rankcountries2) shows the disaggregated mediation effects for two types of policies for the sake of space, restrictions on businesses and stay-at-home orders. The plots reveal how indirect mediation effects differ substantially between policy types. Panel A shows that business restrictions had a powerful suppressive effect on grocery store and to a lesser extent retail establishments during the early part of the epidemic, though that association changed over time. By contrast, panel B indicates that stay-at-home orders have had more durable effects on mobility that have suppressed the disease, particularly in grocery stores, retail establishments and transit. Furthermore, these effects seem to be increasing rather than decreasing over time. On the other hand, stay-at-home orders seem to be increasing disease infections via increasing residential mobility and decreasing time spent in parks, trade-offs that were noted in some early epidemiological modeling of COVID-19 [@flaxman2020].
 
-```{r rankcountries2,fig.cap="Mediated Effects of Lockdowns on Google Mobility Data",fig.asp=0.9}
+```{r policyest,fig.cap="Mediated Effects of Lockdowns on Google Mobility Data",fig.asp=0.9}
 
 # to calculate these effects, need to marginalize over the 
 # sample data, and also the number of mediators/direct effects
@@ -2285,7 +2420,8 @@ These empirical results indicate that partisanship is strongly associated with t
 The model employed in this article was devised to permit the statistical identification of suppression measures and social, political and economic factors on the spread of COVID-19. It is not intended to be a replacement or alternative to the disease forecasting literature. If anything, this modeling exercise shows why structural epidemiological models are so important: without them it is impossible to project the total number of infected people on a given day. This model's simplicity and ability to use empirical data are its main features, and the hope is that it can be used and extended by researchers looking at government policies and other tertiary factors on the spread of the disease. At the very least, the model provides realistic uncertainty intervals taking into account very real biases in the observed data.
 
 <!-- In addition, the model provides insight into how the number of tests undertaken by a given country or area compares to the probably number of infections. These parameter estimates can be used to understand whether a state's testing exceeds, is the same as or is less than the number of infected individuals. Given the wide problem of data scarcity in understanding the disease's spread, we hope this model can be used to make the most of empirical evidence.  -->
-
-# Bibliography
-
-
+  
+  # Bibliography
+  
+  
+  

@@ -103,7 +103,7 @@ functions {
         
         vector[end2 - start2 + 1] prop_success;
         vector[end2 - start2 + 1] prop_fail;
-        //vector[end2 - start2 + 1] mu_cases;
+        vector[end2 - start2 + 1] mu_cases;
         vector[end2 - start2 + 1] mu_tests;
         vector[G] mu_mob[end2 - start2 + 1];
         
@@ -154,10 +154,10 @@ functions {
         mu_infect = mean(prop_infected);
         sd_infect = sd(prop_infected);
         
-        prop_success = inv_logit(prop_infected); 
+        prop_success = prop_infected; 
         prop_fail = 1 - inv_logit(prop_infected);
         
-        //mu_cases = exp(pcr_spec + finding*prop_success);
+        mu_cases = inv_logit(pcr_spec + finding*prop_success);
         //mu_cases[2] = exp(pcr_spec[2] + finding[2]*prop_fail);
 
         // log_prob += normal_lpdf(to_vector(country_test_raw[1:2,s])|0,1); // more likely near the middle than the ends
@@ -187,10 +187,10 @@ functions {
                                 Q_supp2[start2:end2,1:(S-1)]*suppress_med_raw_fear,sigma_fear);
 
         
-          mu_tests = exp(alpha_test[1] + 
+          mu_tests = inv_logit(alpha_test[1] + 
                           country1s * lin_counter[start2:end2,1] +
                           country2s * lin_counter[start2:end2,2] +
-                          country3s * lin_counter[start2:end2,3] +
+                          //country3s * lin_counter[start2:end2,3] +
                           test_baseline * prop_success);
                           
           // mu_tests[2] = exp(alpha_test[2] + 
@@ -209,8 +209,8 @@ functions {
           
           if(q <= 0) {
             
-            log_prob += beta_binomial_lpmf(cases[n]|country_pop[n],prop_success[n-start2+1]*phi[1],prop_fail[n-start2+1]*phi[1]);
-            log_prob += beta_binomial_lpmf(tests[n]|country_pop[n],mu_tests[n-start2+1],phi[2]);
+            log_prob += beta_binomial_lpmf(cases[n]|country_pop[n],mu_cases[n-start2+1]*phi[1],(1-mu_cases[n-start2+1])*phi[1]);
+            log_prob += beta_binomial_lpmf(tests[n]|country_pop[n],mu_tests[n-start2+1]*phi[2],(1-mu_tests[n-start2+1])*phi[2]);
             
             // we're going to re-scale the distribution so that the reported cases is 
             // always the lower bound
@@ -320,7 +320,7 @@ parameters {
   vector[num_country] poly1; // polinomial function of time
   vector[num_country] poly2; // polinomial function of time
   vector[num_country] poly3; // polinomial function of time
-  real mu_test_raw[2];
+  real mu_test_raw[1];
   real finding; // difficulty of identifying infected cases 
   //vector<lower=0,upper=1>[R] survey_prop; // variable that stores survey proportions from CDC data
   real<lower=0> world_infect; // infection rate based on number of travelers
@@ -333,8 +333,8 @@ parameters {
   //real test_lin_counter;
   real test_baseline;
   //real test_lin_counter2;
-  real mu_test_raw2[2];
-  real mu_test_raw3[2];
+  real mu_test_raw2[1];
+  real mu_test_raw3[1];
   real pcr_spec; // anticipated 1 - specificity of RT-PCR tests (taken from literature)
   // constraint equal to upper limit spec of 98 percent, 2% FPR of PCR test results
   vector[3] mu_poly; // hierarchical mean for poly coefficients
@@ -346,11 +346,11 @@ parameters {
   vector[num_country] country_test_raw2;
   vector[num_country] country_test_raw3;
   real alpha_infect; // other intercepts
-  real alpha_test[2];
+  real alpha_test[1];
   vector<lower=0>[2] phi_raw; // shape parameter for infected
-  real<lower=0> sigma_test_raw[2]; // estimate of between-state testing heterogeneity
-  real<lower=0> sigma_test_raw2[2];
-  real<lower=0> sigma_test_raw3[2];
+  real<lower=0> sigma_test_raw[1]; // estimate of between-state testing heterogeneity
+  real<lower=0> sigma_test_raw2[1];
+  real<lower=0> sigma_test_raw3[1];
   cholesky_factor_corr[G] M_Omega; // these are for the MVN for mobility data
   vector<lower=0>[G] M_sigma;
   real fear_const;
@@ -365,7 +365,7 @@ model {
   matrix[G, G] M_Sigma;
   int grainsize = 1;
   
-  sigma_poly ~ exponential(.1);
+  sigma_poly ~ exponential(1);
   mu_poly ~ normal(0,30);
   mu_test_raw ~ normal(0,20);
   
@@ -388,9 +388,9 @@ model {
   pcr_spec ~ normal(0,20);
   
   finding ~ normal(0,20);
-  sigma_test_raw ~ exponential(.1);
-  sigma_test_raw2 ~ exponential(.1);
-  sigma_test_raw3 ~ exponential(.1);
+  sigma_test_raw ~ exponential(1);
+  sigma_test_raw2 ~ exponential(1);
+  sigma_test_raw3 ~ exponential(1);
   sigma_fear ~ exponential(.1);
   fear_const ~ normal(0,5);
   

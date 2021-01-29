@@ -176,48 +176,53 @@ output$dl <- downloadHandler(
   }
 )
 
+
 # Annotations
 renderPlot({
   
+    
   if(input$present) {
-    out_plot <- plotdb() %>% 
+    print(unique(plotdb()$state))
+    
+    out_plot <- plotdb() %>%
     ggplot(aes(y=med_est_pres,x=month_day)) +
       geom_ribbon(aes(ymin=low_est_pres,
         ymax=high_est_pres,
-      fill=state),alpha=0.5,colour=NA) +
+        group=state),alpha=0.5) + 
         geom_text(aes(x=month_day,y=med_est_pres,label=label_pres),
-                  size=3,fontface="bold",hjust=0) 
+                  size=3,fontface="bold",hjust=0)
+    
   } else {
-    out_plot <- plotdb() %>% 
+    out_plot <- plotdb() %>%
     ggplot(aes(y=med_est,x=month_day)) +
       geom_ribbon(aes(ymin=low_est,
         ymax=high_est,
-      fill=state),alpha=0.5,colour=NA) +
+      fill=state),alpha=0.5) +
         geom_text(aes(x=month_day,y=med_est,label=label),
                   size=3,fontface="bold",hjust=0)
   }
   out_plot <- out_plot +
-  geom_line(aes(linetype=state),colour="black") +
+  geom_line(aes(group=state),colour="black") +
   theme_minimal() +
-  #scale_fill_distiller(palette="Reds",direction=1) +
+  # #scale_fill_distiller(palette="Reds",direction=1) +
   labs(caption="Lines are shaded with uncertainty of estimates (5% - 95% Interval).\nThese estimates are based on the assumption that as few as\n10% of cases may be reported.") +
-  xlab("") + 
+  xlab("") +
   guides(colour="none",linetype="none",fill="none") +
     scale_fill_brewer(type="qual") +
     theme(panel.grid = element_blank(),
         legend.position = "top") +
     xlim(input$select[1],input$select[2]+11)
-  
+
   if(input$actual && input$present) {
     out_plot <- out_plot + geom_line(aes(y=present_cases,group=state)) +
       geom_text(aes(y=present_cases,label=label_cases_pres),
-                  size=3,fontface="bold",hjust=0) 
+                  size=3,fontface="bold",hjust=0)
   } else if(input$actual) {
     out_plot <- out_plot + geom_line(aes(y=cum_sum_cases,group=state)) +
       geom_text(aes(y=cum_sum_cases,label=label_cases),
                   size=3,fontface="bold",hjust=0)
-  } 
-  
+  }
+
   if(input$percap) {
      out_plot <-  out_plot + geom_pointrange(data=infldata(),aes(y=inf_pr,
                                                             ymin=low_est,
@@ -225,16 +230,16 @@ renderPlot({
                                              alpha=0.5) +
        scale_y_continuous(labels=scales::percent)
      if(input$present) {
-       out_plot <- out_plot + ylab("Proportion Infected at Present") 
+       out_plot <- out_plot + ylab("Proportion Infected at Present")
      } else {
        out_plot <- out_plot + ylab("Cumulative Proportion Infected")
      }
   } else {
     out_plot <- out_plot + ylab("Cumulative Number Infected")  +
       scale_y_continuous(labels=scales::comma)
-    
+
     if(input$present) {
-       out_plot <- out_plot + ylab("Number Infected at Present") 
+       out_plot <- out_plot + ylab("Number Infected at Present")
      } else {
        out_plot <- out_plot + ylab("Cumulative Number Infected")
      }

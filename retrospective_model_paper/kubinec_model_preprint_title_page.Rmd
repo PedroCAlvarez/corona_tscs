@@ -7,10 +7,10 @@ author:
       correspondence: true
   - Luiz Max Carvalho:
       institute: gvf
-  -  Cindy Cheng:
-      institute: tum
   - Joan Barceló:
       institute: nyuad
+  -  Cindy Cheng:
+      institute: tum
   - Luca Messerschmidt:
       institute: tum
   - Derek Duba:
@@ -37,6 +37,6 @@ output:
       - '--lua-filter=author-info-blocks.lua'
   #bookdown::word_document2
 bibliography: BibTexDatabase.bib
-abstract: "In this paper we use a Bayesian latent variable model to identify the effect of sociopolitical covariates on the historical COVID-19 infection rate among the 50 states. The model is calibrated using COVID-19 serology surveys from the Center for Disease Control. The model is able to show important associations between cellphone mobility and daily polls of concern over COVID-19 with the spread of the epidemic. We use mediation analysis to show how other covariates hypothesized to affect disease spread, including 2016 Trump vote share, public health spending, smoking rates, per capita income and concern over the state of the economy predict COVID-19 spread. We are able to show stark associations between higher Trump approval and fewer COVID-19 infections, but these effects are not mediated by mobility or fear of COVID-19. Rather, the association between partisanship for President Trump and a more limited epidemic persists despite, rather than because of, recommended social distancing measures, signifying that residents of Republican-leaning states likely inferred that they did not need to adopt strategies of left-leaning states to protect themselves from COVID-19.^[To reproduce the model and to access the underlying Stan code, please see our [Github page](https://github.com/saudiwin/corona_tscs). This paper is part of the [CoronaNet project](https://lumesserschmidt.github.io/CoronaNet/) collecting data on government responses to the COVID-19 pandemic. For helpful comments we thank participants of the 2020 Polnet/Politics and Computational Social Science Conference. We acknowledge funding from New York University Abu Dhabi and the Technical University of Munich. We thank Tesea Conte, Muhannad AlRamlawi, Shiva Teerdhala, and Luke Burkholder for invaluable research assistance in evaluating state-level COVID-19 policies.]"
+abstract: "In this paper we present a Bayesian latent variable model that accounts for the bias in COVID-19 cases and tests and enables direct inferences about the causes of the pandemic. We use this model to analyze the effects of hypothesized factors relating to the disease's spread both directly and as mediated by cell phone mobility and fear of the disease. By decomposing these channels of transmission, we can better understand how an array of policy and demographic factors, including partisanship, affected the spread of COVID-19. We show that both Trump vote share in 2016 and racial justice protests are associated with the spread of COVID-19 through increased mobility and decreased concern over the virus. However, there is a pronounced direct effect of Trump vote share that cannot be explained by conventional factors and suggests that the power law distribution of early COVID-19 spread led to a surprisingly durable association between liberal states and the disease. WORD COUNT: 10,529^[To reproduce the model and to access the underlying Stan code, please see our [Github page](https://github.com/saudiwin/corona_tscs). This paper is part of the [CoronaNet project](https://lumesserschmidt.github.io/CoronaNet/) collecting data on government responses to the COVID-19 pandemic. For helpful comments we thank participants of the 2020 Polnet/Politics and Computational Social Science Conference. We thank James Bisbee and Rex Douglass for helpful comments. We acknowledge funding from New York University Abu Dhabi and the Technical University of Munich. We thank Tesea Conte, Muhannad AlRamlawi, Shiva Teerdhala, and Luke Burkholder for invaluable research assistance in evaluating state-level COVID-19 policies.]"
 ---
 

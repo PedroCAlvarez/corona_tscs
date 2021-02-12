@@ -6,7 +6,7 @@
 
 #### Load packages ----
 
-library("git2r")
+library(git2r)
 
 ##### Commit & Push Private Repository to Github ----
 
